@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    
+    <AssemblyName>Aspose.PSD.FOSS</AssemblyName>
+    <RootNamespace>Aspose.PSD.FOSS</RootNamespace>
+    
+    <PackageId>Aspose.PSD.FOSS</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>SID</Authors>
+    <Description>Free Open Source .NET library for basic PSD file operations (read/write without rendering)</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/yourorg/Aspose.PSD-FOSS-for-.NET</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/yourorg/Aspose.PSD-FOSS-for-.NET</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

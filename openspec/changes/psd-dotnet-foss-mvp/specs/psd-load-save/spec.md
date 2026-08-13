@@ -63,6 +63,27 @@
 - **THEN** сохранённый файл содержит все оригинальные section в том же порядке
 - **AND** данные section идентичны оригиналу по байтам
 
+### Requirement: Читаемость и структурная корректность PSD
+Система SHALL читать и писать PSD файлы в соответствии со структурой формата, определенной в официальной спецификации PSD.
+
+**Приоритет:** Структурная корректность важнее "зеленой сборки". Если реализация компилируется, но записывает структурно некорректные PSD файлы - это недопустимо.
+
+#### Scenario: Правильный порядок полей в заголовке
+- **WHEN** загружается PSD файл
+- **THEN** парсер читает поля в правильном порядке: signature → version → reserved → channels → height → width → bitsPerChannel → colorMode
+
+#### Scenario: Правильная структура layer record
+- **WHEN** загружается layer record
+- **THEN** парсер читает: top/left/bottom/right → channel count → channel info (длина каждого канала) → blend mode signature (4B) → blend mode key (4B) → opacity (1B) → clipping (1B) → flags (1B) → filler (1B) → extra data length (4B) + extra data internals (layer mask data length, blending ranges data length, Pascal name, tagged blocks) → channel image data блок после всех layer records
+
+#### Scenario: Структурно корректное сохранение
+- **WHEN** сохраняется PSD файл
+- **THEN** сохранённый файл имеет правильную структуру: Header → Color Data → Resources → Layer and Mask Information section (outer length, layer records, channel image data block, global layer mask info, raw tail) → Image Data
+
+#### Scenario: Round-trip сохранения
+- **WHEN** пользователь загружает PSD файл и сохраняет без изменений
+- **THEN** сохранённый файл идентичен оригиналу по байтам (если не изменялись свойства)
+
 ## MODIFIED Requirements
 
 ## REMOVED Requirements
