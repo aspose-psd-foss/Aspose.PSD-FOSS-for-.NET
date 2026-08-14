@@ -73,8 +73,19 @@ internal sealed class BigEndianReader : IDisposable
     public byte[] ReadBytes(int count)
     {
         byte[] buffer = new byte[count];
-        int read = _stream.Read(buffer, 0, count);
-        if (read < count) throw new EndOfStreamException();
+        int totalRead = 0;
+
+        while (totalRead < count)
+        {
+            int read = _stream.Read(buffer, totalRead, count - totalRead);
+            if (read == 0)
+            {
+                throw new EndOfStreamException();
+            }
+
+            totalRead += read;
+        }
+
         return buffer;
     }
 

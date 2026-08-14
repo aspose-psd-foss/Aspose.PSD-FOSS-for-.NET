@@ -1,78 +1,37 @@
 ## ADDED Requirements
 
-### Requirement: Изменение имени слоя
-Система SHALL позволять изменять имя слоя.
+### Requirement: Change supported layer fields in memory
+The system SHALL allow changing only the MVP layer fields `Name`, `IsVisible`, and `Opacity`.
 
-#### Scenario: Установка нового имени слоя
-- **WHEN** пользователь устанавливает layer.Name = "New Name"
-- **THEN** последующее чтение layer.Name возвращает "New Name"
-- **AND** имя сохраняется при сохранении
+#### Scenario: Change layer name
+- **WHEN** the user sets `layer.Name`
+- **THEN** a subsequent read returns the new value
 
-#### Scenario: Установка пустого имени слоя
-- **WHEN** пользователь устанавливает layer.Name = ""
-- **THEN** система допускает пустую строку (если формат PSD поддерживает)
-- **AND** последующее чтение возвращает пустую строку
+#### Scenario: Change layer visibility
+- **WHEN** the user sets `layer.IsVisible`
+- **THEN** a subsequent read returns the new value
 
-### Requirement: Изменение видимости слоя
-Система SHALL позволять изменять состояние видимости слоя.
+#### Scenario: Change layer opacity
+- **WHEN** the user sets `layer.Opacity`
+- **THEN** a subsequent read returns the new value
 
-#### Scenario: Скрытие видимого слоя
-- **WHEN** пользователь устанавливает layer.IsVisible = false у видимого слоя
-- **THEN** последующее чтение layer.IsVisible возвращает false
-- **AND** слой скрыт в сохранённом файле
+### Requirement: Persist supported layer mutations on save
+The system SHALL persist supported layer mutations when saving the file.
 
-#### Scenario: Отображение скрытого слоя
-- **WHEN** пользователь устанавливает layer.IsVisible = true у скрытого слоя
-- **THEN** последующее чтение layer.IsVisible возвращает true
-- **AND** слой видим в сохранённом файле
+#### Scenario: Save after supported mutations
+- **WHEN** the user changes `Name`, `IsVisible`, or `Opacity`
+- **AND** saves the file
+- **THEN** reloading the file shows the changed values
 
-### Requirement: Изменение прозрачности слоя
-Система SHALL позволять изменять прозрачность слоя.
+### Requirement: Preserve unsupported layer data where possible
+The system SHALL preserve unsupported layer data where it is not being edited directly.
 
-#### Scenario: Установка прозрачности на максимум
-- **WHEN** пользователь устанавливает layer.Opacity = 255
-- **THEN** последующее чтение layer.Opacity возвращает 255
-- **AND** слой полностью непрозрачен в сохранённом файле
-
-#### Scenario: Установка прозрачности на минимум
-- **WHEN** пользователь устанавливает layer.Opacity = 0
-- **THEN** последующее чтение layer.Opacity возвращает 0
-- **AND** слой полностью прозрачен в сохранённом файле
-
-#### Scenario: Установка прозрачности на среднее значение
-- **WHEN** пользователь устанавливает layer.Opacity = 128
-- **THEN** последующее чтение layer.Opacity возвращает 128
-- **AND** слой с 50% прозрачностью в сохранённом файле
-
-### Requirement: Сохранение других свойств слоя
-Система SHALL сохранять все другие свойства слоя при модификации Name, IsVisible или Opacity.
-
-#### Scenario: Изменение имени слоя сохраняет другие свойства
-- **WHEN** пользователь меняет layer.Name
-- **THEN** layer.Bounds, layer.BlendMode и другие свойства остаются без изменений
-- **AND** сохранённый файл содержит исходные значения для немодифицированных свойств
+#### Scenario: Save after changing one supported field
+- **WHEN** the user changes a supported layer field and saves
+- **THEN** unsupported layer payload data is preserved where the implementation can keep it raw
 
 ## MODIFIED Requirements
 
 ## REMOVED Requirements
 
 ## RENAMED Requirements
-
-## Тесты (Acceptance/Validation)
-
-**Приоритет:** Приемочные тесты должны оцениваться на основе behavior, определенного в этом spec, а не demo app. Тестовый project (Aspose.PSD.FOSS.Test) является real test project с NUnit framework.
-
-#### Scenario: Изменение Name и сохранение
-- **WHEN** пользователь изменяет Name layer и вызывает Save
-- **THEN** сохранённый файл содержит обновленное имя слоя
-- **AND** повторная загрузка показывает измененное имя
-
-#### Scenario: Изменение IsVisible и сохранение
-- **WHEN** пользователь изменяет IsVisible layer и вызывает Save
-- **THEN** сохранённый файл содержит обновленное состояние видимости
-- **AND** повторная загрузка показывает измененное состояние
-
-#### Scenario: Изменение Opacity и сохранение
-- **WHEN** пользователь изменяет Opacity layer и вызывает Save
-- **THEN** сохранённый файл содержит обновленное значение прозрачности
-- **AND** повторная загрузка показывает измененное значение

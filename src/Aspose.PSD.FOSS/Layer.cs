@@ -87,7 +87,7 @@ public class Layer
         HasMutated = true;
     }
 
-    internal static Layer Load(BigEndianReader reader, int channelCount)
+    internal static Layer Load(BigEndianReader reader, bool isLargeDocument)
     {
         int top = reader.ReadInt32();
         int left = reader.ReadInt32();
@@ -101,7 +101,7 @@ public class Layer
         for (int i = 0; i < actualChannelCount; i++)
         {
             short channelId = reader.ReadInt16();
-            uint dataLength = reader.ReadUInt32();
+            ulong dataLength = isLargeDocument ? reader.ReadUInt64() : reader.ReadUInt32();
 
             channelInfoArray[i] = new LayerChannelInfo
             {
@@ -113,6 +113,7 @@ public class Layer
         int signature = reader.ReadInt32();
         if (signature != 0x3842494D)
         {
+            throw new PsdLoadException("Invalid layer blend mode signature. Expected '8BIM'.");
         }
 
         byte[] blendModeKey = reader.ReadBytes(4);
@@ -224,7 +225,7 @@ public class Layer
         };
     }
 
-    internal void Write(BigEndianWriter writer)
+    internal void Write(BigEndianWriter writer, bool isLargeDocument)
     {
         writer.Write(Bounds.Top);
         writer.Write(Bounds.Left);
@@ -235,7 +236,14 @@ public class Layer
         for (int i = 0; i < ChannelInfo.Length; i++)
         {
             writer.Write(ChannelInfo[i].ChannelId);
-            writer.Write(ChannelInfo[i].DataLength);
+            if (isLargeDocument)
+            {
+                writer.Write(ChannelInfo[i].DataLength);
+            }
+            else
+            {
+                writer.Write((uint)ChannelInfo[i].DataLength);
+            }
         }
 
         writer.Write(0x3842494D);
@@ -299,6 +307,6 @@ public class Layer
     internal struct LayerChannelInfo
     {
         public short ChannelId;
-        public uint DataLength;
+        public ulong DataLength;
     }
 }

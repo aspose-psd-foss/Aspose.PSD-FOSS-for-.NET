@@ -84,6 +84,11 @@ public sealed class PsdImage : IDisposable
     private ResourceBlock[] _resources = [];
 
     /// <summary>
+    /// Stores the raw Image Resources section payload.
+    /// </summary>
+    private byte[] _resourcesRaw = [];
+
+    /// <summary>
     /// Stores the raw Layer and Mask Information section for byte-exact no-mutation saves.
     /// </summary>
     private byte[] _layerAndMaskInfoRaw = [];
@@ -130,7 +135,7 @@ public sealed class PsdImage : IDisposable
         if (!File.Exists(filePath)) throw new FileNotFoundException($"File not found: {filePath}");
 
         using var stream = File.OpenRead(filePath);
-        return Load(stream, leaveOpen: false);
+        return Load(stream);
     }
 
     /// <summary>
@@ -141,7 +146,28 @@ public sealed class PsdImage : IDisposable
     public static PsdImage Load(Stream stream)
     {
         if (stream == null) throw new ArgumentNullException(nameof(stream));
-        return Load(stream, leaveOpen: true);
+
+        long originalPosition = 0;
+        bool restorePosition = stream.CanSeek;
+        if (restorePosition)
+        {
+            originalPosition = stream.Position;
+        }
+
+        try
+        {
+            var bufferedStream = new MemoryStream();
+            stream.CopyTo(bufferedStream);
+            bufferedStream.Position = 0;
+            return Load(bufferedStream, leaveOpen: false);
+        }
+        finally
+        {
+            if (restorePosition)
+            {
+                stream.Position = originalPosition;
+            }
+        }
     }
 
     private static PsdImage Load(Stream stream, bool leaveOpen)
@@ -185,27 +211,29 @@ public sealed class PsdImage : IDisposable
         uint resourcesLength = reader.ReadUInt32();
         if (resourcesLength == 0) return;
 
-        long resourcesEnd = reader.Position + (int)resourcesLength;
+        _resourcesRaw = reader.ReadBytes((int)resourcesLength);
+        long resourcesEnd = _resourcesRaw.Length;
+        var resourcesReader = new BigEndianReader(new MemoryStream(_resourcesRaw, writable: false), leaveOpen: true);
 
         var resourcesList = new List<ResourceBlock>();
 
-        while (reader.Position < resourcesEnd)
+        while (resourcesReader.Position < resourcesEnd)
         {
-            long startPos = reader.Position;
+            long startPos = resourcesReader.Position;
             if (startPos + 8 > resourcesEnd)
             {
                 break;
             }
             
-            uint signature = reader.ReadUInt32();
+            uint signature = resourcesReader.ReadUInt32();
             if (signature != 0x3842494D)
             {
                 break;
             }
 
-            short resourceId = reader.ReadInt16();
+            short resourceId = resourcesReader.ReadInt16();
 
-            byte nameLength = reader.ReadByte();
+            byte nameLength = resourcesReader.ReadByte();
             
             // Validate name length is reasonable
             if (nameLength > 255)
@@ -217,17 +245,17 @@ public sealed class PsdImage : IDisposable
             string resourceName = string.Empty;
             if (nameLength > 0)
             {
-                byte[] nameBytes = reader.ReadBytes(nameLength);
+                byte[] nameBytes = resourcesReader.ReadBytes(nameLength);
                 resourceName = System.Text.Encoding.ASCII.GetString(nameBytes);
             }
             
             // Odd padding: if (nameLength + 1) % 2 != 0, add 1 byte padding
             if ((nameLength + 1) % 2 != 0)
             {
-                reader.Skip(1);
+                resourcesReader.Skip(1);
             }
 
-            int dataLength = reader.ReadInt32();
+            int dataLength = resourcesReader.ReadInt32();
             
             // Validate data length
             if (dataLength < 0 || dataLength > 10000000)
@@ -235,16 +263,16 @@ public sealed class PsdImage : IDisposable
                 break;
             }
             
-            if (reader.Position + dataLength > resourcesEnd)
+            if (resourcesReader.Position + dataLength > resourcesEnd)
             {
                 break;
             }
             
-            byte[] data = reader.ReadBytes(dataLength);
+            byte[] data = resourcesReader.ReadBytes(dataLength);
 
             if (dataLength % 2 == 1)
             {
-                reader.Skip(1);
+                resourcesReader.Skip(1);
             }
 
             resourcesList.Add(new ResourceBlock
@@ -260,7 +288,7 @@ public sealed class PsdImage : IDisposable
 
     private void LoadLayerAndMaskInfo(BigEndianReader reader)
     {
-        uint sectionLength = reader.ReadUInt32();
+        long sectionLength = ReadLayerAndMaskSectionLength(reader);
         if (sectionLength == 0)
         {
             _layerAndMaskInfoRaw = [];
@@ -273,7 +301,7 @@ public sealed class PsdImage : IDisposable
 
         var memReader = new BigEndianReader(new MemoryStream(rawSectionBytes, writable: false), leaveOpen: true);
 
-        int layerInfoLength = memReader.ReadInt32();
+        long layerInfoLength = _header?.IsLargeDocument == true ? memReader.ReadInt64() : memReader.ReadInt32();
         _layerCountRaw = memReader.ReadInt16();
         short layerCount = _layerCountRaw < 0 ? (short)-_layerCountRaw : _layerCountRaw;
 
@@ -282,12 +310,12 @@ public sealed class PsdImage : IDisposable
             var layers = new Layer[layerCount];
             for (int i = 0; i < layerCount; i++)
             {
-                layers[i] = Layer.Load(memReader, Channels);
+                layers[i] = Layer.Load(memReader, _header?.IsLargeDocument == true);
             }
             _layers = layers;
         }
 
-        int channelImageDataLength = Math.Max(0, layerInfoLength - (int)memReader.Position);
+        int channelImageDataLength = (int)Math.Max(0, layerInfoLength - memReader.Position);
         _layerChannelImageDataRaw = channelImageDataLength > 0
             ? memReader.ReadBytes(channelImageDataLength)
             : [];
@@ -382,6 +410,13 @@ public sealed class PsdImage : IDisposable
 
     private void WriteResources(BigEndianWriter writer)
     {
+        if (_resourcesRaw.Length > 0)
+        {
+            writer.Write((uint)_resourcesRaw.Length);
+            writer.Write(_resourcesRaw);
+            return;
+        }
+
         if (_resources.Length == 0)
         {
             writer.Write((uint)0);
@@ -425,7 +460,7 @@ public sealed class PsdImage : IDisposable
     {
         if (_layerAndMaskInfoRaw.Length > 0 && (_layers == null || !_layers.Any(l => l.HasMutated)))
         {
-            writer.Write((uint)_layerAndMaskInfoRaw.Length);
+            WriteLayerAndMaskSectionLength(writer, _layerAndMaskInfoRaw.Length);
             writer.Write(_layerAndMaskInfoRaw);
         }
         else if (_layers != null && _layers.Length > 0)
@@ -434,7 +469,7 @@ public sealed class PsdImage : IDisposable
         }
         else
         {
-            writer.Write((uint)0);
+            WriteLayerAndMaskSectionLength(writer, 0);
         }
     }
 
@@ -449,7 +484,7 @@ public sealed class PsdImage : IDisposable
 
         foreach (var layer in layers)
         {
-            layer.Write(layerInfoPayloadWriter);
+            layer.Write(layerInfoPayloadWriter, _header?.IsLargeDocument == true);
         }
 
         layerInfoPayloadWriter.Write(_layerChannelImageDataRaw);
@@ -457,12 +492,19 @@ public sealed class PsdImage : IDisposable
 
         using var sectionStream = new MemoryStream();
         using var sectionWriter = new BigEndianWriter(sectionStream, leaveOpen: true);
-        sectionWriter.Write(layerInfoPayload.Length);
+        if (_header?.IsLargeDocument == true)
+        {
+            sectionWriter.Write((long)layerInfoPayload.Length);
+        }
+        else
+        {
+            sectionWriter.Write(layerInfoPayload.Length);
+        }
         sectionWriter.Write(layerInfoPayload);
         sectionWriter.Write(_layerGlobalMaskAndTailRaw);
 
         byte[] sectionBytes = sectionStream.ToArray();
-        writer.Write((uint)sectionBytes.Length);
+        WriteLayerAndMaskSectionLength(writer, sectionBytes.Length);
         writer.Write(sectionBytes);
     }
 
@@ -505,5 +547,22 @@ public sealed class PsdImage : IDisposable
         /// Gets or sets the raw resource payload bytes.
         /// </summary>
         public byte[] Data;
+    }
+
+    private long ReadLayerAndMaskSectionLength(BigEndianReader reader)
+    {
+        return _header?.IsLargeDocument == true ? (long)reader.ReadUInt64() : reader.ReadUInt32();
+    }
+
+    private void WriteLayerAndMaskSectionLength(BigEndianWriter writer, int length)
+    {
+        if (_header?.IsLargeDocument == true)
+        {
+            writer.Write((ulong)length);
+        }
+        else
+        {
+            writer.Write((uint)length);
+        }
     }
 }

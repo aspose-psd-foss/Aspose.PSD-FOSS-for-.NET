@@ -1,123 +1,70 @@
 ## ADDED Requirements
 
-### Requirement: Тестовые данные должны находиться в src/Aspose.PSD.FOSS.Test/testdata
-Все PSD тестовые файлы должны быть размещены в директории `src/Aspose.PSD.FOSS.Test/testdata`.
+### Requirement: Load from file path
+The system SHALL load a PSD or PSB file from a file path.
 
-#### Scenario: Тестовый файл расположен в правильной директории
-- **WHEN** проверяется структура тестового проекта
-- **THEN** файл test.psd находится в `src/Aspose.PSD.FOSS.Test/testdata/test.psd`
-- **AND** файл копируется в выходную директорию при сборке
+#### Scenario: Load an existing file
+- **WHEN** the user calls `PsdImage.Load(path)` with an existing PSD or PSB file
+- **THEN** the system returns a loaded `PsdImage`
 
-### Requirement: Загрузка PSD из file path
-Система SHALL загружать PSD файл из указанного file path.
+#### Scenario: Reject a missing file path
+- **WHEN** the user calls `PsdImage.Load(path)` for a missing file
+- **THEN** the system throws `FileNotFoundException`
 
-#### Scenario: Успешная загрузка из существующего файла
-- **WHEN** пользователь вызывает `PsdImage.Load("input.psd")` с корректным PSD файлом
-- **THEN** система возвращает экземпляр PsdImage с загруженными данными
-- **AND** исключение не выбрасывается
+### Requirement: Load from stream
+The system SHALL load a PSD or PSB file from a stream.
 
-#### Scenario: Загрузка из несуществующего файла выбрасывает ошибку
-- **WHEN** пользователь вызывает `PsdImage.Load("nonexistent.psd")` с файлом, который не существует
-- **THEN** система выбрасывает FileNotFoundException
+#### Scenario: Load from a seekable stream
+- **WHEN** the user calls `PsdImage.Load(stream)` with a seekable stream
+- **THEN** the system loads the file from the current stream position
+- **AND** restores the original stream position after loading
 
-#### Scenario: Загрузка из повреждённого файла выбрасывает ошибку
-- **WHEN** пользователь вызывает `PsdImage.Load("corrupted.psd")` с файлом, имеющим некорректный PSD формат
-- **THEN** система выбрасывает PsdLoadException
+#### Scenario: Reject null stream input
+- **WHEN** the user calls `PsdImage.Load(null)`
+- **THEN** the system throws `ArgumentNullException`
 
-### Requirement: Загрузка PSD из stream
-Система SHALL загружать PSD файл из Stream.
+#### Scenario: Reject an invalid file signature
+- **WHEN** the user loads a stream that does not start with a valid PSD/PSB signature
+- **THEN** the system throws `PsdLoadException`
 
-#### Scenario: Успешная загрузка из Stream
-- **WHEN** пользователь вызывает `PsdImage.Load(stream)` с корректным PSD stream
-- **THEN** система возвращает экземпляр PsdImage с загруженными данными
-- **AND** позиция stream не изменяется после загрузки
+### Requirement: Save to file path or stream
+The system SHALL save the current document to a file path or stream.
 
-#### Scenario: Загрузка из null stream выбрасывает ошибку
-- **WHEN** пользователь вызывает `PsdImage.Load(null)`
-- **THEN** система выбрасывает ArgumentNullException
+#### Scenario: Save to file path
+- **WHEN** the user calls `image.Save(path)`
+- **THEN** the system writes a loadable PSD or PSB file
 
-### Requirement: Сохранение PSD в file path
-Система SHALL сохранять PSD файл в указанный file path.
+#### Scenario: Save to stream
+- **WHEN** the user calls `image.Save(stream)`
+- **THEN** the system writes the current document bytes to the provided stream
 
-#### Scenario: Успешное сохранение
-- **WHEN** пользователь вызывает `image.Save("output.psd")`
-- **THEN** система записывает PSD данные в указанный файл
-- **AND** сохранённый файл может быть загружен успешно
+### Requirement: Preserve unknown sections without mutation
+The system SHALL preserve unknown or unsupported file sections as raw bytes when that is enough to keep the file stable.
 
-### Requirement: Сохранение PSD в stream
-Система SHALL сохранять PSD файл в Stream.
+#### Scenario: No-mutation round-trip
+- **WHEN** the user loads a file and saves it without any supported mutations
+- **THEN** the saved bytes are byte-for-byte identical to the original file
 
-#### Scenario: Успешное сохранение в Stream
-- **WHEN** пользователь вызывает `image.Save(stream)` с записываемым stream
-- **THEN** система записывает PSD данные в stream
-- **AND** позиция stream находится в конце после сохранения
+### Requirement: Preserve raw image resources
+The system SHALL preserve the Image Resources section without rewriting it when direct resource editing is out of scope.
 
-### Requirement: Поддержка определения версии PSD
-Система SHALL читать версию PSD из заголовка файла.
+#### Scenario: Save a file with existing image resources
+- **WHEN** the user loads and saves a file without resource edits
+- **THEN** the raw Image Resources section is written back unchanged
 
-#### Scenario: Чтение версии PSD 6
-- **WHEN** пользователь загружает PSD файл версии 6
-- **THEN** image.Version возвращает 6
+### Requirement: Support the current PSD/PSB length fields required by the MVP subset
+The system SHALL use the correct field sizes for the supported PSD/PSB load/save subset.
 
-#### Scenario: Чтение версии PSB
-- **WHEN** пользователь загружает PSB файл (версия > 6)
-- **THEN** image.Version возвращает фактический номер версии
+#### Scenario: Save PSD lengths
+- **WHEN** the current document format version is PSD (`Version == 1`)
+- **THEN** Layer and Mask length fields use the PSD-sized integers required by the format
 
-### Requirement: Сохранение неизвестных section
-Система SHALL сохранять неизвестные PSD section как raw bytes при сохранении.
-
-#### Scenario: Сохранение с неизвестными section
-- **WHEN** пользователь загружает PSD файл с неизвестными section и сохраняет без модификаций
-- **THEN** сохранённый файл содержит все оригинальные section в том же порядке
-- **AND** данные section идентичны оригиналу по байтам
-
-### Requirement: Читаемость и структурная корректность PSD
-Система SHALL читать и писать PSD файлы в соответствии со структурой формата, определенной в официальной спецификации PSD.
-
-**Приоритет:** Структурная корректность важнее "зеленой сборки". Если реализация компилируется, но записывает структурно некорректные PSD файлы - это недопустимо.
-
-#### Scenario: Правильный порядок полей в заголовке
-- **WHEN** загружается PSD файл
-- **THEN** парсер читает поля в правильном порядке: signature → version → reserved → channels → height → width → bitsPerChannel → colorMode
-
-#### Scenario: Правильная структура layer record
-- **WHEN** загружается layer record
-- **THEN** парсер читает: top/left/bottom/right → channel count → channel info (длина каждого канала) → blend mode signature (4B) → blend mode key (4B) → opacity (1B) → clipping (1B) → flags (1B) → filler (1B) → extra data length (4B) + extra data internals (layer mask data length, blending ranges data length, Pascal name, tagged blocks) → channel image data блок после всех layer records
-
-#### Scenario: Структурно корректное сохранение
-- **WHEN** сохраняется PSD файл
-- **THEN** сохранённый файл имеет правильную структуру: Header → Color Data → Resources → Layer and Mask Information section (outer length, layer records, channel image data block, global layer mask info, raw tail) → Image Data
-
-#### Scenario: Round-trip сохранения без мутации (byte-for-byte)
-- **WHEN** пользователь загружает PSD файл и сохраняет без изменений
-- **THEN** сохранённый файл идентичен оригиналу по байтам (byte-for-byte identical)
-- **RISK:** "Green build, invalid PSD" - строгий round-trip тест должен предотвращать создание некорректных PSD файлов
-
-### Requirement: Round-trip сохранения без мутации
-Система SHALL сохранять PSD файл byte-for-byte identical при отсутствии мутаций.
-
-#### Scenario: Round-trip byte-for-byte сравнение
-- **WHEN** пользователь загружает PSD файл из исходного файла
-- **AND** сохраняет его в новый файл без модификаций
-- **THEN** байты оригинального и сохранённого файла идентичны
-- **AND** повторная загрузка сохранённого файла возвращает эквивалентные свойства
+#### Scenario: Save PSB lengths
+- **WHEN** the current document format version is PSB (`Version == 2`)
+- **THEN** Layer and Mask length fields and per-channel layer data lengths use the PSB-sized integers required by the format
 
 ## MODIFIED Requirements
 
 ## REMOVED Requirements
 
 ## RENAMED Requirements
-
-## Тесты (Acceptance/Validation)
-
-**Приоритет:** Приемочные тесты должны оцениваться на основе behavior, определенного в этом spec, а не demo app. Тестовый project (Aspose.PSD.FOSS.Test) является real test project с NUnit framework.
-
-#### Scenario: Round-trip без mutation (byte-for-byte)
-- **WHEN** пользователь загружает PSD файл и сохраняет без изменений
-- **THEN** сохранённый файл идентичен оригиналу по байтам (byte-for-byte identical)
-- **AND** повторная загрузка возвращает эквивалентные свойства
-
-#### Scenario: Round-trip с мутацией
-- **WHEN** пользователь изменяет свойства слоя и сохраняет
-- **THEN** сохранённый файл содержит обновленные свойства
-- **AND** повторная загрузка показывает измененные свойства

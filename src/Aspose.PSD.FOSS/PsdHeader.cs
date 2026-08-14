@@ -6,13 +6,24 @@ namespace Aspose.PSD.FOSS;
 public sealed class PsdHeader
 {
     /// <summary>
-    /// PSD file signature value (0x38425053 = '8BPS').
+    /// Shared PSD/PSB file signature value (0x38425053 = '8BPS').
     /// </summary>
     public const int PsdSignature = 0x38425053;
+
     /// <summary>
-    /// PSB (Large Document Format) file signature value (0x3842494D = '8BIM').
+    /// Shared PSD/PSB file signature value (0x38425053 = '8BPS').
     /// </summary>
-    public const int PsbSignature = 0x3842494D;
+    public const int PsbSignature = PsdSignature;
+
+    /// <summary>
+    /// PSD version value.
+    /// </summary>
+    public const ushort PsdVersion = 1;
+
+    /// <summary>
+    /// PSB large-document version value.
+    /// </summary>
+    public const ushort PsbVersion = 2;
 
     /// <summary>
     /// Gets the width of the image in pixels.
@@ -39,18 +50,23 @@ public sealed class PsdHeader
     /// </summary>
     public int Version { get; private set; }
 
+    /// <summary>
+    /// Gets a value indicating whether the document is a PSB large document.
+    /// </summary>
+    public bool IsLargeDocument => Version == PsbVersion;
+
     internal static PsdHeader Load(BigEndianReader reader)
     {
         uint signature = reader.ReadUInt32();
-        if (signature != PsdSignature && signature != PsbSignature)
+        if (signature != PsdSignature)
         {
             throw new PsdLoadException("Invalid PSD signature. Expected '8BPS' (0x38425053).");
         }
 
         int version = reader.ReadUInt16();
-        if (version < 1 || version > 6)
+        if (version != PsdVersion && version != PsbVersion)
         {
-            throw new PsdLoadException($"Unsupported PSD version: {version}. Supported versions: 1-6 (PSB > 6).");
+            throw new PsdLoadException($"Unsupported PSD version: {version}. Supported versions: {PsdVersion} (PSD) and {PsbVersion} (PSB).");
         }
 
         reader.Skip(6);

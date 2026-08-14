@@ -84,10 +84,22 @@ public sealed class PsdImageTests : IDisposable
     }
 
     /// <summary>
+    /// Tests that layers can be accessed by index.
+    /// </summary>
+    [Test]
+    public void Load_Layers_CanBeAccessedByIndex()
+    {
+        string testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd");
+
+        using var image = PsdImage.Load(testFile);
+
+        Assert.That(image.Layers[0], Is.Not.Null);
+        Assert.That(image.Layers[1], Is.Not.Null);
+    }
+
+    /// <summary>
     /// Tests that saving a PSD file without mutations produces a valid file.
     /// Verifies that the saved file can be reloaded with equivalent properties.
-    /// Note: Current implementation may not produce byte-for-byte identical output.
-    /// Strict byte-for-byte round-trip is tracked as a correctness gap.
     /// </summary>
     [Test]
     public void Save_RoundTripWithoutMutation_ProducesValidFile()
@@ -209,5 +221,164 @@ public sealed class PsdImageTests : IDisposable
         using var reloaded = PsdImage.Load(outputFile);
 
         Assert.That(reloaded.Layers[0].Opacity, Is.EqualTo(newOpacity));
+    }
+
+    /// <summary>
+    /// Tests that loading from a seekable stream preserves the original stream position.
+    /// </summary>
+    [Test]
+    public void Load_FromSeekableStream_PreservesPosition()
+    {
+        byte[] bytes = File.ReadAllBytes(Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd"));
+        byte[] prefix = [1, 2, 3, 4, 5];
+        using var stream = new MemoryStream();
+        stream.Write(prefix);
+        stream.Write(bytes);
+        stream.Position = prefix.Length;
+
+        using var image = PsdImage.Load(stream);
+
+        Assert.That(stream.Position, Is.EqualTo(prefix.Length));
+        Assert.That(image.Width, Is.GreaterThan(0));
+    }
+
+    /// <summary>
+    /// Tests that loading from a null stream throws <see cref="ArgumentNullException"/>.
+    /// </summary>
+    [Test]
+    public void Load_NullStream_ThrowsArgumentNullException()
+    {
+        Assert.That(() => PsdImage.Load((Stream)null!), Throws.InstanceOf<ArgumentNullException>());
+    }
+
+    /// <summary>
+    /// Tests that loading a missing file path throws <see cref="FileNotFoundException"/>.
+    /// </summary>
+    [Test]
+    public void Load_MissingFilePath_ThrowsFileNotFoundException()
+    {
+        string missingFile = Path.Combine(_testDir, "missing.psd");
+        Assert.That(() => PsdImage.Load(missingFile), Throws.InstanceOf<FileNotFoundException>());
+    }
+
+    /// <summary>
+    /// Tests that loading a file with an invalid signature throws <see cref="PsdLoadException"/>.
+    /// </summary>
+    [Test]
+    public void Load_InvalidSignature_ThrowsPsdLoadException()
+    {
+        byte[] bytes = BuildInvalidSignatureDocument();
+        using var stream = new MemoryStream(bytes);
+
+        Assert.That(() => PsdImage.Load(stream), Throws.InstanceOf<PsdLoadException>());
+    }
+
+    /// <summary>
+    /// Tests that a minimal PSD without layers loads correctly.
+    /// </summary>
+    [Test]
+    public void Load_DocumentWithoutLayers_ReturnsEmptyLayers()
+    {
+        byte[] bytes = BuildMinimalDocument(psb: false);
+        using var stream = new MemoryStream(bytes);
+        using var image = PsdImage.Load(stream);
+
+        Assert.That(image.Version, Is.EqualTo(PsdHeader.PsdVersion));
+        Assert.That(image.Layers, Is.Empty);
+        Assert.That(image.HasLayers, Is.False);
+    }
+
+    /// <summary>
+    /// Tests that a minimal PSB file loads and round-trips correctly without mutations.
+    /// </summary>
+    [Test]
+    public void Save_PsbWithoutLayers_RoundTripByteForByte()
+    {
+        byte[] originalBytes = BuildMinimalDocument(psb: true);
+        string outputFile = Path.Combine(_testDir, "minimal.psb");
+
+        using (var stream = new MemoryStream(originalBytes))
+        using (var image = PsdImage.Load(stream))
+        {
+            Assert.That(image.Version, Is.EqualTo(PsdHeader.PsbVersion));
+            Assert.That(image.Layers, Is.Empty);
+            image.Save(outputFile);
+        }
+
+        byte[] savedBytes = File.ReadAllBytes(outputFile);
+        Assert.That(savedBytes, Is.EqualTo(originalBytes));
+    }
+
+    private static byte[] BuildInvalidSignatureDocument()
+    {
+        byte[] bytes = BuildMinimalDocument(psb: false);
+        bytes[0] = (byte)'B';
+        return bytes;
+    }
+
+    private static byte[] BuildMinimalDocument(bool psb)
+    {
+        using var stream = new MemoryStream();
+
+        void WriteUInt16(ushort value)
+        {
+            stream.WriteByte((byte)(value >> 8));
+            stream.WriteByte((byte)value);
+        }
+
+        void WriteInt32(int value)
+        {
+            stream.WriteByte((byte)(value >> 24));
+            stream.WriteByte((byte)(value >> 16));
+            stream.WriteByte((byte)(value >> 8));
+            stream.WriteByte((byte)value);
+        }
+
+        void WriteUInt32(uint value)
+        {
+            stream.WriteByte((byte)(value >> 24));
+            stream.WriteByte((byte)(value >> 16));
+            stream.WriteByte((byte)(value >> 8));
+            stream.WriteByte((byte)value);
+        }
+
+        void WriteUInt64(ulong value)
+        {
+            stream.WriteByte((byte)(value >> 56));
+            stream.WriteByte((byte)(value >> 48));
+            stream.WriteByte((byte)(value >> 40));
+            stream.WriteByte((byte)(value >> 32));
+            stream.WriteByte((byte)(value >> 24));
+            stream.WriteByte((byte)(value >> 16));
+            stream.WriteByte((byte)(value >> 8));
+            stream.WriteByte((byte)value);
+        }
+
+        stream.Write(System.Text.Encoding.ASCII.GetBytes("8BPS"));
+        WriteUInt16(psb ? PsdHeader.PsbVersion : PsdHeader.PsdVersion);
+        stream.Write(new byte[6]);
+        WriteUInt16(3);
+        WriteInt32(1);
+        WriteInt32(1);
+        WriteUInt16(8);
+        WriteUInt16((ushort)ColorModes.Rgb);
+
+        WriteUInt32(0);
+        WriteUInt32(0);
+        if (psb)
+        {
+            WriteUInt64(0);
+        }
+        else
+        {
+            WriteUInt32(0);
+        }
+
+        WriteUInt16(0);
+        stream.WriteByte(0);
+        stream.WriteByte(0);
+        stream.WriteByte(0);
+
+        return stream.ToArray();
     }
 }

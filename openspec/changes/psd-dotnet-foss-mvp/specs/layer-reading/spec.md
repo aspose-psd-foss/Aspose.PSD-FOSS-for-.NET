@@ -1,106 +1,35 @@
 ## ADDED Requirements
 
-### Requirement: Доступ к коллекции слоёв
-Система SHALL экспонировать все слои из PSD файла.
+### Requirement: Expose parsed layers
+The system SHALL expose parsed layer records through `image.Layers`.
 
-#### Scenario: Чтение массива слоёв
-- **WHEN** пользователь получает доступ к image.Layers
-- **THEN** система возвращает массив экземпляров Layer
-- **AND** массив пуст для PSD файлов без слоёв
+#### Scenario: Read the layer collection
+- **WHEN** the user loads a file with layers
+- **THEN** `image.Layers` returns an array of `Layer`
 
-### Requirement: Чтение имени слоя
-Система SHALL читать и экспонировать имя слоя.
+#### Scenario: Read a file without layers
+- **WHEN** the user loads a file with no layer records
+- **THEN** `image.Layers` returns an empty array
 
-#### Scenario: Чтение имени слоя
-- **WHEN** пользователь получает доступ к layer.Name
-- **THEN** система возвращает имя слоя как строку
+### Requirement: Read supported layer metadata
+The system SHALL expose the supported subset of layer metadata.
 
-### Requirement: Чтение bounds слоя
-Система SHALL читать и экспонировать bounds слоя (позиция и размер).
+#### Scenario: Read name and bounds
+- **WHEN** the user accesses a parsed layer
+- **THEN** `layer.Name` returns the Pascal layer name
+- **AND** `layer.Bounds` returns the document-space rectangle
 
-#### Scenario: Чтение bounds слоя
-- **WHEN** пользователь получает доступ к layer.Bounds
-- **THEN** система возвращает Rectangle с свойствами Left, Top, Right, Bottom
-- **AND** прямоугольник представляет bounding box слоя в координатах документа
+#### Scenario: Read visibility and opacity
+- **WHEN** the user accesses a parsed layer
+- **THEN** `layer.IsVisible` returns the visibility flag
+- **AND** `layer.Opacity` returns the stored opacity
 
-### Requirement: Чтение видимости слоя
-Система SHALL читать и экспонировать состояние видимости слоя.
-
-#### Scenario: Чтение видимого слоя
-- **WHEN** пользователь получает доступ к layer.IsVisible у видимого слоя
-- **THEN** система возвращает true
-
-#### Scenario: Чтение скрытого слоя
-- **WHEN** пользователь получает доступ к layer.IsVisible у скрытого слоя
-- **THEN** система возвращает false
-
-### Requirement: Чтение прозрачности слоя
-Система SHALL читать и экспонировать прозрачность слоя (0-255).
-
-#### Scenario: Чтение полностью непрозрачного слоя
-- **WHEN** пользователь получает доступ к layer.Opacity у полностью непрозрачного слоя
-- **THEN** система возвращает 255
-
-#### Scenario: Чтение полупрозрачного слоя
-- **WHEN** пользователь получает доступ к layer.Opacity у слоя с 50% прозрачностью
-- **THEN** система возвращает примерно 128
-
-### Requirement: Чтение режима смешивания слоя
-Система SHALL читать и экспонировать режим смешивания слоя.
-
-#### Scenario: Чтение режима Normal
-- **WHEN** пользователь получает доступ к layer.BlendMode у слоя с режимом Normal
-- **THEN** система возвращает BlendMode.Normal
-
-#### Scenario: Чтение режима Multiply
-- **WHEN** пользователь получает доступ к layer.BlendMode у слоя с режимом Multiply
-- **THEN** система возвращает BlendMode.Multiply
-
-#### Scenario: Чтение режима Screen
-- **WHEN** пользователь получает доступ к layer.BlendMode у слоя с режимом Screen
-- **THEN** система возвращает BlendMode.Screen
-
-### Requirement: Доступ к слоям по индексу
-Система SHALL позволять доступ к слоям по индексу.
-
-#### Scenario: Доступ к первому слою
-- **WHEN** пользователь получает доступ к image.Layers[0]
-- **THEN** система возвращает верхний слой
-
-#### Scenario: Доступ к слою по корректному индексу
-- **WHEN** пользователь получает доступ к image.Layers[index] с корректным индексом
-- **THEN** система возвращает соответствующий экземпляр Layer
-
-#### Scenario: Доступ к слою по некорректному индексу выбрасывает ошибку
-- **WHEN** пользователь получает доступ к image.Layers[index] с out-of-range индексом
-- **THEN** система выбрасывает IndexOutOfRangeException
+#### Scenario: Read blend mode
+- **WHEN** the user accesses a parsed layer
+- **THEN** `layer.BlendMode` returns the parsed blend mode key mapped to `BlendMode`
 
 ## MODIFIED Requirements
 
 ## REMOVED Requirements
 
 ## RENAMED Requirements
-
-## Тесты (Acceptance/Validation)
-
-**Приоритет:** Приемочные тесты должны оцениваться на основе behavior, определенного в этом spec, а не demo app. Тестовый project (Aspose.PSD.FOSS.Test) является real test project с NUnit framework.
-
-#### Scenario: Чтение Name
-- **WHEN** пользователь загружает PSD файл
-- **THEN** layer.Name возвращает имя слоя
-
-#### Scenario: Чтение Bounds
-- **WHEN** пользователь загружает PSD файл
-- **THEN** layer.Bounds возвращает Rectangle с корректными координатами
-
-#### Scenario: Чтение IsVisible
-- **WHEN** пользователь загружает PSD файл
-- **THEN** layer.IsVisible возвращает состояние видимости (true/false)
-
-#### Scenario: Чтение Opacity
-- **WHEN** пользователь загружает PSD файл
-- **THEN** layer.Opacity возвращает значение 0-255
-
-#### Scenario: Чтение BlendMode
-- **WHEN** пользователь загружает PSD файл
-- **THEN** layer.BlendMode возвращает валидный BlendMode enum
