@@ -76,17 +76,45 @@ public class Layer
     /// </summary>
     public BlendMode BlendMode { get; private set; }
 
+    /// <summary>
+    /// Stores the parsed per-channel metadata from the layer record.
+    /// </summary>
     internal LayerChannelInfo[] ChannelInfo { get; private set; } = [];
+
+    /// <summary>
+    /// Stores the raw layer mask subsection including its length field.
+    /// </summary>
     private byte[] _layerMaskData = [];
+
+    /// <summary>
+    /// Stores the raw blending ranges subsection including its length field.
+    /// </summary>
     private byte[] _blendingRangesData = [];
+
+    /// <summary>
+    /// Stores all remaining additional layer data after the Pascal layer name.
+    /// </summary>
     private byte[] _additionalLayerData = [];
+
+    /// <summary>
+    /// Gets a value indicating whether the layer has a pending in-memory mutation.
+    /// </summary>
     internal bool HasMutated { get; private set; }
 
+    /// <summary>
+    /// Marks the layer as mutated so the save path rewrites the minimal required structures.
+    /// </summary>
     internal void MarkMutated()
     {
         HasMutated = true;
     }
 
+    /// <summary>
+    /// Loads a layer record from the current reader position.
+    /// </summary>
+    /// <param name="reader">The reader positioned at the start of a layer record.</param>
+    /// <param name="isLargeDocument">true for PSB-sized layer channel lengths; otherwise, false.</param>
+    /// <returns>The parsed <see cref="Layer"/> instance.</returns>
     internal static Layer Load(BigEndianReader reader, bool isLargeDocument)
     {
         int top = reader.ReadInt32();
@@ -225,6 +253,11 @@ public class Layer
         };
     }
 
+    /// <summary>
+    /// Writes the current layer record using PSD- or PSB-sized channel lengths.
+    /// </summary>
+    /// <param name="writer">The destination writer.</param>
+    /// <param name="isLargeDocument">true for PSB-sized layer channel lengths; otherwise, false.</param>
     internal void Write(BigEndianWriter writer, bool isLargeDocument)
     {
         writer.Write(Bounds.Top);
@@ -290,12 +323,23 @@ public class Layer
         return System.Text.Encoding.ASCII.GetBytes(key);
     }
 
+    /// <summary>
+    /// Calculates the stored Pascal string size including the length byte and 4-byte padding.
+    /// </summary>
+    /// <param name="value">The layer name to measure.</param>
+    /// <returns>The number of bytes required to store the name in PSD format.</returns>
     private int GetPascalStringStorageLength(string value)
     {
         int length = string.IsNullOrEmpty(value) ? 0 : System.Text.Encoding.ASCII.GetByteCount(value);
         return 1 + length + ((4 - ((length + 1) % 4)) % 4);
     }
 
+    /// <summary>
+    /// Writes a 32-bit unsigned integer into a byte buffer in big-endian byte order.
+    /// </summary>
+    /// <param name="buffer">The target buffer.</param>
+    /// <param name="offset">The offset where the value should be written.</param>
+    /// <param name="value">The value to encode.</param>
     private static void WriteUInt32BigEndian(byte[] buffer, int offset, uint value)
     {
         buffer[offset] = (byte)((value >> 24) & 0xFF);
@@ -304,9 +348,19 @@ public class Layer
         buffer[offset + 3] = (byte)(value & 0xFF);
     }
 
+    /// <summary>
+    /// Stores one channel metadata entry from a layer record.
+    /// </summary>
     internal struct LayerChannelInfo
     {
+        /// <summary>
+        /// Gets or sets the PSD channel identifier.
+        /// </summary>
         public short ChannelId;
+
+        /// <summary>
+        /// Gets or sets the declared byte length of the channel data payload.
+        /// </summary>
         public ulong DataLength;
     }
 }

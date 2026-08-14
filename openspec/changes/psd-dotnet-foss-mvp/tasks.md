@@ -153,7 +153,7 @@
 ## 13. Что ещё остаётся нереализованным, но не должно теряться из артефактов
 
 - [ ] 13.1 Добавить fixture с PSB, содержащим реальные layer records, а не только minimal no-layer case
-- [ ] 13.2 Добавить негативные tests для corrupted length fields
-- [ ] 13.3 Добавить tests для non-seekable stream
+- [x] 13.2 Добавить негативные tests для corrupted length fields
+- [x] 13.3 Добавить tests для non-seekable stream
 - [ ] 13.4 Явно определить, нужен ли выделенный тип для color mode data вместо raw byte preservation
 - [ ] 13.5 Явно определить, нужен ли выделенный тип для image data вместо raw byte preservation

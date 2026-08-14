@@ -118,6 +118,11 @@ public sealed class PsdImage : IDisposable
     /// </summary>
     private int _imageDataCompression;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PsdImage"/> class over an internal working stream.
+    /// </summary>
+    /// <param name="stream">The buffered stream that stores PSD/PSB bytes for this instance.</param>
+    /// <param name="leaveOpen">true to leave the stream open after disposal; otherwise, false.</param>
     private PsdImage(Stream stream, bool leaveOpen)
     {
         _stream = stream;
@@ -191,12 +196,28 @@ public sealed class PsdImage : IDisposable
             LoadLayerAndMaskInfo(reader);
             LoadImageData(reader);
         }
+        catch (PsdLoadException)
+        {
+            throw;
+        }
+        catch (EndOfStreamException exception)
+        {
+            throw new PsdLoadException("Unexpected end of PSD/PSB data while reading the file structure.", exception);
+        }
+        catch (IOException exception)
+        {
+            throw new PsdLoadException("Failed to read PSD/PSB data from the source stream.", exception);
+        }
         finally
         {
             reader.Dispose();
         }
     }
 
+    /// <summary>
+    /// Loads the raw Color Mode Data section.
+    /// </summary>
+    /// <param name="reader">The reader positioned at the section length field.</param>
     private void LoadColorData(BigEndianReader reader)
     {
         uint length = reader.ReadUInt32();
@@ -206,6 +227,10 @@ public sealed class PsdImage : IDisposable
         }
     }
 
+    /// <summary>
+    /// Loads the Image Resources section and preserves its raw payload for round-trip saves.
+    /// </summary>
+    /// <param name="reader">The reader positioned at the section length field.</param>
     private void LoadResources(BigEndianReader reader)
     {
         uint resourcesLength = reader.ReadUInt32();
@@ -286,6 +311,10 @@ public sealed class PsdImage : IDisposable
         _resources = resourcesList.ToArray();
     }
 
+    /// <summary>
+    /// Loads the Layer and Mask Information section and splits it into parsed and raw-preserved parts.
+    /// </summary>
+    /// <param name="reader">The reader positioned at the section length field.</param>
     private void LoadLayerAndMaskInfo(BigEndianReader reader)
     {
         long sectionLength = ReadLayerAndMaskSectionLength(reader);
@@ -328,6 +357,10 @@ public sealed class PsdImage : IDisposable
         _layerAndMaskInfoRaw = rawSectionBytes;
     }
 
+    /// <summary>
+    /// Loads the final Image Data section as raw bytes after reading the compression field.
+    /// </summary>
+    /// <param name="reader">The reader positioned at the image data compression field.</param>
     private void LoadImageData(BigEndianReader reader)
     {
         _imageDataCompression = reader.ReadUInt16();
@@ -549,11 +582,21 @@ public sealed class PsdImage : IDisposable
         public byte[] Data;
     }
 
+    /// <summary>
+    /// Reads the outer Layer and Mask section length using PSD- or PSB-sized integers.
+    /// </summary>
+    /// <param name="reader">The reader positioned at the section length field.</param>
+    /// <returns>The declared section length in bytes.</returns>
     private long ReadLayerAndMaskSectionLength(BigEndianReader reader)
     {
         return _header?.IsLargeDocument == true ? (long)reader.ReadUInt64() : reader.ReadUInt32();
     }
 
+    /// <summary>
+    /// Writes the outer Layer and Mask section length using PSD- or PSB-sized integers.
+    /// </summary>
+    /// <param name="writer">The writer positioned at the section length field.</param>
+    /// <param name="length">The section length in bytes.</param>
     private void WriteLayerAndMaskSectionLength(BigEndianWriter writer, int length)
     {
         if (_header?.IsLargeDocument == true)

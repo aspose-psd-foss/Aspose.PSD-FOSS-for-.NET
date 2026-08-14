@@ -27,6 +27,10 @@ The system SHALL load a PSD or PSB file from a stream.
 - **WHEN** the user loads a stream that does not start with a valid PSD/PSB signature
 - **THEN** the system throws `PsdLoadException`
 
+#### Scenario: Reject malformed section lengths
+- **WHEN** the user loads a PSD or PSB stream whose declared section length exceeds the available bytes
+- **THEN** the system throws `PsdLoadException`
+
 ### Requirement: Save to file path or stream
 The system SHALL save the current document to a file path or stream.
 
