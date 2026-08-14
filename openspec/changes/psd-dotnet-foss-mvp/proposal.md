@@ -23,7 +23,7 @@
 - `image.Save(string)`
 - `image.Save(Stream)`
 
-## Scope MVP
+## Product Scope
 
 - Загрузка PSD
 - Базовая загрузка PSB
@@ -53,10 +53,12 @@
 
 ## Дополнительные engineering requirements
 
-- `Aspose.PSD.FOSS.Test` остаётся единственной точкой для acceptance tests этого MVP
+- `Aspose.PSD.FOSS.Test` остаётся единственной точкой для acceptance tests этого FOSS-продукта
 - testdata хранится внутри test project
 - public surface библиотеки документируется через XML summary
 - public поля и константы тоже обязаны иметь XML summary
+- в репозитории должна быть папка `samples/` с runnable sample projects
+- в репозитории должна быть markdown-документация для нового пользователя и разработчика
 
 ## Текущее покрытие acceptance tests
 

@@ -19,6 +19,15 @@
 
 ## Архитектурные решения
 
+### Repository-facing guidance
+Структура репозитория должна следовать явному repository-facing принципу:
+
+- основная библиотека в `src/`
+- runnable sample projects в `samples/`
+- отдельная markdown-документация в `documentation/`
+
+Документация может быть реализована как `.md` файлы вместо отдельного site generator.
+
 ### Buffered load from stream
 `Load(Stream)` копирует входной поток в internal memory buffer.
 

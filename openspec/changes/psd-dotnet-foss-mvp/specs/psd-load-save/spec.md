@@ -56,7 +56,7 @@ The system SHALL preserve the Image Resources section without rewriting it when 
 - **WHEN** the user loads and saves a file without resource edits
 - **THEN** the raw Image Resources section is written back unchanged
 
-### Requirement: Support the current PSD/PSB length fields required by the MVP subset
+### Requirement: Support the current PSD/PSB length fields required by the supported subset
 The system SHALL use the correct field sizes for the supported PSD/PSB load/save subset.
 
 #### Scenario: Save PSD lengths

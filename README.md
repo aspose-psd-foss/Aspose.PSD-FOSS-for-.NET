@@ -1,104 +1,99 @@
-# Aspose.PSD.FOSS
+# Aspose.PSD.FOSS for .NET
 
-Free Open Source .NET library for basic PSD file operations (read/write without rendering).
+Aspose.PSD.FOSS is a free open-source .NET library for loading, inspecting, editing a small subset of PSD/PSB metadata, and saving the file back without rendering.
 
-## Features
+## Highlights
 
-- Load PSD files from file path or stream
-- Read document properties (Width, Height, BitsPerChannel, ColorMode, Version)
-- Read and edit layer properties (Name, IsVisible, Opacity, BlendMode)
-- Save PSD files to file path or stream
-- Support for PSD v1-6 and PSB (big documents)
-- Preserve unknown sections as raw bytes
+- Aspose.PSD-style API for common PSD metadata scenarios
+- Load PSD/PSB from file paths and streams
+- Read document properties: `Width`, `Height`, `Channels`, `BitsPerChannel`, `ColorMode`, `Version`
+- Read layer metadata: `Name`, `Bounds`, `IsVisible`, `Opacity`, `BlendMode`
+- Change `Name`, `IsVisible`, and `Opacity`
+- Save without rendering
+- Preserve unsupported sections as raw bytes where possible
 
 ## Requirements
 
-- .NET 10.0 or later
+- .NET 10.0 SDK or later
 
 ## Installation
-
-### NuGet
 
 ```bash
 dotnet add package Aspose.PSD.FOSS
 ```
 
-## Usage
-
-### Loading a PSD file
+## Quick Start
 
 ```csharp
 using Aspose.PSD.FOSS;
 
-var image = PsdImage.Load("input.psd");
-Console.WriteLine($"Dimensions: {image.Width}x{image.Height}");
-Console.WriteLine($"Color mode: {image.ColorMode}");
-```
+using PsdImage image = PsdImage.Load("input.psd");
 
-### Reading layer properties
+Console.WriteLine(image.Width);
+Console.WriteLine(image.Height);
+Console.WriteLine(image.BitsPerChannel);
+Console.WriteLine(image.ColorMode);
 
-```csharp
-foreach (var layer in image.Layers)
+foreach (Layer layer in image.Layers)
 {
-    Console.WriteLine($"Layer: {layer.Name}");
-    Console.WriteLine($"Visible: {layer.IsVisible}");
-    Console.WriteLine($"Opacity: {layer.Opacity}");
-    Console.WriteLine($"Blend mode: {layer.BlendMode}");
+    Console.WriteLine(layer.Name);
+    Console.WriteLine(layer.Bounds);
+    Console.WriteLine(layer.IsVisible);
+    Console.WriteLine(layer.Opacity);
+    Console.WriteLine(layer.BlendMode);
 }
-```
 
-### Editing layer properties
-
-```csharp
-image.Layers[0].Name = "New Layer Name";
+image.Layers[0].Name = "Updated layer";
 image.Layers[0].IsVisible = false;
 image.Layers[0].Opacity = 128;
-
 image.Save("output.psd");
 ```
 
-### Loading from stream
+## Samples
 
-```csharp
-using (var stream = File.OpenRead("input.psd"))
-{
-    var image = PsdImage.Load(stream);
-    // Work with image
-}
+Runnable sample projects are available in the repository `samples/` folder:
+
+- `Aspose.PSD.FOSS.Samples.Basic`
+- `Aspose.PSD.FOSS.Samples.Layers`
+- `Aspose.PSD.FOSS.Samples.Streams`
+
+Example commands:
+
+```bash
+dotnet run --project samples/Aspose.PSD.FOSS.Samples.Basic
+dotnet run --project samples/Aspose.PSD.FOSS.Samples.Layers
+dotnet run --project samples/Aspose.PSD.FOSS.Samples.Streams
 ```
 
-## Supported Color Modes
+If you do not pass an input file, the samples try to use the repository PSD test fixture.
 
-- RGB
-- CMYK
-- Grayscale
-- Indexed
-- Duotone
-- Lab
+## Documentation
 
-## Supported Compression Methods
+Markdown documentation is available in the repository:
 
-- Raw
-- RLE
-- ZIP
-- RZ
+- `documentation/README.md`
+- `documentation/getting-started.md`
+- `documentation/developer-guide/basic-psd-operations.md`
+- `documentation/limitations.md`
 
-## Limitations
+## Supported Scope
 
-- No rendering or pixel manipulation
-- No support for layer effects (blending options, layer styles)
-- No support for vector paths
-- No support for text layers (basic reading only)
-- No support for adjustment layers
+- Load PSD files
+- Load the currently supported PSB subset
+- Read document properties from the file header
+- Read layer metadata from Layer and Mask Information
+- Change `Name`, `IsVisible`, and `Opacity`
+- Save PSD/PSB without rendering
 
-## API Reference
+## Out of Scope
 
-See the XML documentation comments in the source code for detailed API reference.
+- Rendering
+- Pixel editing
+- Export to PNG, JPEG, or other raster formats
+- Full image resource editing
+- Full tagged block editing
+- Text, vector, effects, smart filters, and adjustment rendering
 
 ## License
 
 MIT
-
-## Contributing
-
-Contributions are welcome! Please open an issue or submit a pull request.

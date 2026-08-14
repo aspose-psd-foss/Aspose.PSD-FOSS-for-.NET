@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Change supported layer fields in memory
-The system SHALL allow changing only the MVP layer fields `Name`, `IsVisible`, and `Opacity`.
+The system SHALL allow changing only the currently supported layer fields `Name`, `IsVisible`, and `Opacity`.
 
 #### Scenario: Change layer name
 - **WHEN** the user sets `layer.Name`
