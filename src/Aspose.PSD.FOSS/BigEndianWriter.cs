@@ -6,8 +6,19 @@ namespace Aspose.PSD.FOSS;
 /// </summary>
 internal sealed class BigEndianWriter : IDisposable
 {
+    /// <summary>
+    /// Stores the underlying destination stream.
+    /// </summary>
     private readonly Stream _stream;
+
+    /// <summary>
+    /// Indicates whether disposing the writer should leave the stream open.
+    /// </summary>
     private readonly bool _leaveOpen;
+
+    /// <summary>
+    /// Tracks whether the writer has already been disposed.
+    /// </summary>
     private bool _disposed;
 
     /// <summary>

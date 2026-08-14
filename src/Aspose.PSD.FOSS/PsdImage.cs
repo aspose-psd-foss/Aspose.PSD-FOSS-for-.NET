@@ -74,9 +74,9 @@ public sealed class PsdImage : IDisposable
     private Layer[]? _layers;
 
     /// <summary>
-    /// Stores the raw color mode data section.
+    /// Stores the parsed Color Mode Data section.
     /// </summary>
-    private byte[] _colorData = [];
+    private ColorData _colorData = ColorData.Empty;
 
     /// <summary>
     /// Stores parsed image resource blocks.
@@ -109,14 +109,9 @@ public sealed class PsdImage : IDisposable
     private short _layerCountRaw;
 
     /// <summary>
-    /// Stores the raw image data section after its compression field.
+    /// Stores the parsed Image Data section.
     /// </summary>
-    private byte[] _imageData = [];
-
-    /// <summary>
-    /// Stores the image data compression method as read from the file.
-    /// </summary>
-    private int _imageDataCompression;
+    private ImageData _imageData = new(CompressionMethod.Raw, []);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PsdImage"/> class over an internal working stream.
@@ -175,6 +170,12 @@ public sealed class PsdImage : IDisposable
         }
     }
 
+    /// <summary>
+    /// Creates a loaded image instance over the provided stream.
+    /// </summary>
+    /// <param name="stream">The buffered PSD/PSB stream.</param>
+    /// <param name="leaveOpen">true to leave the stream open after disposal; otherwise, false.</param>
+    /// <returns>The loaded <see cref="PsdImage"/> instance.</returns>
     private static PsdImage Load(Stream stream, bool leaveOpen)
     {
         var image = new PsdImage(stream, leaveOpen);
@@ -182,6 +183,9 @@ public sealed class PsdImage : IDisposable
         return image;
     }
 
+    /// <summary>
+    /// Loads all supported PSD/PSB sections into memory.
+    /// </summary>
     private void LoadInternal()
     {
         if (_header != null) return;
@@ -220,11 +224,7 @@ public sealed class PsdImage : IDisposable
     /// <param name="reader">The reader positioned at the section length field.</param>
     private void LoadColorData(BigEndianReader reader)
     {
-        uint length = reader.ReadUInt32();
-        if (length > 0)
-        {
-            _colorData = reader.ReadBytes((int)length);
-        }
+        _colorData = ColorData.Load(reader);
     }
 
     /// <summary>
@@ -244,68 +244,13 @@ public sealed class PsdImage : IDisposable
 
         while (resourcesReader.Position < resourcesEnd)
         {
-            long startPos = resourcesReader.Position;
-            if (startPos + 8 > resourcesEnd)
-            {
-                break;
-            }
-            
-            uint signature = resourcesReader.ReadUInt32();
-            if (signature != 0x3842494D)
+            ResourceBlock? resource = ResourceBlock.Load(resourcesReader, resourcesEnd);
+            if (resource == null)
             {
                 break;
             }
 
-            short resourceId = resourcesReader.ReadInt16();
-
-            byte nameLength = resourcesReader.ReadByte();
-            
-            // Validate name length is reasonable
-            if (nameLength > 255)
-            {
-                break;
-            }
-            
-            // Read name with odd padding (not 4-byte padding!)
-            string resourceName = string.Empty;
-            if (nameLength > 0)
-            {
-                byte[] nameBytes = resourcesReader.ReadBytes(nameLength);
-                resourceName = System.Text.Encoding.ASCII.GetString(nameBytes);
-            }
-            
-            // Odd padding: if (nameLength + 1) % 2 != 0, add 1 byte padding
-            if ((nameLength + 1) % 2 != 0)
-            {
-                resourcesReader.Skip(1);
-            }
-
-            int dataLength = resourcesReader.ReadInt32();
-            
-            // Validate data length
-            if (dataLength < 0 || dataLength > 10000000)
-            {
-                break;
-            }
-            
-            if (resourcesReader.Position + dataLength > resourcesEnd)
-            {
-                break;
-            }
-            
-            byte[] data = resourcesReader.ReadBytes(dataLength);
-
-            if (dataLength % 2 == 1)
-            {
-                resourcesReader.Skip(1);
-            }
-
-            resourcesList.Add(new ResourceBlock
-            {
-                ResourceId = resourceId,
-                Name = resourceName,
-                Data = data
-            });
+            resourcesList.Add(resource);
         }
 
         _resources = resourcesList.ToArray();
@@ -363,15 +308,7 @@ public sealed class PsdImage : IDisposable
     /// <param name="reader">The reader positioned at the image data compression field.</param>
     private void LoadImageData(BigEndianReader reader)
     {
-        _imageDataCompression = reader.ReadUInt16();
-
-        long imageDataStart = reader.Position;
-        reader.Seek(0, SeekOrigin.End);
-        long imageDataEnd = reader.Position;
-        reader.Seek(imageDataStart, SeekOrigin.Begin);
-
-        int imageDataLength = (int)(imageDataEnd - imageDataStart);
-        _imageData = reader.ReadBytes(imageDataLength);
+        _imageData = ImageData.Load(reader);
     }
 
     /// <summary>
@@ -396,19 +333,24 @@ public sealed class PsdImage : IDisposable
         Save(stream, leaveOpen: true);
     }
 
+    /// <summary>
+    /// Saves the current document to a stream with configurable stream ownership.
+    /// </summary>
+    /// <param name="stream">The destination stream.</param>
+    /// <param name="leaveOpen">true to leave the stream open after saving; otherwise, false.</param>
     private void Save(Stream stream, bool leaveOpen)
     {
         if (_disposed) throw new ObjectDisposedException(nameof(PsdImage));
 
-        var writer = new BigEndianWriter(stream, leaveOpen);
+        var writer = new PsdWriter(stream, leaveOpen);
         try
         {
-            WriteSignature(writer);
-            WriteHeader(writer);
-            WriteColorData(writer);
-            WriteResources(writer);
-            WriteLayerAndMaskInfo(writer);
-            WriteImageData(writer);
+            writer.WriteSignature();
+            WriteHeader(writer.Writer);
+            WriteColorData(writer.Writer);
+            WriteResources(writer.Writer);
+            WriteLayerAndMaskInfo(writer.Writer);
+            WriteImageData(writer.Writer);
         }
         finally
         {
@@ -416,31 +358,28 @@ public sealed class PsdImage : IDisposable
         }
     }
 
-    private void WriteSignature(BigEndianWriter writer)
-    {
-        writer.Write((uint)0x38425053);
-    }
-
+    /// <summary>
+    /// Writes the fixed PSD/PSB header block.
+    /// </summary>
+    /// <param name="writer">The destination writer.</param>
     private void WriteHeader(BigEndianWriter writer)
     {
-        writer.Write((ushort)Version);
-        writer.Write(new byte[6]);
-        writer.Write((ushort)Channels);
-        writer.Write(Height);
-        writer.Write(Width);
-        writer.Write((ushort)BitsPerChannel);
-        writer.Write((ushort)ColorMode);
+        _header?.Save(writer);
     }
 
+    /// <summary>
+    /// Writes the Color Mode Data section.
+    /// </summary>
+    /// <param name="writer">The destination writer.</param>
     private void WriteColorData(BigEndianWriter writer)
     {
-        writer.Write((uint)_colorData.Length);
-        if (_colorData.Length > 0)
-        {
-            writer.Write(_colorData);
-        }
+        _colorData.Save(writer);
     }
 
+    /// <summary>
+    /// Writes the Image Resources section using either raw-preserved data or parsed resource blocks.
+    /// </summary>
+    /// <param name="writer">The destination writer.</param>
     private void WriteResources(BigEndianWriter writer)
     {
         if (_resourcesRaw.Length > 0)
@@ -489,6 +428,10 @@ public sealed class PsdImage : IDisposable
         writer.Seek(resourcesEnd, SeekOrigin.Begin);
     }
 
+    /// <summary>
+    /// Writes the Layer and Mask Information section.
+    /// </summary>
+    /// <param name="writer">The destination writer.</param>
     private void WriteLayerAndMaskInfo(BigEndianWriter writer)
     {
         if (_layerAndMaskInfoRaw.Length > 0 && (_layers == null || !_layers.Any(l => l.HasMutated)))
@@ -506,6 +449,10 @@ public sealed class PsdImage : IDisposable
         }
     }
 
+    /// <summary>
+    /// Rebuilds the minimal mutable part of the Layer and Mask Information section.
+    /// </summary>
+    /// <param name="writer">The destination writer.</param>
     private void WriteLayerSectionWithMutations(BigEndianWriter writer)
     {
         using var layerInfoPayloadStream = new MemoryStream();
@@ -541,10 +488,13 @@ public sealed class PsdImage : IDisposable
         writer.Write(sectionBytes);
     }
 
+    /// <summary>
+    /// Writes the final Image Data section.
+    /// </summary>
+    /// <param name="writer">The destination writer.</param>
     private void WriteImageData(BigEndianWriter writer)
     {
-        writer.Write((ushort)_imageDataCompression);
-        writer.Write(_imageData);
+        _imageData.Save(writer);
     }
 
     /// <summary>
@@ -559,27 +509,6 @@ public sealed class PsdImage : IDisposable
         {
             _stream.Dispose();
         }
-    }
-
-    /// <summary>
-    /// Represents a parsed image resource block.
-    /// </summary>
-    private struct ResourceBlock
-    {
-        /// <summary>
-        /// Gets or sets the PSD resource identifier.
-        /// </summary>
-        public short ResourceId;
-
-        /// <summary>
-        /// Gets or sets the resource Pascal name converted to text.
-        /// </summary>
-        public string Name;
-
-        /// <summary>
-        /// Gets or sets the raw resource payload bytes.
-        /// </summary>
-        public byte[] Data;
     }
 
     /// <summary>

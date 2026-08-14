@@ -3,7 +3,7 @@ using System.Drawing;
 namespace Aspose.PSD.FOSS;
 
 /// <summary>
-/// Represents a single PSD layer with basic metadata used by the FOSS MVP.
+/// Represents a single PSD layer with basic metadata used by the FOSS library.
 /// </summary>
 public class Layer
 {
@@ -12,8 +12,19 @@ public class Layer
     /// </summary>
     public const int LayerTrailerSize = 16;
 
+    /// <summary>
+    /// Stores the current layer name.
+    /// </summary>
     private string _name = string.Empty;
+
+    /// <summary>
+    /// Stores the current layer visibility flag.
+    /// </summary>
     private bool _isVisible = true;
+
+    /// <summary>
+    /// Stores the current layer opacity value.
+    /// </summary>
     private byte _opacity = 255;
 
     /// <summary>
@@ -84,12 +95,12 @@ public class Layer
     /// <summary>
     /// Stores the raw layer mask subsection including its length field.
     /// </summary>
-    private byte[] _layerMaskData = [];
+    private LayerMaskData _layerMaskData = LayerMaskData.Empty;
 
     /// <summary>
     /// Stores the raw blending ranges subsection including its length field.
     /// </summary>
-    private byte[] _blendingRangesData = [];
+    private LayerBlendingRangesData _blendingRangesData = LayerBlendingRangesData.Empty;
 
     /// <summary>
     /// Stores all remaining additional layer data after the Pascal layer name.
@@ -155,8 +166,8 @@ public class Layer
         int extraLength = reader.ReadInt32();
 
         string layerName = string.Empty;
-        byte[] layerMaskData = [];
-        byte[] blendingRangesData = [];
+        LayerMaskData layerMaskData = LayerMaskData.Empty;
+        LayerBlendingRangesData blendingRangesData = LayerBlendingRangesData.Empty;
         byte[] additionalLayerData = [];
 
         if (extraLength > 0)
@@ -166,29 +177,10 @@ public class Layer
 
             try
             {
-                uint layerMaskLength = reader.ReadUInt32();
-                layerMaskData = new byte[4 + layerMaskLength];
-                WriteUInt32BigEndian(layerMaskData, 0, layerMaskLength);
-                if (layerMaskLength > 0)
-                {
-                    if (reader.Position + layerMaskLength > extraEnd)
-                        throw new EndOfStreamException();
-                    byte[] layerMaskBytes = reader.ReadBytes((int)layerMaskLength);
-                    Buffer.BlockCopy(layerMaskBytes, 0, layerMaskData, 4, (int)layerMaskLength);
-                }
-
+                layerMaskData = LayerMaskData.Load(reader, extraEnd);
                 if (reader.Position + 4 > extraEnd)
                     throw new EndOfStreamException();
-                uint blendingRangesLength = reader.ReadUInt32();
-                blendingRangesData = new byte[4 + blendingRangesLength];
-                WriteUInt32BigEndian(blendingRangesData, 0, blendingRangesLength);
-                if (blendingRangesLength > 0)
-                {
-                    if (reader.Position + blendingRangesLength > extraEnd)
-                        throw new EndOfStreamException();
-                    byte[] blendingRangesBytes = reader.ReadBytes((int)blendingRangesLength);
-                    Buffer.BlockCopy(blendingRangesBytes, 0, blendingRangesData, 4, (int)blendingRangesLength);
-                }
+                blendingRangesData = LayerBlendingRangesData.Load(reader, extraEnd);
 
                 layerName = reader.ReadPascalString();
 
@@ -202,8 +194,8 @@ public class Layer
             {
                 reader.Seek(extraEnd, SeekOrigin.Begin);
                 layerName = string.Empty;
-                layerMaskData = [];
-                blendingRangesData = [];
+                layerMaskData = LayerMaskData.Empty;
+                blendingRangesData = LayerBlendingRangesData.Empty;
                 additionalLayerData = [];
             }
         }
@@ -226,6 +218,11 @@ public class Layer
         };
     }
 
+    /// <summary>
+    /// Maps a PSD blend mode key to the public <see cref="BlendMode"/> enum.
+    /// </summary>
+    /// <param name="key">The 4-byte PSD blend mode key.</param>
+    /// <returns>The mapped <see cref="BlendMode"/> value.</returns>
     private static BlendMode ParseBlendModeKey(byte[] key)
     {
         if (key.Length < 4) return BlendMode.Normal;
@@ -289,15 +286,20 @@ public class Layer
 
         writer.Write((byte)flags);
         writer.Write((byte)0);
-        int extraDataLength = _layerMaskData.Length + _blendingRangesData.Length + GetPascalStringStorageLength(Name) + _additionalLayerData.Length;
+        int extraDataLength = _layerMaskData.RawData.Length + _blendingRangesData.RawData.Length + GetPascalStringStorageLength(Name) + _additionalLayerData.Length;
         writer.Write(extraDataLength);
 
-        writer.Write(_layerMaskData);
-        writer.Write(_blendingRangesData);
+        writer.Write(_layerMaskData.RawData);
+        writer.Write(_blendingRangesData.RawData);
         writer.WritePascalString(Name);
         writer.Write(_additionalLayerData);
     }
 
+    /// <summary>
+    /// Maps the public <see cref="BlendMode"/> value back to a 4-byte PSD blend mode key.
+    /// </summary>
+    /// <param name="mode">The blend mode value to encode.</param>
+    /// <returns>The encoded PSD blend mode key.</returns>
     private byte[] GetBlendModeBytes(BlendMode mode)
     {
         string key = mode switch
@@ -332,20 +334,6 @@ public class Layer
     {
         int length = string.IsNullOrEmpty(value) ? 0 : System.Text.Encoding.ASCII.GetByteCount(value);
         return 1 + length + ((4 - ((length + 1) % 4)) % 4);
-    }
-
-    /// <summary>
-    /// Writes a 32-bit unsigned integer into a byte buffer in big-endian byte order.
-    /// </summary>
-    /// <param name="buffer">The target buffer.</param>
-    /// <param name="offset">The offset where the value should be written.</param>
-    /// <param name="value">The value to encode.</param>
-    private static void WriteUInt32BigEndian(byte[] buffer, int offset, uint value)
-    {
-        buffer[offset] = (byte)((value >> 24) & 0xFF);
-        buffer[offset + 1] = (byte)((value >> 16) & 0xFF);
-        buffer[offset + 2] = (byte)((value >> 8) & 0xFF);
-        buffer[offset + 3] = (byte)(value & 0xFF);
     }
 
     /// <summary>

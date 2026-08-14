@@ -6,7 +6,14 @@ namespace Aspose.PSD.FOSS;
 /// </summary>
 internal sealed class BigEndianReader : IDisposable
 {
+    /// <summary>
+    /// Stores the underlying source stream.
+    /// </summary>
     private readonly Stream _stream;
+
+    /// <summary>
+    /// Indicates whether disposing the reader should leave the stream open.
+    /// </summary>
     private readonly bool _leaveOpen;
 
     /// <summary>

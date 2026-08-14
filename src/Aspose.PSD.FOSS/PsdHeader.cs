@@ -48,13 +48,23 @@ public sealed class PsdHeader
     /// <summary>
     /// Gets the version of the PSD file format.
     /// </summary>
-    public int Version { get; private set; }
+    public int Version => (int)FormatVersion;
+
+    /// <summary>
+    /// Gets the strongly typed PSD container version.
+    /// </summary>
+    internal PsdVersion FormatVersion { get; private set; }
 
     /// <summary>
     /// Gets a value indicating whether the document is a PSB large document.
     /// </summary>
-    public bool IsLargeDocument => Version == PsbVersion;
+    public bool IsLargeDocument => FormatVersion == global::Aspose.PSD.FOSS.PsdVersion.Psb;
 
+    /// <summary>
+    /// Loads the fixed PSD/PSB file header from the reader.
+    /// </summary>
+    /// <param name="reader">The reader positioned at the start of the file header.</param>
+    /// <returns>The parsed <see cref="PsdHeader"/> instance.</returns>
     internal static PsdHeader Load(BigEndianReader reader)
     {
         uint signature = reader.ReadUInt32();
@@ -63,11 +73,13 @@ public sealed class PsdHeader
             throw new PsdLoadException("Invalid PSD signature. Expected '8BPS' (0x38425053).");
         }
 
-        int version = reader.ReadUInt16();
-        if (version != PsdVersion && version != PsbVersion)
+        ushort rawVersion = reader.ReadUInt16();
+        if (rawVersion != (ushort)global::Aspose.PSD.FOSS.PsdVersion.Psd && rawVersion != (ushort)global::Aspose.PSD.FOSS.PsdVersion.Psb)
         {
-            throw new PsdLoadException($"Unsupported PSD version: {version}. Supported versions: {PsdVersion} (PSD) and {PsbVersion} (PSB).");
+            throw new PsdLoadException($"Unsupported PSD version: {rawVersion}. Supported versions: {PsdVersion} (PSD) and {PsbVersion} (PSB).");
         }
+
+        global::Aspose.PSD.FOSS.PsdVersion version = (global::Aspose.PSD.FOSS.PsdVersion)rawVersion;
 
         reader.Skip(6);
 
@@ -84,7 +96,22 @@ public sealed class PsdHeader
             Channels = channels,
             BitDepth = bitDepth,
             ColorMode = colorMode,
-            Version = version
+            FormatVersion = version
         };
+    }
+
+    /// <summary>
+    /// Writes the fixed PSD/PSB file header to the writer.
+    /// </summary>
+    /// <param name="writer">The destination writer.</param>
+    internal void Save(BigEndianWriter writer)
+    {
+        writer.Write((ushort)FormatVersion);
+        writer.Write(new byte[6]);
+        writer.Write((ushort)Channels);
+        writer.Write(Height);
+        writer.Write(Width);
+        writer.Write((ushort)BitDepth);
+        writer.Write((ushort)ColorMode);
     }
 }
