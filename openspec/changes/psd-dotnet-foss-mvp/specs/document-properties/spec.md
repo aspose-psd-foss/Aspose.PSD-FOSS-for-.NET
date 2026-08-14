@@ -60,3 +60,24 @@
 ## REMOVED Requirements
 
 ## RENAMED Requirements
+
+## Тесты (Acceptance/Validation)
+
+**Приоритет:** Приемочные тесты должны оцениваться на основе behavior, определенного в этом spec, а не demo app. Тестовый project (Aspose.PSD.FOSS.Test) является real test project с NUnit framework.
+
+#### Scenario: Чтение Width и Height
+- **WHEN** пользователь загружает PSD файл
+- **THEN** image.Width и image.Height возвращают корректные значения
+- **AND** значения больше 0
+
+#### Scenario: Чтение Channels
+- **WHEN** пользователь загружает PSD файл
+- **THEN** image.Channels возвращает корректное число каналов
+
+#### Scenario: Чтение BitsPerChannel
+- **WHEN** пользователь загружает PSD файл
+- **THEN** image.BitsPerChannel возвращает 8 (8-bit PSD)
+
+#### Scenario: Чтение ColorMode
+- **WHEN** пользователь загружает PSD файл
+- **THEN** image.ColorMode возвращает валидный ColorModes enum

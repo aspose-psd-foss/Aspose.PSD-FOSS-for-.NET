@@ -80,3 +80,27 @@
 ## REMOVED Requirements
 
 ## RENAMED Requirements
+
+## Тесты (Acceptance/Validation)
+
+**Приоритет:** Приемочные тесты должны оцениваться на основе behavior, определенного в этом spec, а не demo app. Тестовый project (Aspose.PSD.FOSS.Test) является real test project с NUnit framework.
+
+#### Scenario: Чтение Name
+- **WHEN** пользователь загружает PSD файл
+- **THEN** layer.Name возвращает имя слоя
+
+#### Scenario: Чтение Bounds
+- **WHEN** пользователь загружает PSD файл
+- **THEN** layer.Bounds возвращает Rectangle с корректными координатами
+
+#### Scenario: Чтение IsVisible
+- **WHEN** пользователь загружает PSD файл
+- **THEN** layer.IsVisible возвращает состояние видимости (true/false)
+
+#### Scenario: Чтение Opacity
+- **WHEN** пользователь загружает PSD файл
+- **THEN** layer.Opacity возвращает значение 0-255
+
+#### Scenario: Чтение BlendMode
+- **WHEN** пользователь загружает PSD файл
+- **THEN** layer.BlendMode возвращает валидный BlendMode enum

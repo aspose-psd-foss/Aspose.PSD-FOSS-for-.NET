@@ -18,6 +18,8 @@
     <RepositoryType>git</RepositoryType>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\Aspose.PSD.FOSS.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>

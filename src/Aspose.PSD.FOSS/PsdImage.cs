@@ -3,27 +3,114 @@ using System.IO;
 
 namespace Aspose.PSD.FOSS;
 
+/// <summary>
+/// Represents a PSD image that can be loaded, inspected, and saved without rendering.
+/// </summary>
 public sealed class PsdImage : IDisposable
 {
+    /// <summary>
+    /// Stores the underlying source or destination stream.
+    /// </summary>
     private readonly Stream _stream;
+
+    /// <summary>
+    /// Indicates whether the underlying stream must remain open after disposal.
+    /// </summary>
     private readonly bool _leaveOpen;
+
+    /// <summary>
+    /// Tracks whether the instance has already been disposed.
+    /// </summary>
     private bool _disposed;
 
+    /// <summary>
+    /// Gets the document width in pixels.
+    /// </summary>
     public int Width => _header?.Width ?? 0;
+
+    /// <summary>
+    /// Gets the document height in pixels.
+    /// </summary>
     public int Height => _header?.Height ?? 0;
+
+    /// <summary>
+    /// Gets the document channel count from the PSD header.
+    /// </summary>
     public int Channels => _header?.Channels ?? 0;
+
+    /// <summary>
+    /// Gets the number of bits stored per channel.
+    /// </summary>
     public int BitsPerChannel => _header?.BitDepth ?? 0;
+
+    /// <summary>
+    /// Gets the PSD color mode reported by the header.
+    /// </summary>
     public ColorModes ColorMode => _header?.ColorMode ?? ColorModes.Rgb;
+
+    /// <summary>
+    /// Gets the PSD or PSB version value from the header.
+    /// </summary>
     public int Version => _header?.Version ?? 1;
+
+    /// <summary>
+    /// Gets the parsed layer collection.
+    /// </summary>
     public Layer[] Layers => _layers ?? [];
+
+    /// <summary>
+    /// Gets a value indicating whether the document contains at least one parsed layer.
+    /// </summary>
     public bool HasLayers => _layers?.Length > 0;
 
+    /// <summary>
+    /// Stores the parsed PSD header.
+    /// </summary>
     private PsdHeader? _header;
+
+    /// <summary>
+    /// Stores the parsed layer records.
+    /// </summary>
     private Layer[]? _layers;
+
+    /// <summary>
+    /// Stores the raw color mode data section.
+    /// </summary>
     private byte[] _colorData = [];
+
+    /// <summary>
+    /// Stores parsed image resource blocks.
+    /// </summary>
     private ResourceBlock[] _resources = [];
+
+    /// <summary>
+    /// Stores the raw Layer and Mask Information section for byte-exact no-mutation saves.
+    /// </summary>
     private byte[] _layerAndMaskInfoRaw = [];
+
+    /// <summary>
+    /// Stores the raw layer channel image data part of the layer info payload.
+    /// </summary>
+    private byte[] _layerChannelImageDataRaw = [];
+
+    /// <summary>
+    /// Stores the raw global mask info and any trailing bytes after the layer info payload.
+    /// </summary>
+    private byte[] _layerGlobalMaskAndTailRaw = [];
+
+    /// <summary>
+    /// Stores the original signed layer count value so the save path can preserve its sign.
+    /// </summary>
+    private short _layerCountRaw;
+
+    /// <summary>
+    /// Stores the raw image data section after its compression field.
+    /// </summary>
     private byte[] _imageData = [];
+
+    /// <summary>
+    /// Stores the image data compression method as read from the file.
+    /// </summary>
     private int _imageDataCompression;
 
     private PsdImage(Stream stream, bool leaveOpen)
@@ -32,6 +119,11 @@ public sealed class PsdImage : IDisposable
         _leaveOpen = leaveOpen;
     }
 
+    /// <summary>
+    /// Loads a PSD image from a file path.
+    /// </summary>
+    /// <param name="filePath">The path to the PSD file.</param>
+    /// <returns>A loaded <see cref="PsdImage"/> instance.</returns>
     public static PsdImage Load(string filePath)
     {
         if (filePath == null) throw new ArgumentNullException(nameof(filePath));
@@ -41,6 +133,11 @@ public sealed class PsdImage : IDisposable
         return Load(stream, leaveOpen: false);
     }
 
+    /// <summary>
+    /// Loads a PSD image from a readable stream.
+    /// </summary>
+    /// <param name="stream">The input stream containing PSD data.</param>
+    /// <returns>A loaded <see cref="PsdImage"/> instance.</returns>
     public static PsdImage Load(Stream stream)
     {
         if (stream == null) throw new ArgumentNullException(nameof(stream));
@@ -167,17 +264,18 @@ public sealed class PsdImage : IDisposable
         if (sectionLength == 0)
         {
             _layerAndMaskInfoRaw = [];
+            _layerChannelImageDataRaw = [];
+            _layerGlobalMaskAndTailRaw = [];
             return;
         }
 
-        long sectionEnd = reader.Position + (int)sectionLength;
         byte[] rawSectionBytes = reader.ReadBytes((int)sectionLength);
-        
-        var memReader = new BigEndianReader(new System.IO.MemoryStream(rawSectionBytes), leaveOpen: true);
-        
+
+        var memReader = new BigEndianReader(new MemoryStream(rawSectionBytes, writable: false), leaveOpen: true);
+
         int layerInfoLength = memReader.ReadInt32();
-        short layerCount = memReader.ReadInt16();
-        if (layerCount < 0) layerCount = (short)-layerCount;
+        _layerCountRaw = memReader.ReadInt16();
+        short layerCount = _layerCountRaw < 0 ? (short)-_layerCountRaw : _layerCountRaw;
 
         if (layerCount > 0)
         {
@@ -189,18 +287,15 @@ public sealed class PsdImage : IDisposable
             _layers = layers;
         }
 
-        long layerInfoParsed = (int)memReader.Position;
-        int layerInfoSize = layerInfoLength - 4 - 2;
-        long remainingLayerInfo = layerInfoSize - layerInfoParsed;
+        int channelImageDataLength = Math.Max(0, layerInfoLength - (int)memReader.Position);
+        _layerChannelImageDataRaw = channelImageDataLength > 0
+            ? memReader.ReadBytes(channelImageDataLength)
+            : [];
 
-        memReader.Seek(remainingLayerInfo, SeekOrigin.Current);
-
-        long globalMaskEnd = memReader.Position;
-        int remainingInRaw = (int)sectionLength - (int)globalMaskEnd;
-        if (remainingInRaw > 0)
-        {
-            memReader.ReadBytes(remainingInRaw);
-        }
+        int globalMaskAndTailLength = Math.Max(0, rawSectionBytes.Length - (int)memReader.Position);
+        _layerGlobalMaskAndTailRaw = globalMaskAndTailLength > 0
+            ? memReader.ReadBytes(globalMaskAndTailLength)
+            : [];
 
         _layerAndMaskInfoRaw = rawSectionBytes;
     }
@@ -218,6 +313,10 @@ public sealed class PsdImage : IDisposable
         _imageData = reader.ReadBytes(imageDataLength);
     }
 
+    /// <summary>
+    /// Saves the image to a file path.
+    /// </summary>
+    /// <param name="filePath">The destination file path.</param>
     public void Save(string filePath)
     {
         if (filePath == null) throw new ArgumentNullException(nameof(filePath));
@@ -226,6 +325,10 @@ public sealed class PsdImage : IDisposable
         Save(stream, leaveOpen: false);
     }
 
+    /// <summary>
+    /// Saves the image to a writable stream.
+    /// </summary>
+    /// <param name="stream">The destination stream.</param>
     public void Save(Stream stream)
     {
         if (stream == null) throw new ArgumentNullException(nameof(stream));
@@ -320,15 +423,47 @@ public sealed class PsdImage : IDisposable
 
     private void WriteLayerAndMaskInfo(BigEndianWriter writer)
     {
-        if (_layerAndMaskInfoRaw.Length > 0)
+        if (_layerAndMaskInfoRaw.Length > 0 && (_layers == null || !_layers.Any(l => l.HasMutated)))
         {
             writer.Write((uint)_layerAndMaskInfoRaw.Length);
             writer.Write(_layerAndMaskInfoRaw);
+        }
+        else if (_layers != null && _layers.Length > 0)
+        {
+            WriteLayerSectionWithMutations(writer);
         }
         else
         {
             writer.Write((uint)0);
         }
+    }
+
+    private void WriteLayerSectionWithMutations(BigEndianWriter writer)
+    {
+        using var layerInfoPayloadStream = new MemoryStream();
+        using var layerInfoPayloadWriter = new BigEndianWriter(layerInfoPayloadStream, leaveOpen: true);
+
+        Layer[] layers = _layers ?? [];
+        short layerCount = _layerCountRaw < 0 ? (short)-layers.Length : (short)layers.Length;
+        layerInfoPayloadWriter.Write(layerCount);
+
+        foreach (var layer in layers)
+        {
+            layer.Write(layerInfoPayloadWriter);
+        }
+
+        layerInfoPayloadWriter.Write(_layerChannelImageDataRaw);
+        byte[] layerInfoPayload = layerInfoPayloadStream.ToArray();
+
+        using var sectionStream = new MemoryStream();
+        using var sectionWriter = new BigEndianWriter(sectionStream, leaveOpen: true);
+        sectionWriter.Write(layerInfoPayload.Length);
+        sectionWriter.Write(layerInfoPayload);
+        sectionWriter.Write(_layerGlobalMaskAndTailRaw);
+
+        byte[] sectionBytes = sectionStream.ToArray();
+        writer.Write((uint)sectionBytes.Length);
+        writer.Write(sectionBytes);
     }
 
     private void WriteImageData(BigEndianWriter writer)
@@ -337,6 +472,9 @@ public sealed class PsdImage : IDisposable
         writer.Write(_imageData);
     }
 
+    /// <summary>
+    /// Releases the image and optionally the underlying stream.
+    /// </summary>
     public void Dispose()
     {
         if (_disposed) return;
@@ -348,10 +486,24 @@ public sealed class PsdImage : IDisposable
         }
     }
 
+    /// <summary>
+    /// Represents a parsed image resource block.
+    /// </summary>
     private struct ResourceBlock
     {
+        /// <summary>
+        /// Gets or sets the PSD resource identifier.
+        /// </summary>
         public short ResourceId;
+
+        /// <summary>
+        /// Gets or sets the resource Pascal name converted to text.
+        /// </summary>
         public string Name;
+
+        /// <summary>
+        /// Gets or sets the raw resource payload bytes.
+        /// </summary>
         public byte[] Data;
     }
 }

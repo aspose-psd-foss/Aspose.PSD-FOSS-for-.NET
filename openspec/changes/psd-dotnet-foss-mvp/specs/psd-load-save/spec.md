@@ -1,5 +1,13 @@
 ## ADDED Requirements
 
+### Requirement: Тестовые данные должны находиться в src/Aspose.PSD.FOSS.Test/testdata
+Все PSD тестовые файлы должны быть размещены в директории `src/Aspose.PSD.FOSS.Test/testdata`.
+
+#### Scenario: Тестовый файл расположен в правильной директории
+- **WHEN** проверяется структура тестового проекта
+- **THEN** файл test.psd находится в `src/Aspose.PSD.FOSS.Test/testdata/test.psd`
+- **AND** файл копируется в выходную директорию при сборке
+
 ### Requirement: Загрузка PSD из file path
 Система SHALL загружать PSD файл из указанного file path.
 
@@ -80,12 +88,36 @@
 - **WHEN** сохраняется PSD файл
 - **THEN** сохранённый файл имеет правильную структуру: Header → Color Data → Resources → Layer and Mask Information section (outer length, layer records, channel image data block, global layer mask info, raw tail) → Image Data
 
-#### Scenario: Round-trip сохранения
+#### Scenario: Round-trip сохранения без мутации (byte-for-byte)
 - **WHEN** пользователь загружает PSD файл и сохраняет без изменений
-- **THEN** сохранённый файл идентичен оригиналу по байтам (если не изменялись свойства)
+- **THEN** сохранённый файл идентичен оригиналу по байтам (byte-for-byte identical)
+- **RISK:** "Green build, invalid PSD" - строгий round-trip тест должен предотвращать создание некорректных PSD файлов
+
+### Requirement: Round-trip сохранения без мутации
+Система SHALL сохранять PSD файл byte-for-byte identical при отсутствии мутаций.
+
+#### Scenario: Round-trip byte-for-byte сравнение
+- **WHEN** пользователь загружает PSD файл из исходного файла
+- **AND** сохраняет его в новый файл без модификаций
+- **THEN** байты оригинального и сохранённого файла идентичны
+- **AND** повторная загрузка сохранённого файла возвращает эквивалентные свойства
 
 ## MODIFIED Requirements
 
 ## REMOVED Requirements
 
 ## RENAMED Requirements
+
+## Тесты (Acceptance/Validation)
+
+**Приоритет:** Приемочные тесты должны оцениваться на основе behavior, определенного в этом spec, а не demo app. Тестовый project (Aspose.PSD.FOSS.Test) является real test project с NUnit framework.
+
+#### Scenario: Round-trip без mutation (byte-for-byte)
+- **WHEN** пользователь загружает PSD файл и сохраняет без изменений
+- **THEN** сохранённый файл идентичен оригиналу по байтам (byte-for-byte identical)
+- **AND** повторная загрузка возвращает эквивалентные свойства
+
+#### Scenario: Round-trip с мутацией
+- **WHEN** пользователь изменяет свойства слоя и сохраняет
+- **THEN** сохранённый файл содержит обновленные свойства
+- **AND** повторная загрузка показывает измененные свойства
