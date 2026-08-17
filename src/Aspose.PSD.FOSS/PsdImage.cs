@@ -308,7 +308,11 @@ public sealed class PsdImage : IDisposable
     /// <param name="reader">The reader positioned at the image data compression field.</param>
     private void LoadImageData(BigEndianReader reader)
     {
-        _imageData = ImageData.Load(reader);
+        _imageData = ImageData.Load(
+            reader,
+            _header?.IsLargeDocument == true,
+            Height,
+            Channels);
     }
 
     /// <summary>

@@ -67,7 +67,7 @@
 
 - [x] 7.1 Реализовать отдельный класс `ImageData`
 - [x] 7.2 Реализовать выделенный метод `ImageData.Load`
-- [ ] 7.3 Добавить структурное понимание `raw`, `RLE`, `ZIP` compression без рендеринга
+- [x] 7.3 Добавить структурное понимание `raw`, `RLE`, `ZIP` compression без рендеринга
 - [x] 7.4 Хранить image data как raw payload с сохранением compression field для save
 - [x] 7.5 **ВАЖНО: не читать за пределы image data section**
 

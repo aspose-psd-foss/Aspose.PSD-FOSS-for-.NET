@@ -329,6 +329,93 @@ public sealed class PsdImageTests : IDisposable
     }
 
     /// <summary>
+    /// Tests that PSD image data compressed with RLE round-trips without mutation.
+    /// </summary>
+    [Test]
+    public void Save_PsdWithRleImageData_RoundTripByteForByte()
+    {
+        byte[] originalBytes = BuildMinimalDocument(
+            psb: false,
+            compression: CompressionMethod.RLE,
+            imageDataPayload: [0x00, 0x02, 0xAB, 0xCD, 0x00, 0x01, 0xEF]);
+        string outputFile = Path.Combine(_testDir, "minimal_rle.psd");
+
+        using (var stream = new MemoryStream(originalBytes))
+        using (var image = PsdImage.Load(stream))
+        {
+            image.Save(outputFile);
+        }
+
+        byte[] savedBytes = File.ReadAllBytes(outputFile);
+        Assert.That(savedBytes, Is.EqualTo(originalBytes));
+    }
+
+    /// <summary>
+    /// Tests that PSB image data compressed with RLE round-trips without mutation.
+    /// </summary>
+    [Test]
+    public void Save_PsbWithRleImageData_RoundTripByteForByte()
+    {
+        byte[] originalBytes = BuildMinimalDocument(
+            psb: true,
+            compression: CompressionMethod.RLE,
+            imageDataPayload:
+            [
+                0x00, 0x00, 0x00, 0x02,
+                0x00, 0x00, 0x00, 0x01,
+                0x00, 0x00, 0x00, 0x03,
+                0xAB, 0xCD, 0xEF, 0x10, 0x11, 0x12
+            ]);
+        string outputFile = Path.Combine(_testDir, "minimal_rle.psb");
+
+        using (var stream = new MemoryStream(originalBytes))
+        using (var image = PsdImage.Load(stream))
+        {
+            image.Save(outputFile);
+        }
+
+        byte[] savedBytes = File.ReadAllBytes(outputFile);
+        Assert.That(savedBytes, Is.EqualTo(originalBytes));
+    }
+
+    /// <summary>
+    /// Tests that ZIP-compressed image data round-trips without mutation.
+    /// </summary>
+    [Test]
+    public void Save_PsdWithZipImageData_RoundTripByteForByte()
+    {
+        byte[] originalBytes = BuildMinimalDocument(
+            psb: false,
+            compression: CompressionMethod.ZIP,
+            imageDataPayload: [0x78, 0x9C, 0x63, 0x60, 0x04, 0x00, 0x00, 0xFF, 0x00]);
+        string outputFile = Path.Combine(_testDir, "minimal_zip.psd");
+
+        using (var stream = new MemoryStream(originalBytes))
+        using (var image = PsdImage.Load(stream))
+        {
+            image.Save(outputFile);
+        }
+
+        byte[] savedBytes = File.ReadAllBytes(outputFile);
+        Assert.That(savedBytes, Is.EqualTo(originalBytes));
+    }
+
+    /// <summary>
+    /// Tests that a truncated RLE row-length table is rejected.
+    /// </summary>
+    [Test]
+    public void Load_RleImageDataWithTruncatedRowLengthTable_ThrowsPsdLoadException()
+    {
+        byte[] bytes = BuildMinimalDocument(
+            psb: false,
+            compression: CompressionMethod.RLE,
+            imageDataPayload: [0x00, 0x02, 0xAB, 0xCD, 0x00]);
+        using var stream = new MemoryStream(bytes);
+
+        Assert.That(() => PsdImage.Load(stream), Throws.InstanceOf<PsdLoadException>());
+    }
+
+    /// <summary>
     /// Tests that a minimal PSB file loads and round-trips correctly without mutations.
     /// </summary>
     [Test]
@@ -370,9 +457,13 @@ public sealed class PsdImageTests : IDisposable
         buffer[offset + 3] = (byte)value;
     }
 
-    private static byte[] BuildMinimalDocument(bool psb)
+    private static byte[] BuildMinimalDocument(
+        bool psb,
+        CompressionMethod compression = CompressionMethod.Raw,
+        byte[]? imageDataPayload = null)
     {
         using var stream = new MemoryStream();
+        imageDataPayload ??= [0x00, 0x00, 0x00];
 
         void WriteUInt16(ushort value)
         {
@@ -428,10 +519,8 @@ public sealed class PsdImageTests : IDisposable
             WriteUInt32(0);
         }
 
-        WriteUInt16(0);
-        stream.WriteByte(0);
-        stream.WriteByte(0);
-        stream.WriteByte(0);
+        WriteUInt16((ushort)compression);
+        stream.Write(imageDataPayload);
 
         return stream.ToArray();
     }
