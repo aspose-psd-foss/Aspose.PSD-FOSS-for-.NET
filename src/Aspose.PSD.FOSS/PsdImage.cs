@@ -64,6 +64,16 @@ public sealed class PsdImage : IDisposable
     public bool HasLayers => _layers?.Length > 0;
 
     /// <summary>
+    /// Gets the parsed color mode data details for internal verification and tests.
+    /// </summary>
+    internal ColorData ParsedColorData => _colorData;
+
+    /// <summary>
+    /// Gets the parsed image resources for internal verification and tests.
+    /// </summary>
+    internal ResourceBlock[] ParsedResources => _resources;
+
+    /// <summary>
     /// Stores the parsed PSD header.
     /// </summary>
     private PsdHeader? _header;
@@ -224,7 +234,7 @@ public sealed class PsdImage : IDisposable
     /// <param name="reader">The reader positioned at the section length field.</param>
     private void LoadColorData(BigEndianReader reader)
     {
-        _colorData = ColorData.Load(reader);
+        _colorData = ColorData.Load(reader, ColorMode);
     }
 
     /// <summary>
