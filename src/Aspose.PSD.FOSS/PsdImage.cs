@@ -54,14 +54,104 @@ public sealed class PsdImage : IDisposable
     public int Version => _header?.Version ?? 1;
 
     /// <summary>
+    /// Gets the parsed PSD/PSB header object.
+    /// </summary>
+    public PsdHeader Header => _header ?? throw new InvalidOperationException("PSD/PSB header is not loaded.");
+
+    /// <summary>
+    /// Gets a value indicating whether the loaded document is a PSB large document.
+    /// </summary>
+    public bool IsLargeDocument => _header?.IsLargeDocument == true;
+
+    /// <summary>
+    /// Gets a value indicating whether the loaded document is a PSB file.
+    /// </summary>
+    public bool IsPsb => IsLargeDocument;
+
+    /// <summary>
     /// Gets the parsed layer collection.
     /// </summary>
     public Layer[] Layers => _layers ?? [];
 
     /// <summary>
+    /// Gets the number of parsed layers in the document.
+    /// </summary>
+    public int LayerCount => Layers.Length;
+
+    /// <summary>
     /// Gets a value indicating whether the document contains at least one parsed layer.
     /// </summary>
     public bool HasLayers => _layers?.Length > 0;
+
+    /// <summary>
+    /// Gets a value indicating whether the document contains any parsed image resources.
+    /// </summary>
+    public bool HasImageResources => _resourcesRaw.Length > 0 || _resources.Length > 0;
+
+    /// <summary>
+    /// Gets the number of parsed image resource blocks.
+    /// </summary>
+    public int ResourceCount => _resources.Length;
+
+    /// <summary>
+    /// Gets a read-only summary of the parsed image resource blocks.
+    /// </summary>
+    public IReadOnlyList<PsdResourceInfo> Resources => _resources.Select(resource => resource.ToPublicInfo()).ToArray();
+
+    /// <summary>
+    /// Gets a value indicating whether the document contains Color Mode Data bytes.
+    /// </summary>
+    public bool HasColorModeData => _colorData.RawData.Length > 0;
+
+    /// <summary>
+    /// Gets a read-only summary of the parsed Color Mode Data section.
+    /// </summary>
+    public PsdColorDataInfo ColorDataInfo => _colorData.ToPublicInfo();
+
+    /// <summary>
+    /// Gets the parsed indexed palette summary, when the Color Mode Data section contains one.
+    /// </summary>
+    public IndexedColorPaletteInfo? IndexedPalette => ColorDataInfo.IndexedPalette;
+
+    /// <summary>
+    /// Gets a value indicating whether the document contains merged image data payload bytes.
+    /// </summary>
+    public bool HasMergedImageData => _imageData.RawData.Length > 0;
+
+    /// <summary>
+    /// Gets the compression method used by the merged image data section.
+    /// </summary>
+    public CompressionMethod Compression => _imageData.Compression;
+
+    /// <summary>
+    /// Gets a read-only summary of the parsed merged image data structure.
+    /// </summary>
+    public PsdImageDataInfo ImageDataInfo => _imageData.ToPublicInfo();
+
+    /// <summary>
+    /// Gets the structural kind of the merged image data payload.
+    /// </summary>
+    public ImageDataKind ImageDataKind => _imageData.Structure.Kind;
+
+    /// <summary>
+    /// Gets a value indicating whether ZIP prediction is used by the merged image data payload.
+    /// </summary>
+    public bool UsesPrediction => _imageData.Structure.UsesPrediction;
+
+    /// <summary>
+    /// Gets the parsed global angle from the image resources, when present.
+    /// </summary>
+    public int? GlobalAngle => _resources.FirstOrDefault(resource => resource.GlobalAngle.HasValue)?.GlobalAngle;
+
+    /// <summary>
+    /// Gets a value indicating whether an embedded ICC profile resource is present.
+    /// </summary>
+    public bool HasIccProfile => _resources.Any(resource => resource.Kind == KnownResourceKind.IccProfile);
+
+    /// <summary>
+    /// Gets the parsed untagged ICC profile flag, when the corresponding resource is present.
+    /// </summary>
+    public bool? IsIccProfileUntagged => _resources.FirstOrDefault(resource => resource.IsIccProfileUntagged.HasValue)?.IsIccProfileUntagged;
 
     /// <summary>
     /// Gets the parsed color mode data details for internal verification and tests.

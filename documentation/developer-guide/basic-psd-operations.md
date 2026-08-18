@@ -14,6 +14,27 @@ Supported document metadata:
 - `BitsPerChannel`
 - `ColorMode`
 - `Version`
+- `Header`
+- `IsLargeDocument`
+- `IsPsb`
+- `LayerCount`
+- `HasImageResources`
+- `ResourceCount`
+- `HasColorModeData`
+- `HasMergedImageData`
+- `Compression`
+- `ImageDataKind`
+- `UsesPrediction`
+
+Additional read-only inspection API:
+
+- `Resources`
+- `GlobalAngle`
+- `HasIccProfile`
+- `IsIccProfileUntagged`
+- `ColorDataInfo`
+- `IndexedPalette`
+- `ImageDataInfo`
 
 ## Inspect Layers
 
@@ -23,17 +44,39 @@ Supported layer metadata:
 
 - `Name`
 - `Bounds`
+- `Width`
+- `Height`
+- `Top`
+- `Left`
+- `Bottom`
+- `Right`
 - `IsVisible`
 - `Opacity`
+- `Clipping`
 - `BlendMode`
+- `BlendModeKey`
+- `ChannelCount`
+- `HasMaskData`
+- `HasBlendingRangesData`
+- `HasAdditionalLayerData`
+- `Channels`
+- `MaskInfo`
+- `BlendingRangesInfo`
 
 ## Modify Layers
 
-The current product scope supports changing only:
+The current product scope supports changing:
 
 - `Name`
 - `IsVisible`
 - `Opacity`
+- `BlendMode`
+- `Clipping`
+- `Bounds`
+- `Top`
+- `Left`
+- `Bottom`
+- `Right`
 
 These changes are saved back into the PSD/PSB structure without rendering.
 

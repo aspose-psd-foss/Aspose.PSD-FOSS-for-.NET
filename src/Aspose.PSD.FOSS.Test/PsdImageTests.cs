@@ -403,6 +403,225 @@ public sealed class PsdImageTests : IDisposable
     }
 
     /// <summary>
+    /// Tests that simple document-level inspection properties expose the parsed structural state.
+    /// </summary>
+    [Test]
+    public void Load_DocumentSimpleInspectionProperties_ReturnExpectedValues()
+    {
+        byte[] resourcesPayload = BuildResourcesPayload(
+            (ResourceBlock.GlobalAngleResourceId, "glba", [0x00, 0x00, 0x00, 0x2D]));
+        byte[] bytes = BuildMinimalDocument(
+            psb: true,
+            colorMode: ColorModes.CMYK,
+            colorDataPayload: [0xCA, 0xFE],
+            resourcesPayload: resourcesPayload,
+            compression: CompressionMethod.RZ,
+            imageDataPayload: [0x78, 0xDA, 0x01, 0x02]);
+        using var stream = new MemoryStream(bytes);
+        using var image = PsdImage.Load(stream);
+
+        Assert.That(image.Header, Is.Not.Null);
+        Assert.That(image.IsLargeDocument, Is.True);
+        Assert.That(image.IsPsb, Is.True);
+        Assert.That(image.LayerCount, Is.EqualTo(0));
+        Assert.That(image.HasImageResources, Is.True);
+        Assert.That(image.ResourceCount, Is.EqualTo(1));
+        Assert.That(image.HasColorModeData, Is.True);
+        Assert.That(image.HasMergedImageData, Is.True);
+        Assert.That(image.Compression, Is.EqualTo(CompressionMethod.RZ));
+        Assert.That(image.ImageDataKind, Is.EqualTo(ImageDataKind.Zip));
+        Assert.That(image.UsesPrediction, Is.True);
+        Assert.That(image.Header.Version, Is.EqualTo(image.Version));
+        Assert.That(image.Header.ColorMode, Is.EqualTo(image.ColorMode));
+    }
+
+    /// <summary>
+    /// Tests that simple layer-level inspection properties expose stored geometry and subsection presence.
+    /// </summary>
+    [Test]
+    public void Load_LayerSimpleInspectionProperties_ReturnExpectedValues()
+    {
+        using var image = PsdImage.Load(Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd"));
+        Layer firstLayer = image.Layers[0];
+
+        Assert.That(firstLayer.Width, Is.EqualTo(firstLayer.Bounds.Width));
+        Assert.That(firstLayer.Height, Is.EqualTo(firstLayer.Bounds.Height));
+        Assert.That(firstLayer.Top, Is.EqualTo(firstLayer.Bounds.Top));
+        Assert.That(firstLayer.Left, Is.EqualTo(firstLayer.Bounds.Left));
+        Assert.That(firstLayer.Bottom, Is.EqualTo(firstLayer.Bounds.Bottom));
+        Assert.That(firstLayer.Right, Is.EqualTo(firstLayer.Bounds.Right));
+        Assert.That(firstLayer.ChannelCount, Is.GreaterThan(0));
+        Assert.That(firstLayer.BlendModeKey, Has.Length.EqualTo(4));
+        Assert.That(firstLayer.HasMaskData, Is.False);
+        Assert.That(firstLayer.HasBlendingRangesData, Is.EqualTo(firstLayer.BlendingRangesInfo.RawDataLength > 4));
+        Assert.That(firstLayer.HasAdditionalLayerData, Is.True);
+    }
+
+    /// <summary>
+    /// Tests that saving after a supported mutation preserves raw layer flags and the original blend mode key.
+    /// </summary>
+    [Test]
+    public void Save_AfterSupportedMutation_PreservesRawFlagsAndBlendModeKey()
+    {
+        byte[] originalBytes = BuildPsdWithSingleLayer("pass", 0x11, "Layer 1");
+        string outputFile = Path.Combine(_testDir, "preserve_flags_and_blend.psd");
+
+        using (var stream = new MemoryStream(originalBytes))
+        using (var image = PsdImage.Load(stream))
+        {
+            image.Layers[0].Name = "Renamed";
+            image.Save(outputFile);
+        }
+
+        using var reloaded = PsdImage.Load(outputFile);
+        Assert.That(reloaded.Layers[0].BlendModeKey, Is.EqualTo("pass"));
+        Assert.That(reloaded.Layers[0].IsVisible, Is.True);
+    }
+
+    /// <summary>
+    /// Tests that changing a layer's blend mode persists after save and reload.
+    /// </summary>
+    [Test]
+    public void Save_AfterChangingLayerBlendMode_SavesCorrectly()
+    {
+        string testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd");
+        string outputFile = Path.Combine(_testDir, "layer_blend_mode_test.psd");
+
+        using var image = PsdImage.Load(testFile);
+        image.Layers[0].BlendMode = BlendMode.Multiply;
+        image.Save(outputFile);
+
+        using var reloaded = PsdImage.Load(outputFile);
+        Assert.That(reloaded.Layers[0].BlendMode, Is.EqualTo(BlendMode.Multiply));
+        Assert.That(reloaded.Layers[0].BlendModeKey, Is.EqualTo("mul "));
+    }
+
+    /// <summary>
+    /// Tests that changing a layer's clipping value persists after save and reload.
+    /// </summary>
+    [Test]
+    public void Save_AfterChangingLayerClipping_SavesCorrectly()
+    {
+        byte[] originalBytes = BuildPsdWithSingleLayer("norm", 0x00, "Layer 1");
+        string outputFile = Path.Combine(_testDir, "layer_clipping_test.psd");
+
+        using (var stream = new MemoryStream(originalBytes))
+        using (var image = PsdImage.Load(stream))
+        {
+            image.Layers[0].Clipping = 1;
+            image.Save(outputFile);
+        }
+
+        using var reloaded = PsdImage.Load(outputFile);
+        Assert.That(reloaded.Layers[0].Clipping, Is.EqualTo(1));
+    }
+
+    /// <summary>
+    /// Tests that changing a layer's bounds persists after save and reload.
+    /// </summary>
+    [Test]
+    public void Save_AfterChangingLayerBounds_SavesCorrectly()
+    {
+        string testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd");
+        string outputFile = Path.Combine(_testDir, "layer_bounds_test.psd");
+
+        using var image = PsdImage.Load(testFile);
+        Rectangle newBounds = Rectangle.FromLTRB(10, 20, 40, 60);
+        image.Layers[0].Bounds = newBounds;
+        image.Save(outputFile);
+
+        using var reloaded = PsdImage.Load(outputFile);
+        Assert.That(reloaded.Layers[0].Bounds, Is.EqualTo(newBounds));
+    }
+
+    /// <summary>
+    /// Tests that changing coordinate properties updates bounds and persists after save and reload.
+    /// </summary>
+    [Test]
+    public void Save_AfterChangingLayerCoordinates_SavesCorrectly()
+    {
+        byte[] originalBytes = BuildPsdWithSingleLayer("norm", 0x00, "Layer 1");
+        string outputFile = Path.Combine(_testDir, "layer_coordinates_test.psd");
+
+        using (var stream = new MemoryStream(originalBytes))
+        using (var image = PsdImage.Load(stream))
+        {
+            Layer layer = image.Layers[0];
+            layer.Top = 10;
+            layer.Left = 20;
+            layer.Bottom = 30;
+            layer.Right = 50;
+            image.Save(outputFile);
+        }
+
+        using var reloaded = PsdImage.Load(outputFile);
+        Assert.That(reloaded.Layers[0].Bounds, Is.EqualTo(Rectangle.FromLTRB(20, 10, 50, 30)));
+    }
+
+    /// <summary>
+    /// Tests that document-level DTO inspection API exposes resource, color, and image data summaries.
+    /// </summary>
+    [Test]
+    public void Load_DocumentInspectionDtos_ReturnExpectedValues()
+    {
+        byte[] palettePayload = BuildIndexedPalettePayload();
+        byte[] resourcesPayload = BuildResourcesPayload(
+            (ResourceBlock.GlobalAngleResourceId, "glba", [0x00, 0x00, 0x00, 0x2D]),
+            (ResourceBlock.IccProfileResourceId, "icc", [0x49, 0x43, 0x43, 0x50]),
+            (ResourceBlock.IccUntaggedProfileResourceId, string.Empty, [0x01]));
+        byte[] bytes = BuildMinimalDocument(
+            psb: false,
+            colorMode: ColorModes.Indexed,
+            colorDataPayload: palettePayload,
+            resourcesPayload: resourcesPayload,
+            compression: CompressionMethod.RLE,
+            imageDataPayload: [0x00, 0x02, 0xAB, 0xCD, 0x00, 0x01, 0xEF]);
+
+        using var stream = new MemoryStream(bytes);
+        using var image = PsdImage.Load(stream);
+
+        Assert.That(image.Resources, Has.Count.EqualTo(3));
+        Assert.That(image.Resources[0].Kind, Is.EqualTo(PsdResourceKind.GlobalAngle));
+        Assert.That(image.Resources[0].GlobalAngle, Is.EqualTo(45));
+        Assert.That(image.HasIccProfile, Is.True);
+        Assert.That(image.IsIccProfileUntagged, Is.True);
+        Assert.That(image.GlobalAngle, Is.EqualTo(45));
+
+        Assert.That(image.ColorDataInfo.Kind, Is.EqualTo(PsdColorDataKind.IndexedPalette));
+        Assert.That(image.ColorDataInfo.RawDataLength, Is.EqualTo(IndexedColorPalette.ExpectedRawLength));
+        Assert.That(image.IndexedPalette, Is.Not.Null);
+        Assert.That(image.IndexedPalette!.Entries, Has.Count.EqualTo(256));
+
+        Assert.That(image.ImageDataInfo.Kind, Is.EqualTo(ImageDataKind.Rle));
+        Assert.That(image.ImageDataInfo.RowLengthFieldSize, Is.EqualTo(sizeof(ushort)));
+        Assert.That(image.ImageDataInfo.RowByteCounts, Has.Count.EqualTo(3));
+        Assert.That(image.ImageDataInfo.CompressedPayloadLength, Is.EqualTo(1));
+        Assert.That(image.ImageDataInfo.UsesPrediction, Is.False);
+    }
+
+    /// <summary>
+    /// Tests that layer-level DTO inspection API exposes channel and subsection summaries.
+    /// </summary>
+    [Test]
+    public void Load_LayerInspectionDtos_ReturnExpectedValues()
+    {
+        byte[] originalBytes = BuildPsdWithSingleLayer("pass", 0x11, "Layer 1");
+
+        using var stream = new MemoryStream(originalBytes);
+        using var image = PsdImage.Load(stream);
+        Layer layer = image.Layers[0];
+
+        Assert.That(layer.Channels, Has.Count.EqualTo(1));
+        Assert.That(layer.Channels[0].ChannelId, Is.EqualTo(0));
+        Assert.That(layer.Channels[0].DataLength, Is.EqualTo((ulong)2));
+
+        Assert.That(layer.MaskInfo.IsPresent, Is.False);
+        Assert.That(layer.MaskInfo.RawDataLength, Is.EqualTo(4));
+        Assert.That(layer.BlendingRangesInfo.IsPresent, Is.False);
+        Assert.That(layer.BlendingRangesInfo.RawDataLength, Is.EqualTo(4));
+    }
+
+    /// <summary>
     /// Tests that PSD image data compressed with RLE round-trips without mutation.
     /// </summary>
     [Test]
@@ -750,6 +969,73 @@ public sealed class PsdImageTests : IDisposable
         using var sectionStream = new MemoryStream();
         using var sectionWriter = new BigEndianWriter(sectionStream, leaveOpen: true);
         sectionWriter.Write((long)layerInfoPayload.Length);
+        sectionWriter.Write(layerInfoPayload);
+
+        return sectionStream.ToArray();
+    }
+
+    private static byte[] BuildPsdWithSingleLayer(string blendModeKey, byte flags, string layerName)
+    {
+        using var stream = new MemoryStream();
+        using var writer = new BigEndianWriter(stream, leaveOpen: true);
+
+        stream.Write(System.Text.Encoding.ASCII.GetBytes("8BPS"));
+        writer.Write((ushort)PsdHeader.PsdVersion);
+        writer.Write(new byte[6]);
+        writer.Write((ushort)1);
+        writer.Write(1);
+        writer.Write(1);
+        writer.Write((ushort)8);
+        writer.Write((ushort)ColorModes.Rgb);
+        writer.Write((uint)0);
+        writer.Write((uint)0);
+
+        byte[] layerAndMaskSection = BuildPsdLayerAndMaskSection(blendModeKey, flags, layerName);
+        writer.Write((uint)layerAndMaskSection.Length);
+        writer.Write(layerAndMaskSection);
+
+        writer.Write((ushort)CompressionMethod.Raw);
+        writer.Write(new byte[] { 0x00 });
+
+        return stream.ToArray();
+    }
+
+    private static byte[] BuildPsdLayerAndMaskSection(string blendModeKey, byte flags, string layerName)
+    {
+        using var layerInfoPayloadStream = new MemoryStream();
+        using var layerInfoWriter = new BigEndianWriter(layerInfoPayloadStream, leaveOpen: true);
+
+        layerInfoWriter.Write((short)1);
+        layerInfoWriter.Write(0);
+        layerInfoWriter.Write(0);
+        layerInfoWriter.Write(1);
+        layerInfoWriter.Write(1);
+        layerInfoWriter.Write((ushort)1);
+        layerInfoWriter.Write((short)0);
+        layerInfoWriter.Write((uint)2);
+        layerInfoWriter.Write(0x3842494D);
+        layerInfoWriter.Write(System.Text.Encoding.ASCII.GetBytes(blendModeKey));
+        layerInfoWriter.Write((byte)255);
+        layerInfoWriter.Write((byte)0);
+        layerInfoWriter.Write(flags);
+        layerInfoWriter.Write((byte)0);
+
+        using var extraDataStream = new MemoryStream();
+        using var extraDataWriter = new BigEndianWriter(extraDataStream, leaveOpen: true);
+        extraDataWriter.Write((uint)0);
+        extraDataWriter.Write((uint)0);
+        extraDataWriter.WritePascalString(layerName);
+
+        byte[] extraData = extraDataStream.ToArray();
+        layerInfoWriter.Write(extraData.Length);
+        layerInfoWriter.Write(extraData);
+        layerInfoWriter.Write((ushort)CompressionMethod.Raw);
+
+        byte[] layerInfoPayload = layerInfoPayloadStream.ToArray();
+
+        using var sectionStream = new MemoryStream();
+        using var sectionWriter = new BigEndianWriter(sectionStream, leaveOpen: true);
+        sectionWriter.Write(layerInfoPayload.Length);
         sectionWriter.Write(layerInfoPayload);
 
         return sectionStream.ToArray();

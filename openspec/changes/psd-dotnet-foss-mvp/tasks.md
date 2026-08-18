@@ -173,29 +173,29 @@
 
 ## 15. Расширение public API без рендеринга
 
-- [ ] 15.1 Подготовить internal state preservation для расширенного public API: сохранять raw layer flags, original blend mode key и stable parsed summaries вместо потери исходного structural state при ранней нормализации
-- [ ] 15.2 Добавить document-level simple read-only properties `IsLargeDocument`, `IsPsb`, `Header`, `LayerCount`
-- [ ] 15.3 Добавить document-level simple read-only properties `HasImageResources`, `ResourceCount`, `HasColorModeData`, `HasMergedImageData`
-- [ ] 15.4 Добавить document-level simple read-only properties `Compression`, `ImageDataKind`, `UsesPrediction`
-- [ ] 15.5 Добавить layer-level simple read-only properties `Width`, `Height`, `Top`, `Left`, `Bottom`, `Right`
-- [ ] 15.6 Добавить layer-level simple read-only properties `ChannelCount`, `HasMaskData`, `HasBlendingRangesData`, `HasAdditionalLayerData`, `BlendModeKey`
-- [ ] 15.7 Добавить read-only DTO `PsdResourceInfo` и вынести наружу read-only collection document resources
-- [ ] 15.8 Добавить document-level inspection properties `GlobalAngle`, `HasIccProfile`, `IsIccProfileUntagged`
-- [ ] 15.9 Добавить read-only DTO для color mode data и summary по indexed palette
-- [ ] 15.10 Добавить document-level inspection properties `ColorDataInfo` и `IndexedPalette`
-- [ ] 15.11 Добавить read-only DTO для summary по структуре image data
-- [ ] 15.12 Добавить document-level inspection property `ImageDataInfo`
-- [ ] 15.13 Добавить public read-only layer channel DTO и property `Channels`
-- [ ] 15.14 Добавить public read-only DTO для summary по layer mask/blending ranges и properties `MaskInfo`, `BlendingRangesInfo`
-- [ ] 15.15 Расширить mutable layer metadata editing: добавить setter для `BlendMode`
-- [ ] 15.16 Расширить mutable layer metadata editing: добавить setter для `Clipping`
-- [ ] 15.17 Расширить mutable layer metadata editing: добавить setter для `Bounds`
-- [ ] 15.18 Расширить mutable layer metadata editing: добавить coordinate setters `Top`, `Left`, `Bottom`, `Right` с согласованным обновлением `Bounds`
-- [ ] 15.19 Добавить acceptance tests для internal-state-sensitive round-trip сценариев после расширения metadata API
-- [ ] 15.20 Добавить acceptance tests для новых document-level simple properties
-- [ ] 15.21 Добавить acceptance tests для новых layer-level simple properties
-- [ ] 15.22 Добавить acceptance tests для read-only DTO document inspection API
-- [ ] 15.23 Добавить acceptance tests для read-only DTO layer inspection API
-- [ ] 15.24 Добавить acceptance tests для новых mutable metadata fields `BlendMode`, `Clipping`, `Bounds` и coordinate properties
-- [ ] 15.25 Обновить README для расширенного inspection/editing subset в public API
-- [ ] 15.26 Обновить markdown documentation и samples для новых inspection/editing возможностей
+- [x] 15.1 Подготовить internal state preservation для расширенного public API: сохранять raw layer flags, original blend mode key и stable parsed summaries вместо потери исходного structural state при ранней нормализации
+- [x] 15.2 Добавить document-level simple read-only properties `IsLargeDocument`, `IsPsb`, `Header`, `LayerCount`
+- [x] 15.3 Добавить document-level simple read-only properties `HasImageResources`, `ResourceCount`, `HasColorModeData`, `HasMergedImageData`
+- [x] 15.4 Добавить document-level simple read-only properties `Compression`, `ImageDataKind`, `UsesPrediction`
+- [x] 15.5 Добавить layer-level simple read-only properties `Width`, `Height`, `Top`, `Left`, `Bottom`, `Right`
+- [x] 15.6 Добавить layer-level simple read-only properties `ChannelCount`, `HasMaskData`, `HasBlendingRangesData`, `HasAdditionalLayerData`, `BlendModeKey`
+- [x] 15.7 Добавить read-only DTO `PsdResourceInfo` и вынести наружу read-only collection document resources
+- [x] 15.8 Добавить document-level inspection properties `GlobalAngle`, `HasIccProfile`, `IsIccProfileUntagged`
+- [x] 15.9 Добавить read-only DTO для color mode data и summary по indexed palette
+- [x] 15.10 Добавить document-level inspection properties `ColorDataInfo` и `IndexedPalette`
+- [x] 15.11 Добавить read-only DTO для summary по структуре image data
+- [x] 15.12 Добавить document-level inspection property `ImageDataInfo`
+- [x] 15.13 Добавить public read-only layer channel DTO и property `Channels`
+- [x] 15.14 Добавить public read-only DTO для summary по layer mask/blending ranges и properties `MaskInfo`, `BlendingRangesInfo`
+- [x] 15.15 Расширить mutable layer metadata editing: добавить setter для `BlendMode`
+- [x] 15.16 Расширить mutable layer metadata editing: добавить setter для `Clipping`
+- [x] 15.17 Расширить mutable layer metadata editing: добавить setter для `Bounds`
+- [x] 15.18 Расширить mutable layer metadata editing: добавить coordinate setters `Top`, `Left`, `Bottom`, `Right` с согласованным обновлением `Bounds`
+- [x] 15.19 Добавить acceptance tests для internal-state-sensitive round-trip сценариев после расширения metadata API
+- [x] 15.20 Добавить acceptance tests для новых document-level simple properties
+- [x] 15.21 Добавить acceptance tests для новых layer-level simple properties
+- [x] 15.22 Добавить acceptance tests для read-only DTO document inspection API
+- [x] 15.23 Добавить acceptance tests для read-only DTO layer inspection API
+- [x] 15.24 Добавить acceptance tests для новых mutable metadata fields `BlendMode`, `Clipping`, `Bounds` и coordinate properties
+- [x] 15.25 Обновить README для расширенного inspection/editing subset в public API
+- [x] 15.26 Обновить markdown documentation и samples для новых inspection/editing возможностей

@@ -17,7 +17,10 @@ Console.WriteLine($"Channels: {image.Channels}");
 Console.WriteLine($"BitsPerChannel: {image.BitsPerChannel}");
 Console.WriteLine($"ColorMode: {image.ColorMode}");
 Console.WriteLine($"Version: {image.Version}");
-Console.WriteLine($"Layers: {image.Layers.Length}");
+Console.WriteLine($"IsPsb: {image.IsPsb}");
+Console.WriteLine($"Compression: {image.Compression}");
+Console.WriteLine($"Layers: {image.LayerCount}");
+Console.WriteLine($"Resources: {image.ResourceCount}");
 
 static string? ResolveInputPath(string[] args)
 {

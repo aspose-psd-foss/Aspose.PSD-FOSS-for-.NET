@@ -150,6 +150,15 @@ internal sealed class ResourceBlock
 
         return data[0] != 0;
     }
+
+    /// <summary>
+    /// Creates a read-only public summary for this resource block.
+    /// </summary>
+    /// <returns>The public resource summary.</returns>
+    public PsdResourceInfo ToPublicInfo()
+    {
+        return new PsdResourceInfo(ResourceId, Name, Kind.ToPublicKind(), Data.Length, GlobalAngle, IsIccProfileUntagged);
+    }
 }
 
 /// <summary>
@@ -176,4 +185,18 @@ internal enum KnownResourceKind
     /// The resource stores the intentionally-untagged ICC profile flag.
     /// </summary>
     IccUntaggedProfile
+}
+
+internal static class KnownResourceKindExtensions
+{
+    public static PsdResourceKind ToPublicKind(this KnownResourceKind kind)
+    {
+        return kind switch
+        {
+            KnownResourceKind.GlobalAngle => PsdResourceKind.GlobalAngle,
+            KnownResourceKind.IccProfile => PsdResourceKind.IccProfile,
+            KnownResourceKind.IccUntaggedProfile => PsdResourceKind.IccUntaggedProfile,
+            _ => PsdResourceKind.Unknown
+        };
+    }
 }

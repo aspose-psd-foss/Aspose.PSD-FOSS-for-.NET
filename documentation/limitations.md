@@ -5,8 +5,9 @@
 - Load PSD files
 - Load the currently supported PSB subset
 - Read document properties from the PSD/PSB header
-- Read layer name, bounds, visibility, opacity, and blend mode
-- Change layer name, visibility, and opacity
+- Read additional structural metadata from image resources, color mode data, merged image data, and layer subsections
+- Read layer name, bounds, derived geometry, visibility, opacity, clipping, blend mode, blend mode key, and channel summaries
+- Change layer name, visibility, opacity, clipping, blend mode, and layer geometry
 - Save without rendering
 - Preserve unsupported sections as raw bytes where possible
 

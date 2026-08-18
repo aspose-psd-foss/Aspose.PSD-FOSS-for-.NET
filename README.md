@@ -7,8 +7,10 @@ Aspose.PSD.FOSS is a free open-source .NET library for loading, inspecting, edit
 - Aspose.PSD-style API for common PSD metadata scenarios
 - Load PSD/PSB from file paths and streams
 - Read document properties: `Width`, `Height`, `Channels`, `BitsPerChannel`, `ColorMode`, `Version`
-- Read layer metadata: `Name`, `Bounds`, `IsVisible`, `Opacity`, `BlendMode`
-- Change `Name`, `IsVisible`, and `Opacity`
+- Read additional document metadata: `IsLargeDocument`, `IsPsb`, `LayerCount`, resource and merged-image summaries
+- Read layer metadata: `Name`, `Bounds`, `Width`, `Height`, `Top`, `Left`, `Bottom`, `Right`, `IsVisible`, `Opacity`, `Clipping`, `BlendMode`, `BlendModeKey`
+- Inspect parsed resources, color mode data, image data structure, layer channels, mask presence, and blending-range presence
+- Change `Name`, `IsVisible`, `Opacity`, `BlendMode`, `Clipping`, and layer geometry
 - Save without rendering
 - Preserve unsupported sections as raw bytes where possible
 
@@ -18,8 +20,21 @@ Aspose.PSD.FOSS is a free open-source .NET library for loading, inspecting, edit
 
 ## Installation
 
+The package metadata is defined in this repository, but `Aspose.PSD.FOSS` is not published to NuGet yet.
+
+Build the package locally:
+
 ```bash
-dotnet add package Aspose.PSD.FOSS
+dotnet pack src/Aspose.PSD.FOSS/Aspose.PSD.FOSS.csproj -c Release
+```
+
+The package will be created under `src/Aspose.PSD.FOSS/bin/Release/`.
+
+To install it through a local NuGet source:
+
+```bash
+dotnet nuget add source src/Aspose.PSD.FOSS/bin/Release --name AsposePsdFossLocal
+dotnet add package Aspose.PSD.FOSS --source AsposePsdFossLocal
 ```
 
 ## Quick Start
@@ -33,11 +48,16 @@ Console.WriteLine(image.Width);
 Console.WriteLine(image.Height);
 Console.WriteLine(image.BitsPerChannel);
 Console.WriteLine(image.ColorMode);
+Console.WriteLine(image.IsPsb);
+Console.WriteLine(image.Compression);
+Console.WriteLine(image.ResourceCount);
 
 foreach (Layer layer in image.Layers)
 {
     Console.WriteLine(layer.Name);
     Console.WriteLine(layer.Bounds);
+    Console.WriteLine(layer.BlendModeKey);
+    Console.WriteLine(layer.ChannelCount);
     Console.WriteLine(layer.IsVisible);
     Console.WriteLine(layer.Opacity);
     Console.WriteLine(layer.BlendMode);
@@ -46,6 +66,7 @@ foreach (Layer layer in image.Layers)
 image.Layers[0].Name = "Updated layer";
 image.Layers[0].IsVisible = false;
 image.Layers[0].Opacity = 128;
+image.Layers[0].BlendMode = BlendMode.Multiply;
 image.Save("output.psd");
 ```
 
@@ -81,8 +102,8 @@ Markdown documentation is available in the repository:
 - Load PSD files
 - Load the currently supported PSB subset
 - Read document properties from the file header
-- Read layer metadata from Layer and Mask Information
-- Change `Name`, `IsVisible`, and `Opacity`
+- Read structural metadata from Color Mode Data, Image Resources, Layer and Mask Information, and merged image data
+- Change `Name`, `IsVisible`, `Opacity`, `BlendMode`, `Clipping`, and layer geometry
 - Save PSD/PSB without rendering
 
 ## Out of Scope

@@ -19,7 +19,7 @@ Console.WriteLine($"Input: {inputPath}");
 for (int i = 0; i < image.Layers.Length; i++)
 {
     Layer layer = image.Layers[i];
-    Console.WriteLine($"[{i}] Name={layer.Name}; Bounds={layer.Bounds}; Visible={layer.IsVisible}; Opacity={layer.Opacity}; BlendMode={layer.BlendMode}");
+    Console.WriteLine($"[{i}] Name={layer.Name}; Bounds={layer.Bounds}; Visible={layer.IsVisible}; Opacity={layer.Opacity}; Clipping={layer.Clipping}; BlendMode={layer.BlendMode}; BlendModeKey={layer.BlendModeKey}; Channels={layer.ChannelCount}");
 }
 
 if (image.Layers.Length > 0)
@@ -27,6 +27,8 @@ if (image.Layers.Length > 0)
     image.Layers[0].Name = $"{image.Layers[0].Name} (updated)";
     image.Layers[0].IsVisible = false;
     image.Layers[0].Opacity = 128;
+    image.Layers[0].BlendMode = BlendMode.Multiply;
+    image.Layers[0].Clipping = 1;
     image.Save(outputPath);
 
     Console.WriteLine($"Updated first layer and saved: {outputPath}");

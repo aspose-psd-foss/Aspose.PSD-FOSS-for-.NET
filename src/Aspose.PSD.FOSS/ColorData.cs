@@ -75,6 +75,15 @@ internal sealed class ColorData
             writer.Write(RawData);
         }
     }
+
+    /// <summary>
+    /// Creates a read-only public summary for the current Color Mode Data section.
+    /// </summary>
+    /// <returns>The public color data summary.</returns>
+    public PsdColorDataInfo ToPublicInfo()
+    {
+        return new PsdColorDataInfo(Kind.ToPublicKind(), RawData.Length, IndexedPalette?.ToPublicInfo());
+    }
 }
 
 /// <summary>
@@ -146,5 +155,29 @@ internal sealed class IndexedColorPalette
         }
 
         return new IndexedColorPalette(entries);
+    }
+
+    /// <summary>
+    /// Creates a read-only public summary of the indexed palette.
+    /// </summary>
+    /// <returns>The public indexed palette summary.</returns>
+    public IndexedColorPaletteInfo ToPublicInfo()
+    {
+        return new IndexedColorPaletteInfo(Entries);
+    }
+}
+
+internal static class ColorDataKindExtensions
+{
+    public static PsdColorDataKind ToPublicKind(this ColorDataKind kind)
+    {
+        return kind switch
+        {
+            ColorDataKind.IndexedPalette => PsdColorDataKind.IndexedPalette,
+            ColorDataKind.RgbPayload => PsdColorDataKind.RgbPayload,
+            ColorDataKind.CmykPayload => PsdColorDataKind.CmykPayload,
+            ColorDataKind.RawPreserved => PsdColorDataKind.RawPreserved,
+            _ => PsdColorDataKind.None
+        };
     }
 }

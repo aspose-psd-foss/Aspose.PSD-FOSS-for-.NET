@@ -1,4 +1,5 @@
 using System.Drawing;
+using System.Linq;
 
 namespace Aspose.PSD.FOSS;
 
@@ -11,6 +12,31 @@ public class Layer
     /// Gets the fixed-size byte count of the layer record trailer fields.
     /// </summary>
     public const int LayerTrailerSize = 16;
+
+    /// <summary>
+    /// Stores the Adobe layer record signature value "8BIM".
+    /// </summary>
+    private const uint AdobeLayerSignature = 0x3842494D;
+
+    /// <summary>
+    /// Stores the Adobe layer record signature text.
+    /// </summary>
+    private const string AdobeLayerSignatureText = "8BIM";
+
+    /// <summary>
+    /// Stores the PSD blend mode key for the normal blend mode.
+    /// </summary>
+    private const string NormalBlendModeKey = "norm";
+
+    /// <summary>
+    /// Stores the PSD visibility bit that marks a layer as hidden when set.
+    /// </summary>
+    private const byte LayerInvisibleFlag = 0x02;
+
+    /// <summary>
+    /// Stores the reserved trailing byte in the layer record.
+    /// </summary>
+    private const byte LayerRecordReservedByte = 0;
 
     /// <summary>
     /// Stores the current layer name.
@@ -26,6 +52,16 @@ public class Layer
     /// Stores the current layer opacity value.
     /// </summary>
     private byte _opacity = 255;
+
+    /// <summary>
+    /// Stores the original PSD layer flags byte.
+    /// </summary>
+    private byte _flags;
+
+    /// <summary>
+    /// Stores the original 4-byte PSD blend mode key.
+    /// </summary>
+    private string _blendModeKey = NormalBlendModeKey;
 
     /// <summary>
     /// Gets or sets the Pascal layer name stored in the layer record.
@@ -45,7 +81,93 @@ public class Layer
     /// <summary>
     /// Gets the layer bounds in document coordinates.
     /// </summary>
-    public Rectangle Bounds { get; private set; }
+    public Rectangle Bounds
+    {
+        get => _bounds;
+        set
+        {
+            if (_bounds != value)
+            {
+                _bounds = value;
+                HasMutated = true;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Stores the current layer bounds in document coordinates.
+    /// </summary>
+    private Rectangle _bounds;
+
+    /// <summary>
+    /// Gets the layer width in pixels.
+    /// </summary>
+    public int Width => Bounds.Width;
+
+    /// <summary>
+    /// Gets the layer height in pixels.
+    /// </summary>
+    public int Height => Bounds.Height;
+
+    /// <summary>
+    /// Gets the top edge of the layer bounds.
+    /// </summary>
+    public int Top
+    {
+        get => Bounds.Top;
+        set
+        {
+            if (Bounds.Top != value)
+            {
+                Bounds = Rectangle.FromLTRB(Bounds.Left, value, Bounds.Right, Bounds.Bottom);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the left edge of the layer bounds.
+    /// </summary>
+    public int Left
+    {
+        get => Bounds.Left;
+        set
+        {
+            if (Bounds.Left != value)
+            {
+                Bounds = Rectangle.FromLTRB(value, Bounds.Top, Bounds.Right, Bounds.Bottom);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the bottom edge of the layer bounds.
+    /// </summary>
+    public int Bottom
+    {
+        get => Bounds.Bottom;
+        set
+        {
+            if (Bounds.Bottom != value)
+            {
+                Bounds = Rectangle.FromLTRB(Bounds.Left, Bounds.Top, Bounds.Right, value);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the right edge of the layer bounds.
+    /// </summary>
+    public int Right
+    {
+        get => Bounds.Right;
+        set
+        {
+            if (Bounds.Right != value)
+            {
+                Bounds = Rectangle.FromLTRB(Bounds.Left, Bounds.Top, value, Bounds.Bottom);
+            }
+        }
+    }
 
     /// <summary>
     /// Gets or sets a value indicating whether the layer is visible.
@@ -80,12 +202,85 @@ public class Layer
     /// <summary>
     /// Gets the PSD clipping value for the layer.
     /// </summary>
-    public byte Clipping { get; private set; }
+    public byte Clipping
+    {
+        get => _clipping;
+        set
+        {
+            if (_clipping != value)
+            {
+                _clipping = value;
+                HasMutated = true;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Stores the PSD clipping value for the layer.
+    /// </summary>
+    private byte _clipping;
 
     /// <summary>
     /// Gets the PSD blend mode exposed by the layer record.
     /// </summary>
-    public BlendMode BlendMode { get; private set; }
+    public BlendMode BlendMode
+    {
+        get => _blendMode;
+        set
+        {
+            if (_blendMode != value)
+            {
+                _blendMode = value;
+                _blendModeKey = GetBlendModeKey(value);
+                HasMutated = true;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Stores the PSD blend mode exposed by the layer record.
+    /// </summary>
+    private BlendMode _blendMode;
+
+    /// <summary>
+    /// Gets the original 4-byte PSD blend mode key.
+    /// </summary>
+    public string BlendModeKey => _blendModeKey;
+
+    /// <summary>
+    /// Gets the number of parsed channel records in the layer.
+    /// </summary>
+    public int ChannelCount => ChannelInfo.Length;
+
+    /// <summary>
+    /// Gets a read-only summary of the parsed layer channel records.
+    /// </summary>
+    public IReadOnlyList<PsdLayerChannelInfo> Channels => ChannelInfo.Select(channel => new PsdLayerChannelInfo(channel.ChannelId, channel.DataLength)).ToArray();
+
+    /// <summary>
+    /// Gets a value indicating whether the layer contains a non-empty layer mask subsection.
+    /// </summary>
+    public bool HasMaskData => _layerMaskData.RawData.Length > sizeof(uint);
+
+    /// <summary>
+    /// Gets a value indicating whether the layer contains a non-empty blending ranges subsection.
+    /// </summary>
+    public bool HasBlendingRangesData => _blendingRangesData.RawData.Length > sizeof(uint);
+
+    /// <summary>
+    /// Gets a value indicating whether the layer contains trailing opaque additional layer data.
+    /// </summary>
+    public bool HasAdditionalLayerData => _additionalLayerData.Length > 0;
+
+    /// <summary>
+    /// Gets a read-only summary of the parsed layer mask subsection.
+    /// </summary>
+    public LayerMaskInfo MaskInfo => new(HasMaskData, _layerMaskData.RawData.Length);
+
+    /// <summary>
+    /// Gets a read-only summary of the parsed blending ranges subsection.
+    /// </summary>
+    public LayerBlendingRangesInfo BlendingRangesInfo => new(HasBlendingRangesData, _blendingRangesData.RawData.Length);
 
     /// <summary>
     /// Stores the parsed per-channel metadata from the layer record.
@@ -150,12 +345,13 @@ public class Layer
         }
 
         int signature = reader.ReadInt32();
-        if (signature != 0x3842494D)
+        if (signature != AdobeLayerSignature)
         {
-            throw new PsdLoadException("Invalid layer blend mode signature. Expected '8BIM'.");
+            throw new PsdLoadException($"Invalid layer blend mode signature. Expected '{AdobeLayerSignatureText}'.");
         }
 
         byte[] blendModeKey = reader.ReadBytes(4);
+        string originalBlendModeKey = System.Text.Encoding.ASCII.GetString(blendModeKey);
         BlendMode blendMode = ParseBlendModeKey(blendModeKey);
 
         byte opacity = reader.ReadByte();
@@ -201,16 +397,18 @@ public class Layer
         }
 
         var bounds = new Rectangle(left, top, right - left, bottom - top);
-        bool visible = (flags & 0x02) == 0;
+        bool visible = (flags & LayerInvisibleFlag) == 0;
 
         return new Layer
         {
             _name = layerName,
-            Bounds = bounds,
+            _bounds = bounds,
             _isVisible = visible,
             _opacity = opacity,
-            Clipping = clipping,
-            BlendMode = blendMode,
+            _flags = flags,
+            _blendModeKey = originalBlendModeKey,
+            _clipping = clipping,
+            _blendMode = blendMode,
             ChannelInfo = channelInfoArray,
             _layerMaskData = layerMaskData,
             _blendingRangesData = blendingRangesData,
@@ -230,7 +428,7 @@ public class Layer
         string modeKey = System.Text.Encoding.ASCII.GetString(key);
         return modeKey switch
         {
-            "norm" => BlendMode.Normal,
+            NormalBlendModeKey => BlendMode.Normal,
             "mul " => BlendMode.Multiply,
             "scrn" => BlendMode.Screen,
             "over" => BlendMode.Overlay,
@@ -276,16 +474,23 @@ public class Layer
             }
         }
 
-        writer.Write(0x3842494D);
-        writer.Write(GetBlendModeBytes(BlendMode));
+        writer.Write(AdobeLayerSignature);
+        writer.Write(System.Text.Encoding.ASCII.GetBytes(_blendModeKey));
         writer.Write(Opacity);
         writer.Write(Clipping);
 
-        int flags = 0;
-        if (!IsVisible) flags |= 0x02;
+        byte flags = _flags;
+        if (IsVisible)
+        {
+            flags = (byte)(flags & ~LayerInvisibleFlag);
+        }
+        else
+        {
+            flags = (byte)(flags | LayerInvisibleFlag);
+        }
 
-        writer.Write((byte)flags);
-        writer.Write((byte)0);
+        writer.Write(flags);
+        writer.Write(LayerRecordReservedByte);
         int extraDataLength = _layerMaskData.RawData.Length + _blendingRangesData.RawData.Length + GetPascalStringStorageLength(Name) + _additionalLayerData.Length;
         writer.Write(extraDataLength);
 
@@ -300,11 +505,11 @@ public class Layer
     /// </summary>
     /// <param name="mode">The blend mode value to encode.</param>
     /// <returns>The encoded PSD blend mode key.</returns>
-    private byte[] GetBlendModeBytes(BlendMode mode)
+    private static string GetBlendModeKey(BlendMode mode)
     {
-        string key = mode switch
+        return mode switch
         {
-            BlendMode.Normal => "norm",
+            BlendMode.Normal => NormalBlendModeKey,
             BlendMode.Multiply => "mul ",
             BlendMode.Screen => "scrn",
             BlendMode.Overlay => "over",
@@ -320,9 +525,8 @@ public class Layer
             BlendMode.Saturation => "sat ",
             BlendMode.Color => "colr",
             BlendMode.Luminosity => "lum ",
-            _ => "norm"
+            _ => NormalBlendModeKey
         };
-        return System.Text.Encoding.ASCII.GetBytes(key);
     }
 
     /// <summary>

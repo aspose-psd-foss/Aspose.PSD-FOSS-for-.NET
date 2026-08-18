@@ -77,6 +77,20 @@ internal sealed class ImageData
     }
 
     /// <summary>
+    /// Creates a read-only public summary of the parsed merged image data structure.
+    /// </summary>
+    /// <returns>The public image data summary.</returns>
+    public PsdImageDataInfo ToPublicInfo()
+    {
+        return new PsdImageDataInfo(
+            Structure.Kind,
+            Structure.RowLengthFieldSize,
+            Structure.RowByteCounts,
+            Structure.CompressedPayloadLength,
+            Structure.UsesPrediction);
+    }
+
+    /// <summary>
     /// Builds a structural view over the raw image-data payload without decoding pixels.
     /// </summary>
     /// <param name="compression">The stored compression mode.</param>
@@ -261,30 +275,4 @@ internal sealed class ImageDataStructure
     {
         return new ImageDataStructure(ImageDataKind.Unknown, 0, [], payloadLength, usesPrediction: false);
     }
-}
-
-/// <summary>
-/// Identifies the structural shape of the PSD Image Data payload.
-/// </summary>
-internal enum ImageDataKind
-{
-    /// <summary>
-    /// The payload is raw pixel data.
-    /// </summary>
-    Raw,
-
-    /// <summary>
-    /// The payload starts with an RLE row-length table followed by compressed scan data.
-    /// </summary>
-    Rle,
-
-    /// <summary>
-    /// The payload is ZIP-compressed scan data, optionally with prediction.
-    /// </summary>
-    Zip,
-
-    /// <summary>
-    /// The payload uses an unrecognized compression code and is preserved as-is.
-    /// </summary>
-    Unknown,
 }

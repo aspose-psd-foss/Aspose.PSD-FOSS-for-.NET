@@ -6,10 +6,21 @@ Aspose.PSD.FOSS is a lightweight open-source .NET library for loading, inspectin
 
 - .NET 10.0 SDK or later
 
-## Install from NuGet
+## Build the Package Locally
+
+`Aspose.PSD.FOSS` is not published to NuGet yet. Build the package from this repository:
 
 ```bash
-dotnet add package Aspose.PSD.FOSS
+dotnet pack src/Aspose.PSD.FOSS/Aspose.PSD.FOSS.csproj -c Release
+```
+
+The generated `.nupkg` file will be placed under `src/Aspose.PSD.FOSS/bin/Release/`.
+
+If you want to install it through a local NuGet source:
+
+```bash
+dotnet nuget add source src/Aspose.PSD.FOSS/bin/Release --name AsposePsdFossLocal
+dotnet add package Aspose.PSD.FOSS --source AsposePsdFossLocal
 ```
 
 ## First Example
@@ -23,11 +34,15 @@ Console.WriteLine(image.Width);
 Console.WriteLine(image.Height);
 Console.WriteLine(image.BitsPerChannel);
 Console.WriteLine(image.ColorMode);
+Console.WriteLine(image.IsPsb);
+Console.WriteLine(image.Compression);
+Console.WriteLine(image.LayerCount);
 
 foreach (Layer layer in image.Layers)
 {
     Console.WriteLine(layer.Name);
     Console.WriteLine(layer.Bounds);
+    Console.WriteLine(layer.BlendModeKey);
     Console.WriteLine(layer.IsVisible);
     Console.WriteLine(layer.Opacity);
     Console.WriteLine(layer.BlendMode);
@@ -43,6 +58,8 @@ using PsdImage image = PsdImage.Load("input.psd");
 image.Layers[0].Name = "Updated layer";
 image.Layers[0].IsVisible = false;
 image.Layers[0].Opacity = 128;
+image.Layers[0].BlendMode = BlendMode.Multiply;
+image.Layers[0].Clipping = 1;
 image.Save("output.psd");
 ```
 
