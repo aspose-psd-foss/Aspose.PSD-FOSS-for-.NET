@@ -105,12 +105,13 @@ public sealed class PsdImageTests : IDisposable
     public void Save_RoundTripWithoutMutation_ProducesValidFile()
     {
         string testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd");
-        string outputFile = Path.Combine(_testDir, "roundtrip_test.psd");
+        string outputFile = GetPersistentArtifactPath("roundtrip_test.psd");
 
         using var image1 = PsdImage.Load(testFile);
         int originalLength = image1.Layers.Length;
         string originalLayerName = image1.Layers.Length > 0 ? image1.Layers[0].Name : string.Empty;
         image1.Save(outputFile);
+        LogArtifactDirectory(outputFile);
 
         using var image2 = PsdImage.Load(outputFile);
 
@@ -126,6 +127,52 @@ public sealed class PsdImageTests : IDisposable
     }
 
     /// <summary>
+    /// Gets a stable artifact path for the current test under the NUnit work directory.
+    /// </summary>
+    /// <param name="fileName">The artifact file name.</param>
+    /// <returns>The full output path for the artifact.</returns>
+    private static string GetPersistentArtifactPath(string fileName)
+    {
+        string testName = SanitizePathSegment(TestContext.CurrentContext.Test.Name);
+        string artifactDirectory = Path.Combine(
+            TestContext.CurrentContext.WorkDirectory,
+            "artifacts",
+            nameof(PsdImageTests),
+            testName);
+
+        Directory.CreateDirectory(artifactDirectory);
+        return Path.Combine(artifactDirectory, fileName);
+    }
+
+    /// <summary>
+    /// Writes the artifact directory path for the current test to the NUnit output log.
+    /// </summary>
+    /// <param name="outputFile">The saved artifact file path.</param>
+    private static void LogArtifactDirectory(string outputFile)
+    {
+        string outputDirectory = Path.GetDirectoryName(outputFile) ?? string.Empty;
+        TestContext.Out.WriteLine($"Saved test artifact directory: {outputDirectory}");
+    }
+
+    /// <summary>
+    /// Replaces characters that are invalid in file-system path segments.
+    /// </summary>
+    /// <param name="value">The path segment candidate.</param>
+    /// <returns>A file-system-safe path segment.</returns>
+    private static string SanitizePathSegment(string value)
+    {
+        char[] invalidCharacters = Path.GetInvalidFileNameChars();
+        var builder = new System.Text.StringBuilder(value.Length);
+
+        foreach (char character in value)
+        {
+            builder.Append(Array.IndexOf(invalidCharacters, character) >= 0 ? '_' : character);
+        }
+
+        return builder.ToString();
+    }
+
+    /// <summary>
     /// Tests strict no-mutation round-trip with byte-for-byte comparison.
     /// Verifies that saving a PSD file without mutations produces a file
     /// that is byte-for-byte identical to the original.
@@ -134,12 +181,13 @@ public sealed class PsdImageTests : IDisposable
     public void Save_RoundTripWithoutMutation_ByteForByteIdentical()
     {
         string testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd");
-        string outputFile = Path.Combine(_testDir, "roundtrip_byteexact_test.psd");
+        string outputFile = GetPersistentArtifactPath("roundtrip_byteexact_test.psd");
 
         byte[] originalBytes = File.ReadAllBytes(testFile);
 
         using var image = PsdImage.Load(testFile);
         image.Save(outputFile);
+        LogArtifactDirectory(outputFile);
 
         byte[] savedBytes = File.ReadAllBytes(outputFile);
 
@@ -160,7 +208,7 @@ public sealed class PsdImageTests : IDisposable
     public void Save_AfterChangingLayerName_SavesCorrectly()
     {
         string testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd");
-        string outputFile = Path.Combine(_testDir, "layer_name_test.psd");
+        string outputFile = GetPersistentArtifactPath("layer_name_test.psd");
 
         using var image = PsdImage.Load(testFile);
 
@@ -170,6 +218,7 @@ public sealed class PsdImageTests : IDisposable
         image.Layers[0].Name = "Test Layer Name";
 
         image.Save(outputFile);
+        LogArtifactDirectory(outputFile);
 
         using var reloaded = PsdImage.Load(outputFile);
 
@@ -183,7 +232,7 @@ public sealed class PsdImageTests : IDisposable
     public void Save_AfterChangingLayerVisible_SavesCorrectly()
     {
         string testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd");
-        string outputFile = Path.Combine(_testDir, "layer_visible_test.psd");
+        string outputFile = GetPersistentArtifactPath("layer_visible_test.psd");
 
         using var image = PsdImage.Load(testFile);
 
@@ -193,6 +242,7 @@ public sealed class PsdImageTests : IDisposable
         image.Layers[0].IsVisible = !originalVisible;
 
         image.Save(outputFile);
+        LogArtifactDirectory(outputFile);
 
         using var reloaded = PsdImage.Load(outputFile);
 
@@ -206,7 +256,7 @@ public sealed class PsdImageTests : IDisposable
     public void Save_AfterChangingLayerOpacity_SavesCorrectly()
     {
         string testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd");
-        string outputFile = Path.Combine(_testDir, "layer_opacity_test.psd");
+        string outputFile = GetPersistentArtifactPath("layer_opacity_test.psd");
 
         using var image = PsdImage.Load(testFile);
 
@@ -217,6 +267,7 @@ public sealed class PsdImageTests : IDisposable
         image.Layers[0].Opacity = newOpacity;
 
         image.Save(outputFile);
+        LogArtifactDirectory(outputFile);
 
         using var reloaded = PsdImage.Load(outputFile);
 
@@ -464,13 +515,14 @@ public sealed class PsdImageTests : IDisposable
     public void Save_AfterSupportedMutation_PreservesRawFlagsAndBlendModeKey()
     {
         byte[] originalBytes = BuildPsdWithSingleLayer("pass", 0x11, "Layer 1");
-        string outputFile = Path.Combine(_testDir, "preserve_flags_and_blend.psd");
+        string outputFile = GetPersistentArtifactPath("preserve_flags_and_blend.psd");
 
         using (var stream = new MemoryStream(originalBytes))
         using (var image = PsdImage.Load(stream))
         {
             image.Layers[0].Name = "Renamed";
             image.Save(outputFile);
+            LogArtifactDirectory(outputFile);
         }
 
         using var reloaded = PsdImage.Load(outputFile);
@@ -485,11 +537,12 @@ public sealed class PsdImageTests : IDisposable
     public void Save_AfterChangingLayerBlendMode_SavesCorrectly()
     {
         string testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd");
-        string outputFile = Path.Combine(_testDir, "layer_blend_mode_test.psd");
+        string outputFile = GetPersistentArtifactPath("layer_blend_mode_test.psd");
 
         using var image = PsdImage.Load(testFile);
         image.Layers[0].BlendMode = BlendMode.Multiply;
         image.Save(outputFile);
+        LogArtifactDirectory(outputFile);
 
         using var reloaded = PsdImage.Load(outputFile);
         Assert.That(reloaded.Layers[0].BlendMode, Is.EqualTo(BlendMode.Multiply));
@@ -503,13 +556,14 @@ public sealed class PsdImageTests : IDisposable
     public void Save_AfterChangingLayerClipping_SavesCorrectly()
     {
         byte[] originalBytes = BuildPsdWithSingleLayer("norm", 0x00, "Layer 1");
-        string outputFile = Path.Combine(_testDir, "layer_clipping_test.psd");
+        string outputFile = GetPersistentArtifactPath("layer_clipping_test.psd");
 
         using (var stream = new MemoryStream(originalBytes))
         using (var image = PsdImage.Load(stream))
         {
             image.Layers[0].Clipping = 1;
             image.Save(outputFile);
+            LogArtifactDirectory(outputFile);
         }
 
         using var reloaded = PsdImage.Load(outputFile);
@@ -523,12 +577,13 @@ public sealed class PsdImageTests : IDisposable
     public void Save_AfterChangingLayerBounds_SavesCorrectly()
     {
         string testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd");
-        string outputFile = Path.Combine(_testDir, "layer_bounds_test.psd");
+        string outputFile = GetPersistentArtifactPath("layer_bounds_test.psd");
 
         using var image = PsdImage.Load(testFile);
         Rectangle newBounds = Rectangle.FromLTRB(10, 20, 40, 60);
         image.Layers[0].Bounds = newBounds;
         image.Save(outputFile);
+        LogArtifactDirectory(outputFile);
 
         using var reloaded = PsdImage.Load(outputFile);
         Assert.That(reloaded.Layers[0].Bounds, Is.EqualTo(newBounds));
@@ -541,7 +596,7 @@ public sealed class PsdImageTests : IDisposable
     public void Save_AfterChangingLayerCoordinates_SavesCorrectly()
     {
         byte[] originalBytes = BuildPsdWithSingleLayer("norm", 0x00, "Layer 1");
-        string outputFile = Path.Combine(_testDir, "layer_coordinates_test.psd");
+        string outputFile = GetPersistentArtifactPath("layer_coordinates_test.psd");
 
         using (var stream = new MemoryStream(originalBytes))
         using (var image = PsdImage.Load(stream))
@@ -552,6 +607,7 @@ public sealed class PsdImageTests : IDisposable
             layer.Bottom = 30;
             layer.Right = 50;
             image.Save(outputFile);
+            LogArtifactDirectory(outputFile);
         }
 
         using var reloaded = PsdImage.Load(outputFile);
@@ -631,12 +687,13 @@ public sealed class PsdImageTests : IDisposable
             psb: false,
             compression: CompressionMethod.RLE,
             imageDataPayload: [0x00, 0x02, 0xAB, 0xCD, 0x00, 0x01, 0xEF]);
-        string outputFile = Path.Combine(_testDir, "minimal_rle.psd");
+        string outputFile = GetPersistentArtifactPath("minimal_rle.psd");
 
         using (var stream = new MemoryStream(originalBytes))
         using (var image = PsdImage.Load(stream))
         {
             image.Save(outputFile);
+            LogArtifactDirectory(outputFile);
         }
 
         byte[] savedBytes = File.ReadAllBytes(outputFile);
@@ -659,12 +716,13 @@ public sealed class PsdImageTests : IDisposable
                 0x00, 0x00, 0x00, 0x03,
                 0xAB, 0xCD, 0xEF, 0x10, 0x11, 0x12
             ]);
-        string outputFile = Path.Combine(_testDir, "minimal_rle.psb");
+        string outputFile = GetPersistentArtifactPath("minimal_rle.psb");
 
         using (var stream = new MemoryStream(originalBytes))
         using (var image = PsdImage.Load(stream))
         {
             image.Save(outputFile);
+            LogArtifactDirectory(outputFile);
         }
 
         byte[] savedBytes = File.ReadAllBytes(outputFile);
@@ -681,12 +739,13 @@ public sealed class PsdImageTests : IDisposable
             psb: false,
             compression: CompressionMethod.ZIP,
             imageDataPayload: [0x78, 0x9C, 0x63, 0x60, 0x04, 0x00, 0x00, 0xFF, 0x00]);
-        string outputFile = Path.Combine(_testDir, "minimal_zip.psd");
+        string outputFile = GetPersistentArtifactPath("minimal_zip.psd");
 
         using (var stream = new MemoryStream(originalBytes))
         using (var image = PsdImage.Load(stream))
         {
             image.Save(outputFile);
+            LogArtifactDirectory(outputFile);
         }
 
         byte[] savedBytes = File.ReadAllBytes(outputFile);
@@ -715,7 +774,7 @@ public sealed class PsdImageTests : IDisposable
     public void Save_PsbWithoutLayers_RoundTripByteForByte()
     {
         byte[] originalBytes = BuildMinimalDocument(psb: true);
-        string outputFile = Path.Combine(_testDir, "minimal.psb");
+        string outputFile = GetPersistentArtifactPath("minimal.psb");
 
         using (var stream = new MemoryStream(originalBytes))
         using (var image = PsdImage.Load(stream))
@@ -723,6 +782,7 @@ public sealed class PsdImageTests : IDisposable
             Assert.That(image.Version, Is.EqualTo(PsdHeader.PsbVersion));
             Assert.That(image.Layers, Is.Empty);
             image.Save(outputFile);
+            LogArtifactDirectory(outputFile);
         }
 
         byte[] savedBytes = File.ReadAllBytes(outputFile);
@@ -736,7 +796,7 @@ public sealed class PsdImageTests : IDisposable
     public void Save_PsbWithLayerRecord_RoundTripByteForByte()
     {
         byte[] originalBytes = BuildPsbWithSingleLayerDocument();
-        string outputFile = Path.Combine(_testDir, "layered.psb");
+        string outputFile = GetPersistentArtifactPath("layered.psb");
 
         using (var stream = new MemoryStream(originalBytes))
         using (var image = PsdImage.Load(stream))
@@ -749,6 +809,7 @@ public sealed class PsdImageTests : IDisposable
             Assert.That(image.Layers[0].IsVisible, Is.True);
 
             image.Save(outputFile);
+            LogArtifactDirectory(outputFile);
         }
 
         byte[] savedBytes = File.ReadAllBytes(outputFile);
