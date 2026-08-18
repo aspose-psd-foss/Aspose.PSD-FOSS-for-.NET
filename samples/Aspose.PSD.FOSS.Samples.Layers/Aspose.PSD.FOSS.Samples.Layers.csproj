@@ -11,4 +11,8 @@
     <ProjectReference Include="../../src/Aspose.PSD.FOSS/Aspose.PSD.FOSS.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="../Common/SamplePathHelper.cs" Link="Common/SamplePathHelper.cs" />
+  </ItemGroup>
+
 </Project>

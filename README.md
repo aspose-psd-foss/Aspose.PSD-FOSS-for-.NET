@@ -76,6 +76,7 @@ Runnable sample projects are available in the repository `samples/` folder:
 
 - `Aspose.PSD.FOSS.Samples.Basic`
 - `Aspose.PSD.FOSS.Samples.Layers`
+- `Aspose.PSD.FOSS.Samples.StructuralEditing`
 - `Aspose.PSD.FOSS.Samples.Streams`
 
 Example commands:
@@ -83,6 +84,7 @@ Example commands:
 ```bash
 dotnet run --project samples/Aspose.PSD.FOSS.Samples.Basic
 dotnet run --project samples/Aspose.PSD.FOSS.Samples.Layers
+dotnet run --project samples/Aspose.PSD.FOSS.Samples.StructuralEditing
 dotnet run --project samples/Aspose.PSD.FOSS.Samples.Streams
 ```
 

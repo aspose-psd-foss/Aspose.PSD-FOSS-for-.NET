@@ -1,58 +1,109 @@
+// Description:
+// This sample loads a PSD/PSB document and prints supported layer metadata,
+// channel summaries, and raw mask/blending-range subsection presence flags.
+
 using Aspose.PSD.FOSS;
+using Aspose.PSD.FOSS.Samples.Common;
 
-string? inputPath = ResolveInputPath(args);
-if (inputPath == null)
+namespace Aspose.PSD.FOSS.Samples.Layers;
+
+/// <summary>
+/// Hosts the layer inspection sample entry point.
+/// </summary>
+internal static class Program
 {
-    PrintUsage();
-    return;
-}
-
-string outputPath = args.Length > 1
-    ? Path.GetFullPath(args[1])
-    : Path.Combine(Environment.CurrentDirectory, "layers-sample-output.psd");
-
-using PsdImage image = PsdImage.Load(inputPath);
-
-Console.WriteLine("Aspose.PSD.FOSS Layer Sample");
-Console.WriteLine($"Input: {inputPath}");
-
-for (int i = 0; i < image.Layers.Length; i++)
-{
-    Layer layer = image.Layers[i];
-    Console.WriteLine($"[{i}] Name={layer.Name}; Bounds={layer.Bounds}; Visible={layer.IsVisible}; Opacity={layer.Opacity}; Clipping={layer.Clipping}; BlendMode={layer.BlendMode}; BlendModeKey={layer.BlendModeKey}; Channels={layer.ChannelCount}");
-}
-
-if (image.Layers.Length > 0)
-{
-    image.Layers[0].Name = $"{image.Layers[0].Name} (updated)";
-    image.Layers[0].IsVisible = false;
-    image.Layers[0].Opacity = 128;
-    image.Layers[0].BlendMode = BlendMode.Multiply;
-    image.Layers[0].Clipping = 1;
-    image.Save(outputPath);
-
-    Console.WriteLine($"Updated first layer and saved: {outputPath}");
-}
-else
-{
-    Console.WriteLine("The document has no layers, so no mutations were applied.");
-}
-
-static string? ResolveInputPath(string[] args)
-{
-    if (args.Length > 0 && File.Exists(args[0]))
+    /// <summary>
+    /// Runs the layer inspection sample.
+    /// </summary>
+    /// <param name="args">Optional command-line arguments: [input.psd].</param>
+    private static void Main(string[] args)
     {
-        return Path.GetFullPath(args[0]);
+        string? inputPath = SamplePathHelper.ResolveInputPath(args);
+        if (inputPath == null)
+        {
+            PrintUsage();
+            return;
+        }
+
+        RunLayerInspection(inputPath);
     }
 
-    string repositoryFixture = Path.GetFullPath(
-        Path.Combine(AppContext.BaseDirectory, "../../../../../src/Aspose.PSD.FOSS.Test/testdata/test.psd"));
+    /// <summary>
+    /// Loads a PSD or PSB file and prints all supported layer-level metadata.
+    /// </summary>
+    /// <param name="inputPath">The input PSD or PSB file path.</param>
+    private static void RunLayerInspection(string inputPath)
+    {
+        using PsdImage image = PsdImage.Load(inputPath);
 
-    return File.Exists(repositoryFixture) ? repositoryFixture : null;
-}
+        PrintSampleDescription(inputPath, image.LayerCount);
 
-static void PrintUsage()
-{
-    Console.WriteLine("Usage: dotnet run --project samples/Aspose.PSD.FOSS.Samples.Layers -- [input.psd] [output.psd]");
-    Console.WriteLine("If no input path is provided, the sample tries to use the repository test fixture.");
+        for (int i = 0; i < image.Layers.Length; i++)
+        {
+            PrintLayer(image.Layers[i], i);
+        }
+    }
+
+    /// <summary>
+    /// Writes a short description of the sample and the current input document.
+    /// </summary>
+    /// <param name="inputPath">The input PSD or PSB file path.</param>
+    /// <param name="layerCount">The parsed layer count.</param>
+    private static void PrintSampleDescription(string inputPath, int layerCount)
+    {
+        Console.WriteLine("Aspose.PSD.FOSS Layer Sample");
+        Console.WriteLine("Description: Loads a PSD/PSB file and prints supported layer metadata, channel summaries, and raw subsection presence flags.");
+        Console.WriteLine($"Input: {inputPath}");
+        Console.WriteLine($"LayerCount: {layerCount}");
+        Console.WriteLine();
+    }
+
+    /// <summary>
+    /// Prints one layer and its related inspection data.
+    /// </summary>
+    /// <param name="layer">The layer to print.</param>
+    /// <param name="index">The zero-based layer index.</param>
+    private static void PrintLayer(Layer layer, int index)
+    {
+        Console.WriteLine($"Layer [{index}]");
+        Console.WriteLine($"  Name: {layer.Name}");
+        Console.WriteLine($"  Bounds: {layer.Bounds}");
+        Console.WriteLine($"  Width: {layer.Width}");
+        Console.WriteLine($"  Height: {layer.Height}");
+        Console.WriteLine($"  Top: {layer.Top}");
+        Console.WriteLine($"  Left: {layer.Left}");
+        Console.WriteLine($"  Bottom: {layer.Bottom}");
+        Console.WriteLine($"  Right: {layer.Right}");
+        Console.WriteLine($"  IsVisible: {layer.IsVisible}");
+        Console.WriteLine($"  Opacity: {layer.Opacity}");
+        Console.WriteLine($"  Clipping: {layer.Clipping}");
+        Console.WriteLine($"  BlendMode: {layer.BlendMode}");
+        Console.WriteLine($"  BlendModeKey: {layer.BlendModeKey}");
+        Console.WriteLine($"  ChannelCount: {layer.ChannelCount}");
+        Console.WriteLine($"  HasMaskData: {layer.HasMaskData}");
+        Console.WriteLine($"  HasBlendingRangesData: {layer.HasBlendingRangesData}");
+        Console.WriteLine($"  HasAdditionalLayerData: {layer.HasAdditionalLayerData}");
+        Console.WriteLine($"  MaskInfo.IsPresent: {layer.MaskInfo.IsPresent}");
+        Console.WriteLine($"  MaskInfo.RawDataLength: {layer.MaskInfo.RawDataLength}");
+        Console.WriteLine($"  BlendingRangesInfo.IsPresent: {layer.BlendingRangesInfo.IsPresent}");
+        Console.WriteLine($"  BlendingRangesInfo.RawDataLength: {layer.BlendingRangesInfo.RawDataLength}");
+
+        for (int i = 0; i < layer.Channels.Count; i++)
+        {
+            PsdLayerChannelInfo channel = layer.Channels[i];
+            Console.WriteLine($"  Channel [{i}] Id={channel.ChannelId}; DataLength={channel.DataLength}");
+        }
+
+        Console.WriteLine();
+    }
+
+    /// <summary>
+    /// Prints usage instructions for the sample.
+    /// </summary>
+    private static void PrintUsage()
+    {
+        Console.WriteLine("Usage: dotnet run --project samples/Aspose.PSD.FOSS.Samples.Layers -- [input.psd]");
+        Console.WriteLine("Description: Prints supported layer metadata, channel records, and raw mask/blending-range section summaries.");
+        Console.WriteLine("If no input path is provided, the sample tries to use the repository test fixture.");
+    }
 }

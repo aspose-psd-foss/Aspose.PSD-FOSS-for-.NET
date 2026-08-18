@@ -14,4 +14,5 @@ Runnable sample projects are available in the repository `samples/` folder:
 
 - `Aspose.PSD.FOSS.Samples.Basic`
 - `Aspose.PSD.FOSS.Samples.Layers`
+- `Aspose.PSD.FOSS.Samples.StructuralEditing`
 - `Aspose.PSD.FOSS.Samples.Streams`
