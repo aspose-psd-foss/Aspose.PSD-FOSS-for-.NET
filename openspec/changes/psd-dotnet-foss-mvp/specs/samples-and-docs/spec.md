@@ -1,35 +1,35 @@
 ## ADDED Requirements
 
-### Requirement: Provide runnable sample projects in the repository
-The repository SHALL include runnable sample projects in a top-level `samples/` folder as a first-class part of the product repository.
+### Requirement: Предоставление runnable sample projects в репозитории
+Система SHALL предоставлять runnable sample projects в репозитории.
 
-#### Scenario: Discover repository samples
-- **WHEN** a developer opens the repository
-- **THEN** a top-level `samples/` folder is present
+#### Scenario: Обнаружение samples в репозитории
+- **WHEN** разработчик открывает репозиторий
+- **THEN** присутствует верхнеуровневая папка `samples/`
 
-#### Scenario: Run a basic metadata sample
-- **WHEN** a developer runs the basic sample project
-- **THEN** the sample demonstrates loading a PSD/PSB file and printing document properties
+#### Scenario: Запуск базового metadata sample
+- **WHEN** разработчик запускает базовый sample project
+- **THEN** sample демонстрирует загрузку PSD/PSB файла и вывод document properties
 
-#### Scenario: Run a layer editing sample
-- **WHEN** a developer runs the layer sample project
-- **THEN** the sample demonstrates reading layer metadata and saving a file after changing supported layer properties
+#### Scenario: Запуск sample по layer editing
+- **WHEN** разработчик запускает sample project для layer editing
+- **THEN** sample демонстрирует чтение layer metadata и сохранение файла после изменения поддерживаемых layer properties
 
-### Requirement: Provide repository documentation as markdown files
-The repository SHALL include end-user and developer-facing documentation as markdown files.
+### Requirement: Предоставление documentation репозитория как markdown files
+Система SHALL предоставлять documentation репозитория в виде markdown files.
 
-#### Scenario: Discover documentation
-- **WHEN** a developer opens the repository
-- **THEN** a top-level documentation area is present
-- **AND** the root README links to it
+#### Scenario: Обнаружение documentation
+- **WHEN** разработчик открывает репозиторий
+- **THEN** присутствует верхнеуровневая область с documentation
+- **AND** корневой README ссылается на неё
 
-#### Scenario: Read getting started guidance
-- **WHEN** a new user opens the getting started document
-- **THEN** the document explains installation, the basic API shape, and a first working example
+#### Scenario: Чтение getting started guidance
+- **WHEN** новый пользователь открывает getting started document
+- **THEN** document объясняет installation, базовую форму API и первый рабочий пример
 
-#### Scenario: Read supported-scope guidance
-- **WHEN** a user opens the limitations or support-scope document
-- **THEN** the document explains what the current product scope supports and what remains out of scope
+#### Scenario: Чтение guidance по supported scope
+- **WHEN** пользователь открывает документ с limitations или support scope
+- **THEN** document объясняет, что поддерживает текущий scope продукта и что остаётся вне scope
 
 ## MODIFIED Requirements
 

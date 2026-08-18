@@ -1,32 +1,55 @@
 ## ADDED Requirements
 
-### Requirement: Expose parsed layers
-The system SHALL expose parsed layer records through `image.Layers`.
+### Requirement: Предоставление распарсенных слоёв
+Система SHALL предоставлять распарсенные layer records через `image.Layers`.
 
-#### Scenario: Read the layer collection
-- **WHEN** the user loads a file with layers
-- **THEN** `image.Layers` returns an array of `Layer`
+#### Scenario: Чтение коллекции слоёв
+- **WHEN** пользователь загружает файл со слоями
+- **THEN** `image.Layers` возвращает массив `Layer`
 
-#### Scenario: Read a file without layers
-- **WHEN** the user loads a file with no layer records
-- **THEN** `image.Layers` returns an empty array
+#### Scenario: Чтение файла без слоёв
+- **WHEN** пользователь загружает файл без layer records
+- **THEN** `image.Layers` возвращает пустой массив
 
-### Requirement: Read supported layer metadata
-The system SHALL expose the supported subset of layer metadata.
+### Requirement: Чтение поддерживаемых layer metadata
+Система SHALL предоставлять поддерживаемый subset layer metadata.
 
-#### Scenario: Read name and bounds
-- **WHEN** the user accesses a parsed layer
-- **THEN** `layer.Name` returns the Pascal layer name
-- **AND** `layer.Bounds` returns the document-space rectangle
+#### Scenario: Чтение имени и bounds
+- **WHEN** пользователь обращается к распарсенному слою
+- **THEN** `layer.Name` возвращает Pascal layer name
+- **AND** `layer.Bounds` возвращает прямоугольник в координатах документа
 
-#### Scenario: Read visibility and opacity
-- **WHEN** the user accesses a parsed layer
-- **THEN** `layer.IsVisible` returns the visibility flag
-- **AND** `layer.Opacity` returns the stored opacity
+#### Scenario: Чтение visibility и opacity
+- **WHEN** пользователь обращается к распарсенному слою
+- **THEN** `layer.IsVisible` возвращает флаг видимости
+- **AND** `layer.Opacity` возвращает сохранённую opacity
 
-#### Scenario: Read blend mode
-- **WHEN** the user accesses a parsed layer
-- **THEN** `layer.BlendMode` returns the parsed blend mode key mapped to `BlendMode`
+#### Scenario: Чтение blend mode
+- **WHEN** пользователь обращается к распарсенному слою
+- **THEN** `layer.BlendMode` возвращает распарсенный blend mode key, сопоставленный с `BlendMode`
+
+### Requirement: Предоставление дополнительных простых layer metadata
+Система SHALL предоставлять дополнительные простые layer properties, derived from layer records, без требования rendering.
+
+#### Scenario: Чтение geometry helper properties слоя
+- **WHEN** пользователь обращается к распарсенному слою
+- **THEN** `layer.Width` возвращает `layer.Bounds.Width`
+- **AND** `layer.Height` возвращает `layer.Bounds.Height`
+- **AND** `layer.Top`, `layer.Left`, `layer.Bottom` и `layer.Right` отражают сохранённый прямоугольник слоя
+
+#### Scenario: Чтение количества layer channels
+- **WHEN** пользователь обращается к распарсенному слою
+- **THEN** `layer.ChannelCount` возвращает количество распарсенных layer channel records
+
+#### Scenario: Чтение флагов наличия layer subsections
+- **WHEN** пользователь обращается к распарсенному слою
+- **THEN** `layer.HasMaskData` показывает, присутствует ли непустая layer mask subsection
+- **AND** `layer.HasBlendingRangesData` показывает, присутствует ли непустая blending ranges subsection
+- **AND** `layer.HasAdditionalLayerData` показывает, присутствуют ли opaque trailing данные из layer extra data
+
+#### Scenario: Чтение исходного blend mode key
+- **WHEN** пользователь обращается к распарсенному слою
+- **THEN** `layer.BlendModeKey` возвращает исходный 4-byte PSD blend mode key как строковое значение
 
 ## MODIFIED Requirements
 

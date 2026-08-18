@@ -1,15 +1,15 @@
 ## ADDED Requirements
 
-### Requirement: Document the public code surface with XML summaries
-The system SHALL provide concise XML summary documentation for the public API exposed by the FOSS library.
+### Requirement: Документирование public code surface через XML summaries
+Система SHALL предоставлять лаконичную XML summary documentation для public API, который предоставляет FOSS-библиотека.
 
-#### Scenario: Inspect a public type
-- **WHEN** a developer opens a public class, enum, exception, or struct in the library
-- **THEN** the type has an XML summary
+#### Scenario: Просмотр public type
+- **WHEN** разработчик открывает public class, enum, exception или struct в библиотеке
+- **THEN** type имеет XML summary
 
-#### Scenario: Inspect a public member
-- **WHEN** a developer opens a public method, property, field, or constant in the library
-- **THEN** the member has an XML summary
+#### Scenario: Просмотр public member
+- **WHEN** разработчик открывает public method, property, field или constant в библиотеке
+- **THEN** member имеет XML summary
 
 ## MODIFIED Requirements
 

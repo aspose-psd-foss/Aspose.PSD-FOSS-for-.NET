@@ -1,28 +1,51 @@
 ## ADDED Requirements
 
-### Requirement: Read document size from the file header
-The system SHALL expose document width and height from the PSD/PSB header.
+### Requirement: Чтение размера документа из file header
+Система SHALL предоставлять ширину и высоту документа из PSD/PSB header.
 
-#### Scenario: Read width and height
-- **WHEN** the user loads a PSD or PSB file
-- **THEN** `image.Width` returns the stored width
-- **AND** `image.Height` returns the stored height
+#### Scenario: Чтение ширины и высоты
+- **WHEN** пользователь загружает PSD или PSB файл
+- **THEN** `image.Width` возвращает сохранённую ширину
+- **AND** `image.Height` возвращает сохранённую высоту
 
-### Requirement: Read channel and bit-depth metadata from the file header
-The system SHALL expose channel count and bits per channel from the PSD/PSB header.
+### Requirement: Чтение metadata каналов и bit depth из file header
+Система SHALL предоставлять число каналов и bits per channel из PSD/PSB header.
 
-#### Scenario: Read channels and bit depth
-- **WHEN** the user loads a PSD or PSB file
-- **THEN** `image.Channels` returns the stored channel count
-- **AND** `image.BitsPerChannel` returns the stored bit depth
+#### Scenario: Чтение каналов и bit depth
+- **WHEN** пользователь загружает PSD или PSB файл
+- **THEN** `image.Channels` возвращает сохранённое число каналов
+- **AND** `image.BitsPerChannel` возвращает сохранённый bit depth
 
-### Requirement: Read color mode and format version from the file header
-The system SHALL expose the color mode and format version from the PSD/PSB header.
+### Requirement: Чтение color mode и версии формата из file header
+Система SHALL предоставлять color mode и версию формата из PSD/PSB header.
 
-#### Scenario: Read color mode and version
-- **WHEN** the user loads a PSD or PSB file
-- **THEN** `image.ColorMode` returns the stored color mode
-- **AND** `image.Version` returns `1` for PSD or `2` for PSB
+#### Scenario: Чтение color mode и версии
+- **WHEN** пользователь загружает PSD или PSB файл
+- **THEN** `image.ColorMode` возвращает сохранённый color mode
+- **AND** `image.Version` возвращает `1` для PSD или `2` для PSB
+
+### Requirement: Предоставление derived document metadata для metadata-oriented сценариев
+Система SHALL предоставлять дополнительные простые document properties, не требующие rendering или pixel decoding.
+
+#### Scenario: Чтение состояния PSD против PSB
+- **WHEN** пользователь загружает PSD файл
+- **THEN** `image.IsLargeDocument` возвращает `false`
+- **AND** `image.IsPsb` возвращает `false`
+
+#### Scenario: Чтение состояния PSB
+- **WHEN** пользователь загружает PSB файл
+- **THEN** `image.IsLargeDocument` возвращает `true`
+- **AND** `image.IsPsb` возвращает `true`
+
+#### Scenario: Чтение количества слоёв
+- **WHEN** пользователь загружает файл
+- **THEN** `image.LayerCount` возвращает количество распарсенных слоёв
+- **AND** `image.LayerCount` совпадает с `image.Layers.Length`
+
+#### Scenario: Чтение объекта header
+- **WHEN** пользователь обращается к `image.Header`
+- **THEN** система возвращает распарсенный `PsdHeader`
+- **AND** его значения совпадают с document-level properties, которые предоставляет `PsdImage`
 
 ## MODIFIED Requirements
 

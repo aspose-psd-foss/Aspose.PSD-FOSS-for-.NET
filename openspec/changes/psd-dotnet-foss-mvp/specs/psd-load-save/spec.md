@@ -1,71 +1,71 @@
 ## ADDED Requirements
 
-### Requirement: Load from file path
-The system SHALL load a PSD or PSB file from a file path.
+### Requirement: Загрузка из file path
+Система SHALL загружать PSD или PSB файл из file path.
 
-#### Scenario: Load an existing file
-- **WHEN** the user calls `PsdImage.Load(path)` with an existing PSD or PSB file
-- **THEN** the system returns a loaded `PsdImage`
+#### Scenario: Загрузка существующего файла
+- **WHEN** пользователь вызывает `PsdImage.Load(path)` с существующим PSD или PSB файлом
+- **THEN** система возвращает загруженный `PsdImage`
 
-#### Scenario: Reject a missing file path
-- **WHEN** the user calls `PsdImage.Load(path)` for a missing file
-- **THEN** the system throws `FileNotFoundException`
+#### Scenario: Отклонение отсутствующего file path
+- **WHEN** пользователь вызывает `PsdImage.Load(path)` для отсутствующего файла
+- **THEN** система выбрасывает `FileNotFoundException`
 
-### Requirement: Load from stream
-The system SHALL load a PSD or PSB file from a stream.
+### Requirement: Загрузка из stream
+Система SHALL загружать PSD или PSB файл из stream.
 
-#### Scenario: Load from a seekable stream
-- **WHEN** the user calls `PsdImage.Load(stream)` with a seekable stream
-- **THEN** the system loads the file from the current stream position
-- **AND** restores the original stream position after loading
+#### Scenario: Загрузка из seekable stream
+- **WHEN** пользователь вызывает `PsdImage.Load(stream)` с seekable stream
+- **THEN** система загружает файл из текущей позиции stream
+- **AND** восстанавливает исходную позицию stream после загрузки
 
-#### Scenario: Reject null stream input
-- **WHEN** the user calls `PsdImage.Load(null)`
-- **THEN** the system throws `ArgumentNullException`
+#### Scenario: Отклонение `null` stream
+- **WHEN** пользователь вызывает `PsdImage.Load(null)`
+- **THEN** система выбрасывает `ArgumentNullException`
 
-#### Scenario: Reject an invalid file signature
-- **WHEN** the user loads a stream that does not start with a valid PSD/PSB signature
-- **THEN** the system throws `PsdLoadException`
+#### Scenario: Отклонение некорректной file signature
+- **WHEN** пользователь загружает stream, который не начинается с корректной PSD/PSB signature
+- **THEN** система выбрасывает `PsdLoadException`
 
-#### Scenario: Reject malformed section lengths
-- **WHEN** the user loads a PSD or PSB stream whose declared section length exceeds the available bytes
-- **THEN** the system throws `PsdLoadException`
+#### Scenario: Отклонение malformed section lengths
+- **WHEN** пользователь загружает PSD или PSB stream, у которого объявленная длина секции превышает доступные bytes
+- **THEN** система выбрасывает `PsdLoadException`
 
-### Requirement: Save to file path or stream
-The system SHALL save the current document to a file path or stream.
+### Requirement: Сохранение в file path или stream
+Система SHALL сохранять текущий документ в file path или stream.
 
-#### Scenario: Save to file path
-- **WHEN** the user calls `image.Save(path)`
-- **THEN** the system writes a loadable PSD or PSB file
+#### Scenario: Сохранение в file path
+- **WHEN** пользователь вызывает `image.Save(path)`
+- **THEN** система записывает загружаемый PSD или PSB файл
 
-#### Scenario: Save to stream
-- **WHEN** the user calls `image.Save(stream)`
-- **THEN** the system writes the current document bytes to the provided stream
+#### Scenario: Сохранение в stream
+- **WHEN** пользователь вызывает `image.Save(stream)`
+- **THEN** система записывает текущие bytes документа в предоставленный stream
 
-### Requirement: Preserve unknown sections without mutation
-The system SHALL preserve unknown or unsupported file sections as raw bytes when that is enough to keep the file stable.
+### Requirement: Сохранение неизвестных секций без мутаций
+Система SHALL сохранять неизвестные или неподдерживаемые секции файла как raw bytes, когда этого достаточно для стабильности файла.
 
 #### Scenario: No-mutation round-trip
-- **WHEN** the user loads a file and saves it without any supported mutations
-- **THEN** the saved bytes are byte-for-byte identical to the original file
+- **WHEN** пользователь загружает файл и сохраняет его без каких-либо поддерживаемых мутаций
+- **THEN** сохранённые bytes byte-for-byte идентичны исходному файлу
 
-### Requirement: Preserve raw image resources
-The system SHALL preserve the Image Resources section without rewriting it when direct resource editing is out of scope.
+### Requirement: Сохранение raw image resources
+Система SHALL сохранять секцию Image Resources без переписывания, когда прямое редактирование resources вне scope.
 
-#### Scenario: Save a file with existing image resources
-- **WHEN** the user loads and saves a file without resource edits
-- **THEN** the raw Image Resources section is written back unchanged
+#### Scenario: Save файла с существующими image resources
+- **WHEN** пользователь загружает и сохраняет файл без изменений resources
+- **THEN** raw секция Image Resources записывается обратно без изменений
 
-### Requirement: Support the current PSD/PSB length fields required by the supported subset
-The system SHALL use the correct field sizes for the supported PSD/PSB load/save subset.
+### Requirement: Поддержка текущих PSD/PSB length fields, нужных поддерживаемому subset
+Система SHALL использовать корректные размеры полей для поддерживаемого PSD/PSB load/save subset.
 
-#### Scenario: Save PSD lengths
-- **WHEN** the current document format version is PSD (`Version == 1`)
-- **THEN** Layer and Mask length fields use the PSD-sized integers required by the format
+#### Scenario: Сохранение PSD length fields
+- **WHEN** текущая версия формата документа — PSD (`Version == 1`)
+- **THEN** поля длины Layer and Mask используют PSD-sized integers, требуемые форматом
 
-#### Scenario: Save PSB lengths
-- **WHEN** the current document format version is PSB (`Version == 2`)
-- **THEN** Layer and Mask length fields and per-channel layer data lengths use the PSB-sized integers required by the format
+#### Scenario: Сохранение PSB length fields
+- **WHEN** текущая версия формата документа — PSB (`Version == 2`)
+- **THEN** поля длины Layer and Mask и длины per-channel layer data используют PSB-sized integers, требуемые форматом
 
 ## MODIFIED Requirements
 

@@ -23,18 +23,27 @@
 - `image.Save(string)`
 - `image.Save(Stream)`
 
-## Product Scope
+Public API расширяется в пределах non-rendering scope за счёт дополнительных возможностей для metadata-oriented сценариев:
+
+- дополнительные простые document properties (`bool`, `int`, `enum`)
+- дополнительные простые layer properties (`bool`, `int`, `string`, `enum`)
+- read-only inspection DTO для image resources, image data, color mode data, layer channels, mask/blending metadata
+- безопасное расширение layer metadata editing для `BlendMode`, `Clipping` и layer geometry
+
+## Scope продукта
 
 - Загрузка PSD
 - Базовая загрузка PSB
 - Чтение document properties из header
 - Чтение layer metadata из Layer and Mask Information
+- Чтение дополнительных structural metadata без рендеринга
 - Изменение `Name`, `IsVisible`, `Opacity`
+- Изменение `BlendMode`, `Clipping` и layer geometry в рамках structural save path
 - Сохранение без рендеринга
 - Byte-for-byte round-trip без мутаций
 - Raw-preserve для неподдерживаемых/неизвестных данных, где это возможно
 
-## Out of scope
+## Вне scope
 
 - Rendering
 - Pixel editing
@@ -55,21 +64,21 @@
 
 - `Aspose.PSD.FOSS.Test` остаётся единственной точкой для acceptance tests этого FOSS-продукта
 - testdata хранится внутри test project
-- public surface библиотеки документируется через XML summary
+- public API библиотеки документируется через XML summary
 - public поля и константы тоже обязаны иметь XML summary
 - в репозитории должна быть папка `samples/` с runnable sample projects
 - в репозитории должна быть markdown-документация для нового пользователя и разработчика
 
 ## Текущее покрытие acceptance tests
 
-- Load document properties from PSD
-- Load layer properties from PSD
-- Load document without layers
-- Load from seekable stream without changing original position
-- Reject invalid signature
-- Reject null stream
-- Save PSD without mutation byte-for-byte
-- Save PSD after changing `Name`
-- Save PSD after changing `IsVisible`
-- Save PSD after changing `Opacity`
-- Save minimal PSB without mutation byte-for-byte
+- Чтение document properties из PSD
+- Чтение layer properties из PSD
+- Загрузка документа без слоёв
+- Загрузка из seekable stream без изменения исходной позиции
+- Отклонение некорректной signature
+- Отклонение `null` stream
+- Сохранение PSD без мутаций byte-for-byte
+- Сохранение PSD после изменения `Name`
+- Сохранение PSD после изменения `IsVisible`
+- Сохранение PSD после изменения `Opacity`
+- Сохранение минимального PSB без мутаций byte-for-byte

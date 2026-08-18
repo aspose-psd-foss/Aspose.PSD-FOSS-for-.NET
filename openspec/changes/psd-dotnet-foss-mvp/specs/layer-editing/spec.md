@@ -1,34 +1,50 @@
 ## ADDED Requirements
 
-### Requirement: Change supported layer fields in memory
-The system SHALL allow changing only the currently supported layer fields `Name`, `IsVisible`, and `Opacity`.
+### Requirement: Изменение поддерживаемых полей слоя в памяти
+Система SHALL разрешать изменять поддерживаемые layer metadata fields, которые можно сериализовать через structural save path без rendering.
 
-#### Scenario: Change layer name
-- **WHEN** the user sets `layer.Name`
-- **THEN** a subsequent read returns the new value
+#### Scenario: Изменение имени слоя
+- **WHEN** пользователь задаёт `layer.Name`
+- **THEN** последующее чтение возвращает новое значение
 
-#### Scenario: Change layer visibility
-- **WHEN** the user sets `layer.IsVisible`
-- **THEN** a subsequent read returns the new value
+#### Scenario: Изменение видимости слоя
+- **WHEN** пользователь задаёт `layer.IsVisible`
+- **THEN** последующее чтение возвращает новое значение
 
-#### Scenario: Change layer opacity
-- **WHEN** the user sets `layer.Opacity`
-- **THEN** a subsequent read returns the new value
+#### Scenario: Изменение opacity слоя
+- **WHEN** пользователь задаёт `layer.Opacity`
+- **THEN** последующее чтение возвращает новое значение
 
-### Requirement: Persist supported layer mutations on save
-The system SHALL persist supported layer mutations when saving the file.
+#### Scenario: Изменение blend mode слоя
+- **WHEN** пользователь задаёт `layer.BlendMode`
+- **THEN** последующее чтение возвращает новое значение
 
-#### Scenario: Save after supported mutations
-- **WHEN** the user changes `Name`, `IsVisible`, or `Opacity`
-- **AND** saves the file
-- **THEN** reloading the file shows the changed values
+#### Scenario: Изменение clipping слоя
+- **WHEN** пользователь задаёт `layer.Clipping`
+- **THEN** последующее чтение возвращает новое значение
 
-### Requirement: Preserve unsupported layer data where possible
-The system SHALL preserve unsupported layer data where it is not being edited directly.
+#### Scenario: Изменение bounds слоя
+- **WHEN** пользователь задаёт `layer.Bounds`
+- **THEN** последующее чтение возвращает новый прямоугольник
 
-#### Scenario: Save after changing one supported field
-- **WHEN** the user changes a supported layer field and saves
-- **THEN** unsupported layer payload data is preserved where the implementation can keep it raw
+#### Scenario: Изменение coordinate properties слоя
+- **WHEN** пользователь задаёт одно или несколько значений `layer.Top`, `layer.Left`, `layer.Bottom` или `layer.Right`
+- **THEN** `layer.Bounds` отражает обновлённую geometry
+
+### Requirement: Сохранение поддерживаемых мутаций слоя при save
+Система SHALL сохранять поддерживаемые мутации слоя при сохранении файла.
+
+#### Scenario: Save после поддерживаемых мутаций
+- **WHEN** пользователь изменяет одно или несколько поддерживаемых layer metadata fields
+- **AND** сохраняет файл
+- **THEN** повторная загрузка файла показывает изменённые значения
+
+### Requirement: Сохранение неподдерживаемых layer data там, где это возможно
+Система SHALL сохранять неподдерживаемые layer data там, где они не редактируются напрямую.
+
+#### Scenario: Save после изменения одного поддерживаемого поля
+- **WHEN** пользователь изменяет поддерживаемое поле слоя и сохраняет файл
+- **THEN** неподдерживаемые данные layer payload сохраняются там, где реализация может удержать их в raw виде
 
 ## MODIFIED Requirements
 
