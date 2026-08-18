@@ -2,6 +2,15 @@
 
 This guide covers the currently supported operations of Aspose.PSD.FOSS.
 
+## Supported Workflows
+
+The library currently supports four main workflows:
+
+1. Load a PSD/PSB file and inspect document metadata.
+2. Enumerate layers and inspect supported layer metadata.
+3. Change a limited set of layer properties.
+4. Save the file back without rendering.
+
 ## Load a PSD or PSB Document
 
 Use `PsdImage.Load(string)` or `PsdImage.Load(Stream)` to open a document.
@@ -36,6 +45,8 @@ Additional read-only inspection API:
 - `IndexedPalette`
 - `ImageDataInfo`
 
+These APIs are intended for structural inspection rather than semantic reconstruction of the full Photoshop feature set.
+
 ## Inspect Layers
 
 Use `image.Layers` to enumerate parsed layer records.
@@ -63,6 +74,8 @@ Supported layer metadata:
 - `MaskInfo`
 - `BlendingRangesInfo`
 
+The library exposes small inspection DTOs for channels, resources, color data, image data, masks, and blending ranges so callers can read useful structure without parsing raw sections themselves.
+
 ## Modify Layers
 
 The current product scope supports changing:
@@ -87,6 +100,8 @@ The library follows a minimal parse and raw-preserve approach:
 - supported structures are parsed and rewritten when needed;
 - unsupported sections are preserved as raw bytes where possible;
 - a no-mutation save keeps the original bytes unchanged for the currently supported scenarios.
+
+This means the library is optimized for safe structural edits, not for reconstructing or normalizing the whole Photoshop document model.
 
 ## Stream Behavior
 

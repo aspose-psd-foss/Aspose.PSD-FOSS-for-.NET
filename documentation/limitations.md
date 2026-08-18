@@ -1,5 +1,7 @@
 # Supported Features and Limitations
 
+This page is the contract for what a new developer should assume about the project. If a feature is not listed as supported here, treat it as unsupported.
+
 ## Supported in the Current Product Scope
 
 - Load PSD files
@@ -30,3 +32,4 @@
 - The library is not an open-source clone of the full commercial Aspose.PSD product.
 - The implementation intentionally focuses on a small safe subset of PSD/PSB behavior.
 - Unknown sections are preserved where possible, but not all PSD/PSB structures are interpreted semantically.
+- The safest assumption is that the library supports structural inspection and limited metadata edits, not general Photoshop document processing.

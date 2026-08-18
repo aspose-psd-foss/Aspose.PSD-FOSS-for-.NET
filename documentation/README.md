@@ -2,6 +2,12 @@
 
 This documentation explains how to start using Aspose.PSD.FOSS, what the current product scope supports, and where to find runnable examples.
 
+If you are new to the project, read these pages in order:
+
+1. Getting Started — what the library is for and how to run the first example.
+2. Basic PSD Operations — the supported workflows and public API shape.
+3. Supported Features and Limitations — the exact scope boundaries.
+
 ## Contents
 
 - [Getting Started](getting-started.md)
@@ -16,3 +22,10 @@ Runnable sample projects are available in the repository `samples/` folder:
 - `Aspose.PSD.FOSS.Samples.Layers`
 - `Aspose.PSD.FOSS.Samples.StructuralEditing`
 - `Aspose.PSD.FOSS.Samples.Streams`
+
+These samples map to the main supported workflows:
+
+- document inspection;
+- layer inspection;
+- structural layer editing;
+- stream-based round trips.

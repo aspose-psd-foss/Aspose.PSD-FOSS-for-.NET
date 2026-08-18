@@ -2,6 +2,38 @@
 
 Aspose.PSD.FOSS is a free open-source .NET library for loading, inspecting, editing a small subset of PSD/PSB metadata, and saving the file back without rendering.
 
+This library is for metadata-safe PSD/PSB inspection and limited structural editing. It is not a rendering engine, a raster editor, or an open-source replacement for the full commercial Aspose.PSD product.
+
+## Who This Project Is For
+
+Use Aspose.PSD.FOSS when you need to:
+
+- inspect PSD/PSB structure and metadata from .NET code;
+- read layer, resource, color-mode, and merged-image summaries;
+- make small safe edits to layer metadata;
+- save the file back without rendering pixels.
+
+Do not use Aspose.PSD.FOSS when you need to:
+
+- render PSD/PSB content;
+- edit pixels or export raster images;
+- interpret the full Photoshop feature set semantically;
+- replace the commercial Aspose.PSD API surface one-to-one.
+
+## Common Workflows
+
+- Inspect a PSD/PSB document and read structural metadata.
+- Enumerate layers and read their basic properties.
+- Change supported layer properties such as name, visibility, opacity, clipping, blend mode, and geometry.
+- Save the updated file back while preserving unsupported sections as raw bytes where possible.
+
+## Mental Model
+
+- The library parses only a small supported subset of the PSD/PSB format.
+- Known structures are exposed through a compact public API.
+- Unsupported sections are preserved as raw bytes where possible.
+- When you mutate supported metadata, the library rewrites only the affected supported structures and keeps the rest of the file in raw-preserved form.
+
 ## Highlights
 
 - Aspose.PSD-style API for common PSD metadata scenarios
@@ -70,6 +102,12 @@ image.Layers[0].BlendMode = BlendMode.Multiply;
 image.Save("output.psd");
 ```
 
+## Choosing Between Aspose.PSD.FOSS and Commercial Aspose.PSD
+
+Choose Aspose.PSD.FOSS if you need a small open-source library for structural inspection and limited non-rendering edits.
+
+Choose the commercial Aspose.PSD product if you need broad Photoshop feature support such as rendering, raster editing, export pipelines, richer resource/tag handling, or wider PSD/PSB compatibility.
+
 ## Samples
 
 Runnable sample projects are available in the repository `samples/` folder:
@@ -78,6 +116,15 @@ Runnable sample projects are available in the repository `samples/` folder:
 - `Aspose.PSD.FOSS.Samples.Layers`
 - `Aspose.PSD.FOSS.Samples.StructuralEditing`
 - `Aspose.PSD.FOSS.Samples.Streams`
+
+Sample/workflow matrix:
+
+| Sample | Main workflow | What it demonstrates |
+|---|---|---|
+| `Aspose.PSD.FOSS.Samples.Basic` | Document inspection | Header fields, document flags, resource summaries, color mode data, and merged image data inspection |
+| `Aspose.PSD.FOSS.Samples.Layers` | Layer inspection | Layer metadata, derived geometry, channel summaries, mask summaries, and blending-range summaries |
+| `Aspose.PSD.FOSS.Samples.StructuralEditing` | Supported metadata editing | Renaming layers, changing visibility, opacity, clipping, blend mode, and geometry, then saving without rendering |
+| `Aspose.PSD.FOSS.Samples.Streams` | Stream-based round trip | Loading from a stream, saving to a stream, and working with in-memory PSD/PSB data |
 
 Example commands:
 

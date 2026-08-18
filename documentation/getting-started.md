@@ -2,6 +2,12 @@
 
 Aspose.PSD.FOSS is a lightweight open-source .NET library for loading, inspecting, editing a small subset of layer metadata, and saving PSD/PSB files without rendering.
 
+## What the Library Is For
+
+Use Aspose.PSD.FOSS when you need to inspect PSD/PSB structure, read supported metadata, make small structural edits, and save the file back without rendering.
+
+This library is intentionally narrow in scope. It does not render Photoshop documents, edit pixels, or expose the full commercial Aspose.PSD feature set.
+
 ## Requirements
 
 - .NET 10.0 SDK or later
@@ -22,6 +28,15 @@ If you want to install it through a local NuGet source:
 dotnet nuget add source src/Aspose.PSD.FOSS/bin/Release --name AsposePsdFossLocal
 dotnet add package Aspose.PSD.FOSS --source AsposePsdFossLocal
 ```
+
+## First 5 Minutes
+
+The fastest way to understand the project is:
+
+1. Load a PSD/PSB file.
+2. Print document and layer metadata.
+3. Change one supported layer property.
+4. Save the result back without rendering.
 
 ## First Example
 
@@ -62,6 +77,12 @@ image.Layers[0].BlendMode = BlendMode.Multiply;
 image.Layers[0].Clipping = 1;
 image.Save("output.psd");
 ```
+
+## What to Read Next
+
+- Read the developer guide to see the full supported workflow surface.
+- Read the limitations page before assuming support for broader Photoshop features.
+- Run the sample projects for end-to-end examples of inspection, editing, and stream-based usage.
 
 ## Next Steps
 
