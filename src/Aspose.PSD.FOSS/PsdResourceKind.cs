@@ -1,7 +1,7 @@
 namespace Aspose.PSD.FOSS;
 
 /// <summary>
-/// Identifies the small set of image resources that this library understands semantically.
+/// Identifies the semantic classification exposed for an image resource block.
 /// </summary>
 public enum PsdResourceKind
 {
@@ -11,17 +11,17 @@ public enum PsdResourceKind
     Unknown,
 
     /// <summary>
-    /// The resource stores the global layer-effects lighting angle.
+    /// Reserved for future semantic parsing of the global layer-effects lighting angle resource.
     /// </summary>
     GlobalAngle,
 
     /// <summary>
-    /// The resource stores an embedded ICC profile payload.
+    /// Reserved for future semantic parsing of an embedded ICC profile payload.
     /// </summary>
     IccProfile,
 
     /// <summary>
-    /// The resource stores the intentionally-untagged ICC profile flag.
+    /// Reserved for future semantic parsing of the intentionally-untagged ICC profile flag.
     /// </summary>
     IccUntaggedProfile
 }

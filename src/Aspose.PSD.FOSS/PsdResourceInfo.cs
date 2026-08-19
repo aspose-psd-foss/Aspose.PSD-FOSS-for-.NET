@@ -10,7 +10,7 @@ public sealed class PsdResourceInfo
     /// </summary>
     /// <param name="resourceId">The PSD resource identifier.</param>
     /// <param name="name">The decoded Pascal resource name.</param>
-    /// <param name="kind">The known semantic classification for the resource.</param>
+    /// <param name="kind">The semantic classification exposed for the resource.</param>
     /// <param name="dataLength">The raw payload length in bytes.</param>
     /// <param name="globalAngle">The parsed global angle, when available.</param>
     /// <param name="isIccProfileUntagged">The parsed untagged-profile flag, when available.</param>
@@ -41,7 +41,7 @@ public sealed class PsdResourceInfo
     public string Name { get; }
 
     /// <summary>
-    /// Gets the known semantic classification for the resource.
+    /// Gets the semantic classification exposed for the resource.
     /// </summary>
     public PsdResourceKind Kind { get; }
 
@@ -52,11 +52,13 @@ public sealed class PsdResourceInfo
 
     /// <summary>
     /// Gets the parsed global angle, when this resource carries that value.
+    /// The current unknown-only parser leaves this value unset.
     /// </summary>
     public int? GlobalAngle { get; }
 
     /// <summary>
     /// Gets the parsed untagged-profile flag, when this resource carries that value.
+    /// The current unknown-only parser leaves this value unset.
     /// </summary>
     public bool? IsIccProfileUntagged { get; }
 }

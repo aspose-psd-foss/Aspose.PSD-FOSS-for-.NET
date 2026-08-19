@@ -140,18 +140,21 @@ public sealed class PsdImage : IDisposable
 
     /// <summary>
     /// Gets the parsed global angle from the image resources, when present.
+    /// The current lightweight unknown-only parser does not reconstruct ID-specific semantic values.
     /// </summary>
-    public int? GlobalAngle => _resources.FirstOrDefault(resource => resource.GlobalAngle.HasValue)?.GlobalAngle;
+    public int? GlobalAngle => null;
 
     /// <summary>
     /// Gets a value indicating whether an embedded ICC profile resource is present.
+    /// The current lightweight unknown-only parser does not reconstruct ID-specific semantic values.
     /// </summary>
-    public bool HasIccProfile => _resources.Any(resource => resource.Kind == KnownResourceKind.IccProfile);
+    public bool HasIccProfile => false;
 
     /// <summary>
     /// Gets the parsed untagged ICC profile flag, when the corresponding resource is present.
+    /// The current lightweight unknown-only parser does not reconstruct ID-specific semantic values.
     /// </summary>
-    public bool? IsIccProfileUntagged => _resources.FirstOrDefault(resource => resource.IsIccProfileUntagged.HasValue)?.IsIccProfileUntagged;
+    public bool? IsIccProfileUntagged => null;
 
     /// <summary>
     /// Gets the parsed color mode data details for internal verification and tests.
@@ -161,7 +164,7 @@ public sealed class PsdImage : IDisposable
     /// <summary>
     /// Gets the parsed image resources for internal verification and tests.
     /// </summary>
-    internal ResourceBlock[] ParsedResources => _resources;
+    internal UnknownResource[] ParsedResources => _resources;
 
     /// <summary>
     /// Stores the parsed PSD header.
@@ -181,7 +184,7 @@ public sealed class PsdImage : IDisposable
     /// <summary>
     /// Stores parsed image resource blocks.
     /// </summary>
-    private ResourceBlock[] _resources = [];
+    private UnknownResource[] _resources = [];
 
     /// <summary>
     /// Stores the raw Image Resources section payload.
@@ -340,11 +343,11 @@ public sealed class PsdImage : IDisposable
         long resourcesEnd = _resourcesRaw.Length;
         var resourcesReader = new BigEndianReader(new MemoryStream(_resourcesRaw, writable: false), leaveOpen: true);
 
-        var resourcesList = new List<ResourceBlock>();
+        var resourcesList = new List<UnknownResource>();
 
         while (resourcesReader.Position < resourcesEnd)
         {
-            ResourceBlock? resource = ResourceBlock.Load(resourcesReader, resourcesEnd);
+            UnknownResource? resource = UnknownResource.Load(resourcesReader, resourcesEnd);
             if (resource == null)
             {
                 break;

@@ -31,6 +31,7 @@ Do not use Aspose.PSD.FOSS when you need to:
 
 - The library parses only a small supported subset of the PSD/PSB format.
 - Known structures are exposed through a compact public API.
+- Image resources are exposed through lightweight unknown-only summaries rather than ID-specific semantic reconstruction.
 - Unsupported sections are preserved as raw bytes where possible.
 - When you mutate supported metadata, the library rewrites only the affected supported structures and keeps the rest of the file in raw-preserved form.
 
@@ -121,7 +122,7 @@ Sample/workflow matrix:
 
 | Sample | Main workflow | What it demonstrates |
 |---|---|---|
-| `Aspose.PSD.FOSS.Samples.Basic` | Document inspection | Header fields, document flags, resource summaries, color mode data, and merged image data inspection |
+| `Aspose.PSD.FOSS.Samples.Basic` | Document inspection | Header fields, document flags, unknown-only resource summaries, color mode data, and merged image data inspection |
 | `Aspose.PSD.FOSS.Samples.Layers` | Layer inspection | Layer metadata, derived geometry, channel summaries, mask summaries, and blending-range summaries |
 | `Aspose.PSD.FOSS.Samples.StructuralEditing` | Supported metadata editing | Renaming layers, changing visibility, opacity, clipping, blend mode, and geometry, then saving without rendering |
 | `Aspose.PSD.FOSS.Samples.Streams` | Stream-based round trip | Loading from a stream, saving to a stream, and working with in-memory PSD/PSB data |
@@ -161,6 +162,7 @@ Markdown documentation is available in the repository:
 - Pixel editing
 - Export to PNG, JPEG, or other raster formats
 - Full image resource editing
+- Semantic recognition of specific image resource kinds
 - Full tagged block editing
 - Text, vector, effects, smart filters, and adjustment rendering
 

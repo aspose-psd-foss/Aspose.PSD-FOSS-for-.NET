@@ -20,6 +20,7 @@ This page is the contract for what a new developer should assume about the proje
 - Export to PNG, JPEG, or other raster formats
 - Pixel editing
 - Full image resource editing
+- Semantic recognition of specific image resource kinds
 - Full tagged block editing
 - Text rendering
 - Vector rendering

@@ -47,6 +47,11 @@ Additional read-only inspection API:
 
 These APIs are intended for structural inspection rather than semantic reconstruction of the full Photoshop feature set.
 
+In the current lightweight image-resource implementation:
+
+- `Resources` returns unknown-only resource summaries with identifier, Pascal name, and payload length;
+- `GlobalAngle`, `HasIccProfile`, and `IsIccProfileUntagged` remain part of the public API, but they are not reconstructed from resource IDs and therefore stay unset/default.
+
 ## Inspect Layers
 
 Use `image.Layers` to enumerate parsed layer records.

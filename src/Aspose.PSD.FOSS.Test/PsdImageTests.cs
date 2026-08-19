@@ -403,26 +403,26 @@ public sealed class PsdImageTests : IDisposable
     }
 
     /// <summary>
-    /// Tests that supported known image resources are classified and parsed without rewriting the raw section.
+    /// Tests that image resources are loaded as unknown blocks without ID-specific semantics.
     /// </summary>
     [Test]
-    public void Load_KnownImageResources_ClassifiesKnownBlocks()
+    public void Load_ImageResources_ParsesUnknownBlocksWithoutSemantics()
     {
         byte[] resourcesPayload = BuildResourcesPayload(
-            (ResourceBlock.GlobalAngleResourceId, "glba", [0x00, 0x00, 0x00, 0x2D]),
-            (ResourceBlock.IccProfileResourceId, "icc", [0x49, 0x43, 0x43, 0x50]),
-            (ResourceBlock.IccUntaggedProfileResourceId, string.Empty, [0x01]));
+            (ImageResourceIds.GlobalAngle, "glba", [0x00, 0x00, 0x00, 0x2D]),
+            (ImageResourceIds.IccProfile, "icc", [0x49, 0x43, 0x43, 0x50]),
+            (ImageResourceIds.IccUntaggedProfile, string.Empty, [0x01]));
         byte[] bytes = BuildMinimalDocument(psb: false, resourcesPayload: resourcesPayload);
         using var stream = new MemoryStream(bytes);
         using var image = PsdImage.Load(stream);
 
         Assert.That(image.ParsedResources, Has.Length.EqualTo(3));
-        Assert.That(image.ParsedResources[0].Kind, Is.EqualTo(KnownResourceKind.GlobalAngle));
-        Assert.That(image.ParsedResources[0].GlobalAngle, Is.EqualTo(45));
-        Assert.That(image.ParsedResources[1].Kind, Is.EqualTo(KnownResourceKind.IccProfile));
+        Assert.That(image.ParsedResources[0].ResourceId, Is.EqualTo(ImageResourceIds.GlobalAngle));
+        Assert.That(image.ParsedResources[0].Data, Is.EqualTo(new byte[] { 0x00, 0x00, 0x00, 0x2D }));
+        Assert.That(image.ParsedResources[1].ResourceId, Is.EqualTo(ImageResourceIds.IccProfile));
         Assert.That(image.ParsedResources[1].Data, Is.EqualTo(new byte[] { 0x49, 0x43, 0x43, 0x50 }));
-        Assert.That(image.ParsedResources[2].Kind, Is.EqualTo(KnownResourceKind.IccUntaggedProfile));
-        Assert.That(image.ParsedResources[2].IsIccProfileUntagged, Is.True);
+        Assert.That(image.ParsedResources[2].ResourceId, Is.EqualTo(ImageResourceIds.IccUntaggedProfile));
+        Assert.That(image.ParsedResources[2].Data, Is.EqualTo(new byte[] { 0x01 }));
     }
 
     /// <summary>
@@ -460,7 +460,7 @@ public sealed class PsdImageTests : IDisposable
     public void Load_DocumentSimpleInspectionProperties_ReturnExpectedValues()
     {
         byte[] resourcesPayload = BuildResourcesPayload(
-            (ResourceBlock.GlobalAngleResourceId, "glba", [0x00, 0x00, 0x00, 0x2D]));
+            (ImageResourceIds.GlobalAngle, "glba", [0x00, 0x00, 0x00, 0x2D]));
         byte[] bytes = BuildMinimalDocument(
             psb: true,
             colorMode: ColorModes.CMYK,
@@ -484,6 +484,42 @@ public sealed class PsdImageTests : IDisposable
         Assert.That(image.UsesPrediction, Is.True);
         Assert.That(image.Header.Version, Is.EqualTo(image.Version));
         Assert.That(image.Header.ColorMode, Is.EqualTo(image.ColorMode));
+    }
+
+    /// <summary>
+    /// Tests that saving a document with image resources preserves the raw Image Resources section bytes.
+    /// </summary>
+    [Test]
+    public void Save_DocumentWithImageResources_PreservesRawResourcesSection()
+    {
+        byte[] resourcesPayload = BuildResourcesPayload(
+            (ImageResourceIds.GlobalAngle, "glba", [0x00, 0x00, 0x00, 0x2D]),
+            (ImageResourceIds.IccProfile, "icc", [0x49, 0x43, 0x43, 0x50]),
+            (ImageResourceIds.IccUntaggedProfile, string.Empty, [0x01]));
+        byte[] originalBytes = BuildMinimalDocument(
+            psb: false,
+            colorMode: ColorModes.Rgb,
+            resourcesPayload: resourcesPayload,
+            compression: CompressionMethod.Raw,
+            imageDataPayload: [0xAA, 0xBB, 0xCC, 0xDD]);
+        string outputFile = GetPersistentArtifactPath("resources_roundtrip_test.psd");
+
+        using (var stream = new MemoryStream(originalBytes))
+        using (var image = PsdImage.Load(stream))
+        {
+            image.Save(outputFile);
+            LogArtifactDirectory(outputFile);
+        }
+
+        byte[] savedBytes = File.ReadAllBytes(outputFile);
+        byte[] originalResourcesSection = ExtractImageResourcesSection(originalBytes);
+        byte[] savedResourcesSection = ExtractImageResourcesSection(savedBytes);
+
+        Assert.That(savedResourcesSection, Is.EqualTo(originalResourcesSection));
+
+        using var reloaded = PsdImage.Load(outputFile);
+        Assert.That(reloaded.HasImageResources, Is.True);
+        Assert.That(reloaded.ResourceCount, Is.EqualTo(3));
     }
 
     /// <summary>
@@ -615,16 +651,16 @@ public sealed class PsdImageTests : IDisposable
     }
 
     /// <summary>
-    /// Tests that document-level DTO inspection API exposes resource, color, and image data summaries.
+    /// Tests that document-level DTO inspection API exposes unknown-only resource summaries and other structural metadata.
     /// </summary>
     [Test]
     public void Load_DocumentInspectionDtos_ReturnExpectedValues()
     {
         byte[] palettePayload = BuildIndexedPalettePayload();
         byte[] resourcesPayload = BuildResourcesPayload(
-            (ResourceBlock.GlobalAngleResourceId, "glba", [0x00, 0x00, 0x00, 0x2D]),
-            (ResourceBlock.IccProfileResourceId, "icc", [0x49, 0x43, 0x43, 0x50]),
-            (ResourceBlock.IccUntaggedProfileResourceId, string.Empty, [0x01]));
+            (ImageResourceIds.GlobalAngle, "glba", [0x00, 0x00, 0x00, 0x2D]),
+            (ImageResourceIds.IccProfile, "icc", [0x49, 0x43, 0x43, 0x50]),
+            (ImageResourceIds.IccUntaggedProfile, string.Empty, [0x01]));
         byte[] bytes = BuildMinimalDocument(
             psb: false,
             colorMode: ColorModes.Indexed,
@@ -637,11 +673,15 @@ public sealed class PsdImageTests : IDisposable
         using var image = PsdImage.Load(stream);
 
         Assert.That(image.Resources, Has.Count.EqualTo(3));
-        Assert.That(image.Resources[0].Kind, Is.EqualTo(PsdResourceKind.GlobalAngle));
-        Assert.That(image.Resources[0].GlobalAngle, Is.EqualTo(45));
-        Assert.That(image.HasIccProfile, Is.True);
-        Assert.That(image.IsIccProfileUntagged, Is.True);
-        Assert.That(image.GlobalAngle, Is.EqualTo(45));
+        Assert.That(image.Resources[0].Kind, Is.EqualTo(PsdResourceKind.Unknown));
+        Assert.That(image.Resources[1].Kind, Is.EqualTo(PsdResourceKind.Unknown));
+        Assert.That(image.Resources[2].Kind, Is.EqualTo(PsdResourceKind.Unknown));
+        Assert.That(image.Resources[0].GlobalAngle, Is.Null);
+        Assert.That(image.Resources[1].GlobalAngle, Is.Null);
+        Assert.That(image.Resources[2].GlobalAngle, Is.Null);
+        Assert.That(image.HasIccProfile, Is.False);
+        Assert.That(image.IsIccProfileUntagged, Is.Null);
+        Assert.That(image.GlobalAngle, Is.Null);
 
         Assert.That(image.ColorDataInfo.Kind, Is.EqualTo(PsdColorDataKind.IndexedPalette));
         Assert.That(image.ColorDataInfo.RawDataLength, Is.EqualTo(IndexedColorPalette.ExpectedRawLength));
@@ -965,6 +1005,23 @@ public sealed class PsdImageTests : IDisposable
         }
 
         return stream.ToArray();
+    }
+
+    /// <summary>
+    /// Extracts the full Image Resources section, including its 4-byte length field.
+    /// </summary>
+    /// <param name="documentBytes">The complete PSD document bytes.</param>
+    /// <returns>The raw Image Resources section bytes, including the section length field.</returns>
+    private static byte[] ExtractImageResourcesSection(byte[] documentBytes)
+    {
+        const int headerLength = 26;
+        int colorModeLength = BigEndianBitConverter.ToInt32(documentBytes, headerLength);
+        int resourcesLengthOffset = headerLength + 4 + colorModeLength;
+        int resourcesPayloadLength = BigEndianBitConverter.ToInt32(documentBytes, resourcesLengthOffset);
+        int totalSectionLength = 4 + resourcesPayloadLength;
+        byte[] sectionBytes = new byte[totalSectionLength];
+        Array.Copy(documentBytes, resourcesLengthOffset, sectionBytes, 0, totalSectionLength);
+        return sectionBytes;
     }
 
     private static byte[] BuildPsbWithSingleLayerDocument()

@@ -202,8 +202,8 @@
 
 ## 16. Lightweight unknown-only image resources
 
-- [ ] 16.1 Обновить OpenSpec proposal/design/specs под unknown-only чтение image resources без semantic recognition specific resource IDs
-- [ ] 16.2 Добавить выделенный internal class `UnknownResource` и материализовать каждый считанный image resource block как `UnknownResource`
-- [ ] 16.3 Убрать ID-specific classification/parsing из FOSS resource loading path, сохранив общий PSD block envelope parse и raw-preserve round-trip
-- [ ] 16.4 Обновить acceptance tests под unknown-only contract для resource summaries и document-level convenience properties
-- [ ] 16.5 Обновить README, markdown documentation и samples, чтобы они не имплицировали semantic recognition `GlobalAngle`/ICC resources в FOSS
+- [x] 16.1 Обновить OpenSpec proposal/design/specs под unknown-only чтение image resources без semantic recognition specific resource IDs
+- [x] 16.2 Добавить выделенный internal class `UnknownResource` и материализовать каждый считанный image resource block как `UnknownResource`
+- [x] 16.3 Убрать ID-specific classification/parsing из FOSS resource loading path, сохранив общий PSD block envelope parse и raw-preserve round-trip
+- [x] 16.4 Обновить acceptance tests под unknown-only contract для resource summaries и document-level convenience properties
+- [x] 16.5 Обновить README, markdown documentation и samples, чтобы они не имплицировали semantic recognition `GlobalAngle`/ICC resources в FOSS

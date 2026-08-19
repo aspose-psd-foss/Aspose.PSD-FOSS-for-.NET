@@ -1,6 +1,6 @@
 // Description:
 // This sample loads a PSD/PSB document and prints document-level metadata,
-// image resource summaries, color mode data details, and merged image data structure.
+// unknown-only image resource summaries, color mode data details, and merged image data structure.
 
 using Aspose.PSD.FOSS;
 using Aspose.PSD.FOSS.Samples.Common;
@@ -96,7 +96,7 @@ internal static class Program
     }
 
     /// <summary>
-    /// Prints parsed image resource summaries and related convenience properties.
+    /// Prints parsed image resource summaries in the current unknown-only mode.
     /// </summary>
     /// <param name="image">The loaded PSD or PSB image.</param>
     private static void PrintImageResources(PsdImage image)
@@ -104,14 +104,12 @@ internal static class Program
         Console.WriteLine("Image Resources");
         Console.WriteLine($"  HasImageResources: {image.HasImageResources}");
         Console.WriteLine($"  ResourceCount: {image.ResourceCount}");
-        Console.WriteLine($"  GlobalAngle: {FormatNullableInt(image.GlobalAngle)}");
-        Console.WriteLine($"  HasIccProfile: {image.HasIccProfile}");
-        Console.WriteLine($"  IsIccProfileUntagged: {FormatNullableBool(image.IsIccProfileUntagged)}");
+        Console.WriteLine("  Mode: Unknown-only resource summaries without ID-specific semantic reconstruction");
 
         for (int i = 0; i < image.Resources.Count; i++)
         {
             PsdResourceInfo resource = image.Resources[i];
-            Console.WriteLine($"  [{i}] ResourceId={resource.ResourceId}; Name={resource.Name}; Kind={resource.Kind}; DataLength={resource.DataLength}; GlobalAngle={FormatNullableInt(resource.GlobalAngle)}; IsIccProfileUntagged={FormatNullableBool(resource.IsIccProfileUntagged)}");
+            Console.WriteLine($"  [{i}] ResourceId={resource.ResourceId}; Name={resource.Name}; Kind={resource.Kind}; DataLength={resource.DataLength}");
         }
 
         Console.WriteLine();
@@ -141,26 +139,6 @@ internal static class Program
     private static int GetIndexedPaletteEntryCount(PsdImage image)
     {
         return image.IndexedPalette?.Entries.Count ?? 0;
-    }
-
-    /// <summary>
-    /// Formats an optional integer for console output.
-    /// </summary>
-    /// <param name="value">The optional integer value.</param>
-    /// <returns>A string representation suitable for console output.</returns>
-    private static string FormatNullableInt(int? value)
-    {
-        return value?.ToString() ?? "<none>";
-    }
-
-    /// <summary>
-    /// Formats an optional Boolean for console output.
-    /// </summary>
-    /// <param name="value">The optional Boolean value.</param>
-    /// <returns>A string representation suitable for console output.</returns>
-    private static string FormatNullableBool(bool? value)
-    {
-        return value?.ToString() ?? "<none>";
     }
 
     /// <summary>
