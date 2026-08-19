@@ -590,11 +590,25 @@ public sealed class PsdImage : IDisposable
             sectionWriter.Write(layerInfoPayload.Length);
         }
         sectionWriter.Write(layerInfoPayload);
-        sectionWriter.Write(_layerGlobalMaskAndTailRaw);
+        sectionWriter.Write(GetLayerGlobalMaskAndTailBytesForWrite());
 
         byte[] sectionBytes = sectionStream.ToArray();
         WriteLayerAndMaskSectionLength(writer, sectionBytes.Length);
         writer.Write(sectionBytes);
+    }
+
+    /// <summary>
+    /// Returns the raw global layer mask and trailing bytes, synthesizing an empty global mask block when absent.
+    /// </summary>
+    /// <returns>The bytes to append after layer info inside the Layer and Mask section.</returns>
+    private byte[] GetLayerGlobalMaskAndTailBytesForWrite()
+    {
+        if (_layerGlobalMaskAndTailRaw.Length > 0)
+        {
+            return _layerGlobalMaskAndTailRaw;
+        }
+
+        return [0, 0, 0, 0];
     }
 
     /// <summary>

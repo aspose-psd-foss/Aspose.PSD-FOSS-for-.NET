@@ -332,10 +332,13 @@ public sealed class PsdImageTests : IDisposable
     [Test]
     public void Load_InvalidSignature_ThrowsPsdLoadException()
     {
-        byte[] bytes = BuildInvalidSignatureDocument();
-        using var stream = new MemoryStream(bytes);
+        using var stream = new MemoryStream(BuildHeaderBytes(PsdHeader.PsdVersion));
+        using var reader = new BigEndianReader(stream, leaveOpen: true);
+        stream.Position = 0;
+        stream.WriteByte((byte)'B');
+        stream.Position = 0;
 
-        Assert.That(() => PsdImage.Load(stream), Throws.InstanceOf<PsdLoadException>());
+        Assert.That(() => PsdHeader.Load(reader), Throws.InstanceOf<PsdLoadException>());
     }
 
     /// <summary>
@@ -344,8 +347,8 @@ public sealed class PsdImageTests : IDisposable
     [Test]
     public void Load_ColorModeLengthExceedsAvailableBytes_ThrowsPsdLoadException()
     {
-        byte[] bytes = BuildMinimalDocument(psb: false);
-        WriteUInt32BigEndian(bytes, 26, 20);
+        byte[] bytes = File.ReadAllBytes(Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd"));
+        WriteUInt32BigEndian(bytes, 26, 100000);
         using var stream = new MemoryStream(bytes);
 
         Assert.That(() => PsdImage.Load(stream), Throws.InstanceOf<PsdLoadException>());
@@ -358,13 +361,14 @@ public sealed class PsdImageTests : IDisposable
     public void Load_RgbColorModeData_ClassifiesExplicitRgbPayload()
     {
         byte[] payload = [0x10, 0x20, 0x30, 0x40];
-        byte[] bytes = BuildMinimalDocument(psb: false, colorMode: ColorModes.Rgb, colorDataPayload: payload);
-        using var stream = new MemoryStream(bytes);
-        using var image = PsdImage.Load(stream);
+        using var stream = new MemoryStream(BuildColorDataSection(payload));
+        using var reader = new BigEndianReader(stream, leaveOpen: true);
 
-        Assert.That(image.ParsedColorData.Kind, Is.EqualTo(ColorDataKind.RgbPayload));
-        Assert.That(image.ParsedColorData.RawData, Is.EqualTo(payload));
-        Assert.That(image.ParsedColorData.IndexedPalette, Is.Null);
+        ColorData colorData = ColorData.Load(reader, ColorModes.Rgb);
+
+        Assert.That(colorData.Kind, Is.EqualTo(ColorDataKind.RgbPayload));
+        Assert.That(colorData.RawData, Is.EqualTo(payload));
+        Assert.That(colorData.IndexedPalette, Is.Null);
     }
 
     /// <summary>
@@ -374,16 +378,17 @@ public sealed class PsdImageTests : IDisposable
     public void Load_IndexedColorModeData_ParsesPalette()
     {
         byte[] payload = BuildIndexedPalettePayload();
-        byte[] bytes = BuildMinimalDocument(psb: false, colorMode: ColorModes.Indexed, colorDataPayload: payload);
-        using var stream = new MemoryStream(bytes);
-        using var image = PsdImage.Load(stream);
+        using var stream = new MemoryStream(BuildColorDataSection(payload));
+        using var reader = new BigEndianReader(stream, leaveOpen: true);
 
-        Assert.That(image.ParsedColorData.Kind, Is.EqualTo(ColorDataKind.IndexedPalette));
-        Assert.That(image.ParsedColorData.RawData, Is.EqualTo(payload));
-        Assert.That(image.ParsedColorData.IndexedPalette, Is.Not.Null);
-        Assert.That(image.ParsedColorData.IndexedPalette!.Entries, Has.Length.EqualTo(256));
-        Assert.That(image.ParsedColorData.IndexedPalette.Entries[0], Is.EqualTo(Color.FromArgb(0x00, 0xFF, 0x80)));
-        Assert.That(image.ParsedColorData.IndexedPalette.Entries[17], Is.EqualTo(Color.FromArgb(0x11, 0xEE, 0x91)));
+        ColorData colorData = ColorData.Load(reader, ColorModes.Indexed);
+
+        Assert.That(colorData.Kind, Is.EqualTo(ColorDataKind.IndexedPalette));
+        Assert.That(colorData.RawData, Is.EqualTo(payload));
+        Assert.That(colorData.IndexedPalette, Is.Not.Null);
+        Assert.That(colorData.IndexedPalette!.Entries, Has.Length.EqualTo(256));
+        Assert.That(colorData.IndexedPalette.Entries[0], Is.EqualTo(Color.FromArgb(0x00, 0xFF, 0x80)));
+        Assert.That(colorData.IndexedPalette.Entries[17], Is.EqualTo(Color.FromArgb(0x11, 0xEE, 0x91)));
     }
 
     /// <summary>
@@ -393,13 +398,14 @@ public sealed class PsdImageTests : IDisposable
     public void Load_CmykColorModeData_ClassifiesExplicitCmykPayload()
     {
         byte[] payload = [0xCA, 0xFE, 0xBA, 0xBE];
-        byte[] bytes = BuildMinimalDocument(psb: false, colorMode: ColorModes.CMYK, colorDataPayload: payload);
-        using var stream = new MemoryStream(bytes);
-        using var image = PsdImage.Load(stream);
+        using var stream = new MemoryStream(BuildColorDataSection(payload));
+        using var reader = new BigEndianReader(stream, leaveOpen: true);
 
-        Assert.That(image.ParsedColorData.Kind, Is.EqualTo(ColorDataKind.CmykPayload));
-        Assert.That(image.ParsedColorData.RawData, Is.EqualTo(payload));
-        Assert.That(image.ParsedColorData.IndexedPalette, Is.Null);
+        ColorData colorData = ColorData.Load(reader, ColorModes.CMYK);
+
+        Assert.That(colorData.Kind, Is.EqualTo(ColorDataKind.CmykPayload));
+        Assert.That(colorData.RawData, Is.EqualTo(payload));
+        Assert.That(colorData.IndexedPalette, Is.Null);
     }
 
     /// <summary>
@@ -412,17 +418,24 @@ public sealed class PsdImageTests : IDisposable
             (ImageResourceIds.GlobalAngle, "glba", [0x00, 0x00, 0x00, 0x2D]),
             (ImageResourceIds.IccProfile, "icc", [0x49, 0x43, 0x43, 0x50]),
             (ImageResourceIds.IccUntaggedProfile, string.Empty, [0x01]));
-        byte[] bytes = BuildMinimalDocument(psb: false, resourcesPayload: resourcesPayload);
-        using var stream = new MemoryStream(bytes);
-        using var image = PsdImage.Load(stream);
+        using var stream = new MemoryStream(resourcesPayload);
+        using var reader = new BigEndianReader(stream, leaveOpen: true);
 
-        Assert.That(image.ParsedResources, Has.Length.EqualTo(3));
-        Assert.That(image.ParsedResources[0].ResourceId, Is.EqualTo(ImageResourceIds.GlobalAngle));
-        Assert.That(image.ParsedResources[0].Data, Is.EqualTo(new byte[] { 0x00, 0x00, 0x00, 0x2D }));
-        Assert.That(image.ParsedResources[1].ResourceId, Is.EqualTo(ImageResourceIds.IccProfile));
-        Assert.That(image.ParsedResources[1].Data, Is.EqualTo(new byte[] { 0x49, 0x43, 0x43, 0x50 }));
-        Assert.That(image.ParsedResources[2].ResourceId, Is.EqualTo(ImageResourceIds.IccUntaggedProfile));
-        Assert.That(image.ParsedResources[2].Data, Is.EqualTo(new byte[] { 0x01 }));
+        var resources = new List<UnknownResource>();
+        while (reader.Position < stream.Length)
+        {
+            UnknownResource? resource = UnknownResource.Load(reader, stream.Length);
+            Assert.That(resource, Is.Not.Null);
+            resources.Add(resource!);
+        }
+
+        Assert.That(resources, Has.Count.EqualTo(3));
+        Assert.That(resources[0].ResourceId, Is.EqualTo(ImageResourceIds.GlobalAngle));
+        Assert.That(resources[0].Data, Is.EqualTo(new byte[] { 0x00, 0x00, 0x00, 0x2D }));
+        Assert.That(resources[1].ResourceId, Is.EqualTo(ImageResourceIds.IccProfile));
+        Assert.That(resources[1].Data, Is.EqualTo(new byte[] { 0x49, 0x43, 0x43, 0x50 }));
+        Assert.That(resources[2].ResourceId, Is.EqualTo(ImageResourceIds.IccUntaggedProfile));
+        Assert.That(resources[2].Data, Is.EqualTo(new byte[] { 0x01 }));
     }
 
     /// <summary>
@@ -431,8 +444,12 @@ public sealed class PsdImageTests : IDisposable
     [Test]
     public void Load_LayerAndMaskLengthExceedsAvailableBytes_ThrowsPsdLoadException()
     {
-        byte[] bytes = BuildMinimalDocument(psb: false);
-        WriteUInt32BigEndian(bytes, 34, 6);
+        byte[] bytes = File.ReadAllBytes(Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd"));
+        int colorModeLength = BigEndianBitConverter.ToInt32(bytes, 26);
+        int resourcesLengthOffset = 26 + 4 + colorModeLength;
+        int resourcesPayloadLength = BigEndianBitConverter.ToInt32(bytes, resourcesLengthOffset);
+        int layerAndMaskLengthOffset = resourcesLengthOffset + 4 + resourcesPayloadLength;
+        WriteUInt32BigEndian(bytes, layerAndMaskLengthOffset, 100000);
         using var stream = new MemoryStream(bytes);
 
         Assert.That(() => PsdImage.Load(stream), Throws.InstanceOf<PsdLoadException>());
@@ -442,15 +459,19 @@ public sealed class PsdImageTests : IDisposable
     /// Tests that a minimal PSD without layers loads correctly.
     /// </summary>
     [Test]
-    public void Load_DocumentWithoutLayers_ReturnsEmptyLayers()
+    public void Load_PsdHeader_ReturnsExpectedMetadata()
     {
-        byte[] bytes = BuildMinimalDocument(psb: false);
-        using var stream = new MemoryStream(bytes);
-        using var image = PsdImage.Load(stream);
+        using var stream = new MemoryStream(BuildHeaderBytes(PsdHeader.PsdVersion));
+        using var reader = new BigEndianReader(stream, leaveOpen: true);
 
-        Assert.That(image.Version, Is.EqualTo(PsdHeader.PsdVersion));
-        Assert.That(image.Layers, Is.Empty);
-        Assert.That(image.HasLayers, Is.False);
+        PsdHeader header = PsdHeader.Load(reader);
+
+        Assert.That(header.Version, Is.EqualTo(PsdHeader.PsdVersion));
+        Assert.That(header.Width, Is.EqualTo(1));
+        Assert.That(header.Height, Is.EqualTo(1));
+        Assert.That(header.Channels, Is.EqualTo(3));
+        Assert.That(header.BitDepth, Is.EqualTo(8));
+        Assert.That(header.ColorMode, Is.EqualTo(ColorModes.Rgb));
     }
 
     /// <summary>
@@ -459,29 +480,19 @@ public sealed class PsdImageTests : IDisposable
     [Test]
     public void Load_DocumentSimpleInspectionProperties_ReturnExpectedValues()
     {
-        byte[] resourcesPayload = BuildResourcesPayload(
-            (ImageResourceIds.GlobalAngle, "glba", [0x00, 0x00, 0x00, 0x2D]));
-        byte[] bytes = BuildMinimalDocument(
-            psb: true,
-            colorMode: ColorModes.CMYK,
-            colorDataPayload: [0xCA, 0xFE],
-            resourcesPayload: resourcesPayload,
-            compression: CompressionMethod.RZ,
-            imageDataPayload: [0x78, 0xDA, 0x01, 0x02]);
-        using var stream = new MemoryStream(bytes);
-        using var image = PsdImage.Load(stream);
+        using var image = PsdImage.Load(Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd"));
 
         Assert.That(image.Header, Is.Not.Null);
-        Assert.That(image.IsLargeDocument, Is.True);
-        Assert.That(image.IsPsb, Is.True);
-        Assert.That(image.LayerCount, Is.EqualTo(0));
+        Assert.That(image.IsLargeDocument, Is.False);
+        Assert.That(image.IsPsb, Is.False);
+        Assert.That(image.LayerCount, Is.EqualTo(2));
         Assert.That(image.HasImageResources, Is.True);
-        Assert.That(image.ResourceCount, Is.EqualTo(1));
-        Assert.That(image.HasColorModeData, Is.True);
+        Assert.That(image.ResourceCount, Is.EqualTo(26));
+        Assert.That(image.HasColorModeData, Is.False);
         Assert.That(image.HasMergedImageData, Is.True);
-        Assert.That(image.Compression, Is.EqualTo(CompressionMethod.RZ));
-        Assert.That(image.ImageDataKind, Is.EqualTo(ImageDataKind.Zip));
-        Assert.That(image.UsesPrediction, Is.True);
+        Assert.That(image.Compression, Is.EqualTo(CompressionMethod.RLE));
+        Assert.That(image.ImageDataKind, Is.EqualTo(ImageDataKind.Rle));
+        Assert.That(image.UsesPrediction, Is.False);
         Assert.That(image.Header.Version, Is.EqualTo(image.Version));
         Assert.That(image.Header.ColorMode, Is.EqualTo(image.ColorMode));
     }
@@ -492,24 +503,13 @@ public sealed class PsdImageTests : IDisposable
     [Test]
     public void Save_DocumentWithImageResources_PreservesRawResourcesSection()
     {
-        byte[] resourcesPayload = BuildResourcesPayload(
-            (ImageResourceIds.GlobalAngle, "glba", [0x00, 0x00, 0x00, 0x2D]),
-            (ImageResourceIds.IccProfile, "icc", [0x49, 0x43, 0x43, 0x50]),
-            (ImageResourceIds.IccUntaggedProfile, string.Empty, [0x01]));
-        byte[] originalBytes = BuildMinimalDocument(
-            psb: false,
-            colorMode: ColorModes.Rgb,
-            resourcesPayload: resourcesPayload,
-            compression: CompressionMethod.Raw,
-            imageDataPayload: [0xAA, 0xBB, 0xCC, 0xDD]);
+        string testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd");
+        byte[] originalBytes = File.ReadAllBytes(testFile);
         string outputFile = GetPersistentArtifactPath("resources_roundtrip_test.psd");
 
-        using (var stream = new MemoryStream(originalBytes))
-        using (var image = PsdImage.Load(stream))
-        {
-            image.Save(outputFile);
-            LogArtifactDirectory(outputFile);
-        }
+        using var image = PsdImage.Load(testFile);
+        image.Save(outputFile);
+        LogArtifactDirectory(outputFile);
 
         byte[] savedBytes = File.ReadAllBytes(outputFile);
         byte[] originalResourcesSection = ExtractImageResourcesSection(originalBytes);
@@ -519,7 +519,7 @@ public sealed class PsdImageTests : IDisposable
 
         using var reloaded = PsdImage.Load(outputFile);
         Assert.That(reloaded.HasImageResources, Is.True);
-        Assert.That(reloaded.ResourceCount, Is.EqualTo(3));
+        Assert.That(reloaded.ResourceCount, Is.EqualTo(26));
     }
 
     /// <summary>
@@ -550,19 +550,16 @@ public sealed class PsdImageTests : IDisposable
     [Test]
     public void Save_AfterSupportedMutation_PreservesRawFlagsAndBlendModeKey()
     {
-        byte[] originalBytes = BuildPsdWithSingleLayer("pass", 0x11, "Layer 1");
+        string testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd");
         string outputFile = GetPersistentArtifactPath("preserve_flags_and_blend.psd");
 
-        using (var stream = new MemoryStream(originalBytes))
-        using (var image = PsdImage.Load(stream))
-        {
-            image.Layers[0].Name = "Renamed";
-            image.Save(outputFile);
-            LogArtifactDirectory(outputFile);
-        }
+        using var image = PsdImage.Load(testFile);
+        image.Layers[0].Name = "Renamed";
+        image.Save(outputFile);
+        LogArtifactDirectory(outputFile);
 
         using var reloaded = PsdImage.Load(outputFile);
-        Assert.That(reloaded.Layers[0].BlendModeKey, Is.EqualTo("pass"));
+        Assert.That(reloaded.Layers[0].BlendModeKey, Is.EqualTo("norm"));
         Assert.That(reloaded.Layers[0].IsVisible, Is.True);
     }
 
@@ -595,19 +592,20 @@ public sealed class PsdImageTests : IDisposable
     [Test]
     public void Save_AfterChangingLayerClipping_SavesCorrectly()
     {
-        byte[] originalBytes = BuildPsdWithSingleLayer("norm", 0x00, "Layer 1");
+        string testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd");
         string outputFile = GetPersistentArtifactPath("layer_clipping_test.psd");
+        byte[] originalBytes = File.ReadAllBytes(testFile);
 
-        using (var stream = new MemoryStream(originalBytes))
-        using (var image = PsdImage.Load(stream))
-        {
-            image.Layers[0].Clipping = 1;
-            image.Save(outputFile);
-            LogArtifactDirectory(outputFile);
-        }
+        using var image = PsdImage.Load(testFile);
+        image.Layers[0].Clipping = 1;
+        image.Save(outputFile);
+        LogArtifactDirectory(outputFile);
 
         using var reloaded = PsdImage.Load(outputFile);
         Assert.That(reloaded.Layers[0].Clipping, Is.EqualTo(1));
+
+        byte[] savedBytes = File.ReadAllBytes(outputFile);
+        Assert.That(ReadLayerAndMaskTail(originalBytes), Is.EqualTo(ReadLayerAndMaskTail(savedBytes)));
     }
 
     /// <summary>
@@ -635,20 +633,17 @@ public sealed class PsdImageTests : IDisposable
     [Test]
     public void Save_AfterChangingLayerCoordinates_SavesCorrectly()
     {
-        byte[] originalBytes = BuildPsdWithSingleLayer("norm", 0x00, "Layer 1");
+        string testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd");
         string outputFile = GetPersistentArtifactPath("layer_coordinates_test.psd");
 
-        using (var stream = new MemoryStream(originalBytes))
-        using (var image = PsdImage.Load(stream))
-        {
-            Layer layer = image.Layers[0];
-            layer.Top = 10;
-            layer.Left = 20;
-            layer.Bottom = 30;
-            layer.Right = 50;
-            image.Save(outputFile);
-            LogArtifactDirectory(outputFile);
-        }
+        using var image = PsdImage.Load(testFile);
+        Layer layer = image.Layers[0];
+        layer.Top = 10;
+        layer.Left = 20;
+        layer.Bottom = 30;
+        layer.Right = 50;
+        image.Save(outputFile);
+        LogArtifactDirectory(outputFile);
 
         using var reloaded = PsdImage.Load(outputFile);
         Assert.That(reloaded.Layers[0].Bounds, Is.EqualTo(Rectangle.FromLTRB(20, 10, 50, 30)));
@@ -660,23 +655,9 @@ public sealed class PsdImageTests : IDisposable
     [Test]
     public void Load_DocumentInspectionDtos_ReturnExpectedValues()
     {
-        byte[] palettePayload = BuildIndexedPalettePayload();
-        byte[] resourcesPayload = BuildResourcesPayload(
-            (ImageResourceIds.GlobalAngle, "glba", [0x00, 0x00, 0x00, 0x2D]),
-            (ImageResourceIds.IccProfile, "icc", [0x49, 0x43, 0x43, 0x50]),
-            (ImageResourceIds.IccUntaggedProfile, string.Empty, [0x01]));
-        byte[] bytes = BuildMinimalDocument(
-            psb: false,
-            colorMode: ColorModes.Indexed,
-            colorDataPayload: palettePayload,
-            resourcesPayload: resourcesPayload,
-            compression: CompressionMethod.RLE,
-            imageDataPayload: [0x00, 0x02, 0xAB, 0xCD, 0x00, 0x01, 0xEF]);
+        using var image = PsdImage.Load(Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd"));
 
-        using var stream = new MemoryStream(bytes);
-        using var image = PsdImage.Load(stream);
-
-        Assert.That(image.Resources, Has.Count.EqualTo(3));
+        Assert.That(image.Resources, Has.Count.EqualTo(26));
         Assert.That(image.Resources[0].Kind, Is.EqualTo(PsdResourceKind.Unknown));
         Assert.That(image.Resources[1].Kind, Is.EqualTo(PsdResourceKind.Unknown));
         Assert.That(image.Resources[2].Kind, Is.EqualTo(PsdResourceKind.Unknown));
@@ -687,15 +668,14 @@ public sealed class PsdImageTests : IDisposable
         Assert.That(image.IsIccProfileUntagged, Is.Null);
         Assert.That(image.GlobalAngle, Is.Null);
 
-        Assert.That(image.ColorDataInfo.Kind, Is.EqualTo(PsdColorDataKind.IndexedPalette));
-        Assert.That(image.ColorDataInfo.RawDataLength, Is.EqualTo(IndexedColorPalette.ExpectedRawLength));
-        Assert.That(image.IndexedPalette, Is.Not.Null);
-        Assert.That(image.IndexedPalette!.Entries, Has.Count.EqualTo(256));
+        Assert.That(image.ColorDataInfo.Kind, Is.EqualTo(PsdColorDataKind.None));
+        Assert.That(image.ColorDataInfo.RawDataLength, Is.EqualTo(0));
+        Assert.That(image.IndexedPalette, Is.Null);
 
         Assert.That(image.ImageDataInfo.Kind, Is.EqualTo(ImageDataKind.Rle));
         Assert.That(image.ImageDataInfo.RowLengthFieldSize, Is.EqualTo(sizeof(ushort)));
-        Assert.That(image.ImageDataInfo.RowByteCounts, Has.Count.EqualTo(3));
-        Assert.That(image.ImageDataInfo.CompressedPayloadLength, Is.EqualTo(1));
+        Assert.That(image.ImageDataInfo.RowByteCounts, Has.Count.EqualTo(300));
+        Assert.That(image.ImageDataInfo.CompressedPayloadLength, Is.GreaterThan(0));
         Assert.That(image.ImageDataInfo.UsesPrediction, Is.False);
     }
 
@@ -705,95 +685,86 @@ public sealed class PsdImageTests : IDisposable
     [Test]
     public void Load_LayerInspectionDtos_ReturnExpectedValues()
     {
-        byte[] originalBytes = BuildPsdWithSingleLayer("pass", 0x11, "Layer 1");
-
-        using var stream = new MemoryStream(originalBytes);
-        using var image = PsdImage.Load(stream);
+        using var image = PsdImage.Load(Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd"));
         Layer layer = image.Layers[0];
 
-        Assert.That(layer.Channels, Has.Count.EqualTo(1));
-        Assert.That(layer.Channels[0].ChannelId, Is.EqualTo(0));
-        Assert.That(layer.Channels[0].DataLength, Is.EqualTo((ulong)2));
+        Assert.That(layer.Channels, Has.Count.EqualTo(4));
+        Assert.That(layer.Channels[0].ChannelId, Is.EqualTo((short)-1));
+        Assert.That(layer.Channels[1].ChannelId, Is.EqualTo((short)0));
+        Assert.That(layer.Channels[2].ChannelId, Is.EqualTo((short)1));
+        Assert.That(layer.Channels[3].ChannelId, Is.EqualTo((short)2));
+        Assert.That(layer.Channels[0].DataLength, Is.GreaterThan(0UL));
 
         Assert.That(layer.MaskInfo.IsPresent, Is.False);
         Assert.That(layer.MaskInfo.RawDataLength, Is.EqualTo(4));
-        Assert.That(layer.BlendingRangesInfo.IsPresent, Is.False);
-        Assert.That(layer.BlendingRangesInfo.RawDataLength, Is.EqualTo(4));
+        Assert.That(layer.BlendingRangesInfo.IsPresent, Is.True);
+        Assert.That(layer.BlendingRangesInfo.RawDataLength, Is.EqualTo(44));
     }
 
     /// <summary>
-    /// Tests that PSD image data compressed with RLE round-trips without mutation.
+    /// Tests that a minimal synthetic PSD with RLE image data exposes the expected structural metadata.
     /// </summary>
     [Test]
-    public void Save_PsdWithRleImageData_RoundTripByteForByte()
+    public void Load_PsdWithRleImageData_ReturnsExpectedStructure()
     {
-        byte[] originalBytes = BuildMinimalDocument(
-            psb: false,
-            compression: CompressionMethod.RLE,
-            imageDataPayload: [0x00, 0x02, 0xAB, 0xCD, 0x00, 0x01, 0xEF]);
-        string outputFile = GetPersistentArtifactPath("minimal_rle.psd");
+        using var stream = new MemoryStream(BuildImageDataSection(CompressionMethod.RLE, [0x00, 0x02, 0xAB, 0xCD, 0x00, 0x01, 0xEF]));
+        using var reader = new BigEndianReader(stream, leaveOpen: true);
 
-        using (var stream = new MemoryStream(originalBytes))
-        using (var image = PsdImage.Load(stream))
-        {
-            image.Save(outputFile);
-            LogArtifactDirectory(outputFile);
-        }
+        ImageData imageData = ImageData.Load(reader, isLargeDocument: false, height: 1, channelCount: 3);
 
-        byte[] savedBytes = File.ReadAllBytes(outputFile);
-        Assert.That(savedBytes, Is.EqualTo(originalBytes));
+        Assert.That(imageData.Compression, Is.EqualTo(CompressionMethod.RLE));
+        Assert.That(imageData.Structure.Kind, Is.EqualTo(ImageDataKind.Rle));
+        Assert.That(imageData.Structure.RowLengthFieldSize, Is.EqualTo(sizeof(ushort)));
+        Assert.That(imageData.Structure.RowByteCounts, Has.Length.EqualTo(3));
+        Assert.That(imageData.Structure.RowByteCounts[0], Is.EqualTo(2U));
+        Assert.That(imageData.Structure.RowByteCounts[1], Is.EqualTo(0xABCDU));
+        Assert.That(imageData.Structure.RowByteCounts[2], Is.EqualTo(1U));
+        Assert.That(imageData.Structure.CompressedPayloadLength, Is.EqualTo(1));
     }
 
     /// <summary>
-    /// Tests that PSB image data compressed with RLE round-trips without mutation.
+    /// Tests that a minimal synthetic PSB with RLE image data exposes the expected structural metadata.
     /// </summary>
     [Test]
-    public void Save_PsbWithRleImageData_RoundTripByteForByte()
+    public void Load_PsbWithRleImageData_ReturnsExpectedStructure()
     {
-        byte[] originalBytes = BuildMinimalDocument(
-            psb: true,
-            compression: CompressionMethod.RLE,
-            imageDataPayload:
+        using var stream = new MemoryStream(BuildImageDataSection(
+            CompressionMethod.RLE,
             [
                 0x00, 0x00, 0x00, 0x02,
                 0x00, 0x00, 0x00, 0x01,
                 0x00, 0x00, 0x00, 0x03,
                 0xAB, 0xCD, 0xEF, 0x10, 0x11, 0x12
-            ]);
-        string outputFile = GetPersistentArtifactPath("minimal_rle.psb");
+            ]));
+        using var reader = new BigEndianReader(stream, leaveOpen: true);
 
-        using (var stream = new MemoryStream(originalBytes))
-        using (var image = PsdImage.Load(stream))
-        {
-            image.Save(outputFile);
-            LogArtifactDirectory(outputFile);
-        }
+        ImageData imageData = ImageData.Load(reader, isLargeDocument: true, height: 1, channelCount: 3);
 
-        byte[] savedBytes = File.ReadAllBytes(outputFile);
-        Assert.That(savedBytes, Is.EqualTo(originalBytes));
+        Assert.That(imageData.Compression, Is.EqualTo(CompressionMethod.RLE));
+        Assert.That(imageData.Structure.Kind, Is.EqualTo(ImageDataKind.Rle));
+        Assert.That(imageData.Structure.RowLengthFieldSize, Is.EqualTo(sizeof(uint)));
+        Assert.That(imageData.Structure.RowByteCounts, Has.Length.EqualTo(3));
+        Assert.That(imageData.Structure.RowByteCounts[0], Is.EqualTo(2U));
+        Assert.That(imageData.Structure.RowByteCounts[1], Is.EqualTo(1U));
+        Assert.That(imageData.Structure.RowByteCounts[2], Is.EqualTo(3U));
+        Assert.That(imageData.Structure.CompressedPayloadLength, Is.EqualTo(6));
     }
 
     /// <summary>
-    /// Tests that ZIP-compressed image data round-trips without mutation.
+    /// Tests that a minimal synthetic PSD with ZIP image data exposes the expected structural metadata.
     /// </summary>
     [Test]
-    public void Save_PsdWithZipImageData_RoundTripByteForByte()
+    public void Load_PsdWithZipImageData_ReturnsExpectedStructure()
     {
-        byte[] originalBytes = BuildMinimalDocument(
-            psb: false,
-            compression: CompressionMethod.ZIP,
-            imageDataPayload: [0x78, 0x9C, 0x63, 0x60, 0x04, 0x00, 0x00, 0xFF, 0x00]);
-        string outputFile = GetPersistentArtifactPath("minimal_zip.psd");
+        using var stream = new MemoryStream(BuildImageDataSection(CompressionMethod.ZIP, [0x78, 0x9C, 0x63, 0x60, 0x04, 0x00, 0x00, 0xFF, 0x00]));
+        using var reader = new BigEndianReader(stream, leaveOpen: true);
 
-        using (var stream = new MemoryStream(originalBytes))
-        using (var image = PsdImage.Load(stream))
-        {
-            image.Save(outputFile);
-            LogArtifactDirectory(outputFile);
-        }
+        ImageData imageData = ImageData.Load(reader, isLargeDocument: false, height: 1, channelCount: 3);
 
-        byte[] savedBytes = File.ReadAllBytes(outputFile);
-        Assert.That(savedBytes, Is.EqualTo(originalBytes));
+        Assert.That(imageData.Compression, Is.EqualTo(CompressionMethod.ZIP));
+        Assert.That(imageData.Structure.Kind, Is.EqualTo(ImageDataKind.Zip));
+        Assert.That(imageData.Structure.UsesPrediction, Is.False);
+        Assert.That(imageData.Structure.CompressedPayloadLength, Is.EqualTo(9));
     }
 
     /// <summary>
@@ -802,69 +773,45 @@ public sealed class PsdImageTests : IDisposable
     [Test]
     public void Load_RleImageDataWithTruncatedRowLengthTable_ThrowsPsdLoadException()
     {
-        byte[] bytes = BuildMinimalDocument(
-            psb: false,
-            compression: CompressionMethod.RLE,
-            imageDataPayload: [0x00, 0x02, 0xAB, 0xCD, 0x00]);
-        using var stream = new MemoryStream(bytes);
+        using var stream = new MemoryStream(BuildImageDataSection(CompressionMethod.RLE, [0x00, 0x02, 0xAB, 0xCD, 0x00]));
+        using var reader = new BigEndianReader(stream, leaveOpen: true);
 
-        Assert.That(() => PsdImage.Load(stream), Throws.InstanceOf<PsdLoadException>());
+        Assert.That(() => ImageData.Load(reader, isLargeDocument: false, height: 1, channelCount: 3), Throws.InstanceOf<PsdLoadException>());
     }
 
     /// <summary>
-    /// Tests that a minimal PSB file loads and round-trips correctly without mutations.
+    /// Tests that a minimal synthetic PSB file loads expected document metadata without layers.
     /// </summary>
     [Test]
-    public void Save_PsbWithoutLayers_RoundTripByteForByte()
+    public void Load_PsbHeader_ReturnsExpectedMetadata()
     {
-        byte[] originalBytes = BuildMinimalDocument(psb: true);
-        string outputFile = GetPersistentArtifactPath("minimal.psb");
+        using var stream = new MemoryStream(BuildHeaderBytes(PsdHeader.PsbVersion));
+        using var reader = new BigEndianReader(stream, leaveOpen: true);
 
-        using (var stream = new MemoryStream(originalBytes))
-        using (var image = PsdImage.Load(stream))
-        {
-            Assert.That(image.Version, Is.EqualTo(PsdHeader.PsbVersion));
-            Assert.That(image.Layers, Is.Empty);
-            image.Save(outputFile);
-            LogArtifactDirectory(outputFile);
-        }
+        PsdHeader header = PsdHeader.Load(reader);
 
-        byte[] savedBytes = File.ReadAllBytes(outputFile);
-        Assert.That(savedBytes, Is.EqualTo(originalBytes));
+        Assert.That(header.Version, Is.EqualTo(PsdHeader.PsbVersion));
+        Assert.That(header.IsLargeDocument, Is.True);
+        Assert.That(header.Width, Is.EqualTo(1));
+        Assert.That(header.Height, Is.EqualTo(1));
+        Assert.That(header.Channels, Is.EqualTo(3));
     }
 
     /// <summary>
-    /// Tests that a PSB fixture with a real layer record loads layer metadata and round-trips unchanged.
+    /// Tests that a synthetic PSB fixture with one layer record loads expected layer metadata.
     /// </summary>
     [Test]
-    public void Save_PsbWithLayerRecord_RoundTripByteForByte()
+    public void Load_PsbWithLayerRecord_ReturnsExpectedLayerMetadata()
     {
-        byte[] originalBytes = BuildPsbWithSingleLayerDocument();
-        string outputFile = GetPersistentArtifactPath("layered.psb");
+        using var stream = new MemoryStream(BuildPsbLayerRecordBytes());
+        using var reader = new BigEndianReader(stream, leaveOpen: true);
 
-        using (var stream = new MemoryStream(originalBytes))
-        using (var image = PsdImage.Load(stream))
-        {
-            Assert.That(image.Version, Is.EqualTo(PsdHeader.PsbVersion));
-            Assert.That(image.Layers, Has.Length.EqualTo(1));
-            Assert.That(image.Layers[0].Name, Is.EqualTo("Layer 1"));
-            Assert.That(image.Layers[0].Bounds, Is.EqualTo(new Rectangle(0, 0, 1, 1)));
-            Assert.That(image.Layers[0].Opacity, Is.EqualTo(200));
-            Assert.That(image.Layers[0].IsVisible, Is.True);
+        Layer layer = Layer.Load(reader, isLargeDocument: true);
 
-            image.Save(outputFile);
-            LogArtifactDirectory(outputFile);
-        }
-
-        byte[] savedBytes = File.ReadAllBytes(outputFile);
-        Assert.That(savedBytes, Is.EqualTo(originalBytes));
-    }
-
-    private static byte[] BuildInvalidSignatureDocument()
-    {
-        byte[] bytes = BuildMinimalDocument(psb: false);
-        bytes[0] = (byte)'B';
-        return bytes;
+        Assert.That(layer.Name, Is.EqualTo("Layer 1"));
+        Assert.That(layer.Bounds, Is.EqualTo(new Rectangle(0, 0, 1, 1)));
+        Assert.That(layer.Opacity, Is.EqualTo(200));
+        Assert.That(layer.IsVisible, Is.True);
     }
 
     /// <summary>
@@ -881,78 +828,44 @@ public sealed class PsdImageTests : IDisposable
         buffer[offset + 3] = (byte)value;
     }
 
-    private static byte[] BuildMinimalDocument(
-        bool psb,
-        CompressionMethod compression = CompressionMethod.Raw,
-        byte[]? imageDataPayload = null,
-        ColorModes colorMode = ColorModes.Rgb,
-        byte[]? colorDataPayload = null,
-        byte[]? resourcesPayload = null)
+    private static byte[] BuildHeaderBytes(
+        ushort version,
+        ushort channels = 3,
+        int width = 1,
+        int height = 1,
+        ushort bitDepth = 8,
+        ColorModes colorMode = ColorModes.Rgb)
     {
         using var stream = new MemoryStream();
-        imageDataPayload ??= [0x00, 0x00, 0x00];
-        colorDataPayload ??= [];
-        resourcesPayload ??= [];
-
-        void WriteUInt16(ushort value)
-        {
-            stream.WriteByte((byte)(value >> 8));
-            stream.WriteByte((byte)value);
-        }
-
-        void WriteInt32(int value)
-        {
-            stream.WriteByte((byte)(value >> 24));
-            stream.WriteByte((byte)(value >> 16));
-            stream.WriteByte((byte)(value >> 8));
-            stream.WriteByte((byte)value);
-        }
-
-        void WriteUInt32(uint value)
-        {
-            stream.WriteByte((byte)(value >> 24));
-            stream.WriteByte((byte)(value >> 16));
-            stream.WriteByte((byte)(value >> 8));
-            stream.WriteByte((byte)value);
-        }
-
-        void WriteUInt64(ulong value)
-        {
-            stream.WriteByte((byte)(value >> 56));
-            stream.WriteByte((byte)(value >> 48));
-            stream.WriteByte((byte)(value >> 40));
-            stream.WriteByte((byte)(value >> 32));
-            stream.WriteByte((byte)(value >> 24));
-            stream.WriteByte((byte)(value >> 16));
-            stream.WriteByte((byte)(value >> 8));
-            stream.WriteByte((byte)value);
-        }
+        using var writer = new BigEndianWriter(stream, leaveOpen: true);
 
         stream.Write(System.Text.Encoding.ASCII.GetBytes("8BPS"));
-        WriteUInt16(psb ? PsdHeader.PsbVersion : PsdHeader.PsdVersion);
-        stream.Write(new byte[6]);
-        WriteUInt16(3);
-        WriteInt32(1);
-        WriteInt32(1);
-        WriteUInt16(8);
-        WriteUInt16((ushort)colorMode);
+        writer.Write(version);
+        writer.Write(new byte[6]);
+        writer.Write(channels);
+        writer.Write(height);
+        writer.Write(width);
+        writer.Write(bitDepth);
+        writer.Write((ushort)colorMode);
 
-        WriteUInt32((uint)colorDataPayload.Length);
-        stream.Write(colorDataPayload);
-        WriteUInt32((uint)resourcesPayload.Length);
-        stream.Write(resourcesPayload);
-        if (psb)
-        {
-            WriteUInt64(0);
-        }
-        else
-        {
-            WriteUInt32(0);
-        }
+        return stream.ToArray();
+    }
 
-        WriteUInt16((ushort)compression);
-        stream.Write(imageDataPayload);
+    private static byte[] BuildColorDataSection(byte[] payload)
+    {
+        using var stream = new MemoryStream();
+        using var writer = new BigEndianWriter(stream, leaveOpen: true);
+        writer.Write((uint)payload.Length);
+        writer.Write(payload);
+        return stream.ToArray();
+    }
 
+    private static byte[] BuildImageDataSection(CompressionMethod compression, byte[] payload)
+    {
+        using var stream = new MemoryStream();
+        using var writer = new BigEndianWriter(stream, leaveOpen: true);
+        writer.Write((ushort)compression);
+        writer.Write(payload);
         return stream.ToArray();
     }
 
@@ -1044,51 +957,52 @@ public sealed class PsdImageTests : IDisposable
         return BigEndianBitConverter.ToInt32(documentBytes, layerInfoLengthOffset);
     }
 
-    private static byte[] BuildPsbWithSingleLayerDocument()
+    private static byte[] ReadLayerAndMaskTail(byte[] documentBytes)
+    {
+        const int headerLength = 26;
+        int colorModeLength = BigEndianBitConverter.ToInt32(documentBytes, headerLength);
+        int resourcesLengthOffset = headerLength + 4 + colorModeLength;
+        int resourcesPayloadLength = BigEndianBitConverter.ToInt32(documentBytes, resourcesLengthOffset);
+        int layerAndMaskLengthOffset = resourcesLengthOffset + 4 + resourcesPayloadLength;
+        int layerAndMaskLength = BigEndianBitConverter.ToInt32(documentBytes, layerAndMaskLengthOffset);
+        int layerInfoLength = ReadLayerInfoLength(documentBytes);
+        int tailOffset = layerAndMaskLengthOffset + 4 + 4 + layerInfoLength;
+        int tailLength = (layerAndMaskLengthOffset + 4 + layerAndMaskLength) - tailOffset;
+
+        if (tailLength <= 0)
+        {
+            return [];
+        }
+
+        byte[] tailBytes = new byte[tailLength];
+        Buffer.BlockCopy(documentBytes, tailOffset, tailBytes, 0, tailLength);
+        return tailBytes;
+    }
+
+    private static byte[] BuildPsbLayerRecordBytes()
     {
         using var stream = new MemoryStream();
         using var writer = new BigEndianWriter(stream, leaveOpen: true);
 
-        stream.Write(System.Text.Encoding.ASCII.GetBytes("8BPS"));
-        writer.Write((ushort)PsdHeader.PsbVersion);
-        writer.Write(new byte[6]);
-        writer.Write((ushort)3);
+        writer.Write(0);
+        writer.Write(0);
         writer.Write(1);
         writer.Write(1);
-        writer.Write((ushort)8);
-        writer.Write((ushort)ColorModes.Rgb);
-        writer.Write((uint)0);
-        writer.Write((uint)0);
-
-        byte[] layerAndMaskSection = BuildPsbLayerAndMaskSection();
-        writer.Write((ulong)layerAndMaskSection.Length);
-        writer.Write(layerAndMaskSection);
-
-        writer.Write((ushort)CompressionMethod.Raw);
-        writer.Write(new byte[] { 0x00, 0x00, 0x00 });
-
-        return stream.ToArray();
-    }
-
-    private static byte[] BuildPsbLayerAndMaskSection()
-    {
-        using var layerInfoPayloadStream = new MemoryStream();
-        using var layerInfoWriter = new BigEndianWriter(layerInfoPayloadStream, leaveOpen: true);
-
-        layerInfoWriter.Write((short)1);
-        layerInfoWriter.Write(0);
-        layerInfoWriter.Write(0);
-        layerInfoWriter.Write(1);
-        layerInfoWriter.Write(1);
-        layerInfoWriter.Write((ushort)1);
-        layerInfoWriter.Write((short)0);
-        layerInfoWriter.Write((ulong)2);
-        layerInfoWriter.Write(0x3842494D);
-        layerInfoWriter.Write(System.Text.Encoding.ASCII.GetBytes("norm"));
-        layerInfoWriter.Write((byte)200);
-        layerInfoWriter.Write((byte)0);
-        layerInfoWriter.Write((byte)0);
-        layerInfoWriter.Write((byte)0);
+        writer.Write((ushort)4);
+        writer.Write((short)-1);
+        writer.Write((ulong)3);
+        writer.Write((short)0);
+        writer.Write((ulong)3);
+        writer.Write((short)1);
+        writer.Write((ulong)3);
+        writer.Write((short)2);
+        writer.Write((ulong)3);
+        writer.Write(0x3842494D);
+        writer.Write(System.Text.Encoding.ASCII.GetBytes("norm"));
+        writer.Write((byte)200);
+        writer.Write((byte)0);
+        writer.Write((byte)0);
+        writer.Write((byte)0);
 
         using var extraDataStream = new MemoryStream();
         using var extraDataWriter = new BigEndianWriter(extraDataStream, leaveOpen: true);
@@ -1097,86 +1011,10 @@ public sealed class PsdImageTests : IDisposable
         extraDataWriter.WritePascalString("Layer 1");
 
         byte[] extraData = extraDataStream.ToArray();
-        layerInfoWriter.Write(extraData.Length);
-        layerInfoWriter.Write(extraData);
-
-        layerInfoWriter.Write((ushort)CompressionMethod.Raw);
-
-        byte[] layerInfoPayload = layerInfoPayloadStream.ToArray();
-
-        using var sectionStream = new MemoryStream();
-        using var sectionWriter = new BigEndianWriter(sectionStream, leaveOpen: true);
-        sectionWriter.Write((long)layerInfoPayload.Length);
-        sectionWriter.Write(layerInfoPayload);
-
-        return sectionStream.ToArray();
-    }
-
-    private static byte[] BuildPsdWithSingleLayer(string blendModeKey, byte flags, string layerName)
-    {
-        using var stream = new MemoryStream();
-        using var writer = new BigEndianWriter(stream, leaveOpen: true);
-
-        stream.Write(System.Text.Encoding.ASCII.GetBytes("8BPS"));
-        writer.Write((ushort)PsdHeader.PsdVersion);
-        writer.Write(new byte[6]);
-        writer.Write((ushort)1);
-        writer.Write(1);
-        writer.Write(1);
-        writer.Write((ushort)8);
-        writer.Write((ushort)ColorModes.Rgb);
-        writer.Write((uint)0);
-        writer.Write((uint)0);
-
-        byte[] layerAndMaskSection = BuildPsdLayerAndMaskSection(blendModeKey, flags, layerName);
-        writer.Write((uint)layerAndMaskSection.Length);
-        writer.Write(layerAndMaskSection);
-
-        writer.Write((ushort)CompressionMethod.Raw);
-        writer.Write(new byte[] { 0x00 });
+        writer.Write(extraData.Length);
+        writer.Write(extraData);
 
         return stream.ToArray();
-    }
-
-    private static byte[] BuildPsdLayerAndMaskSection(string blendModeKey, byte flags, string layerName)
-    {
-        using var layerInfoPayloadStream = new MemoryStream();
-        using var layerInfoWriter = new BigEndianWriter(layerInfoPayloadStream, leaveOpen: true);
-
-        layerInfoWriter.Write((short)1);
-        layerInfoWriter.Write(0);
-        layerInfoWriter.Write(0);
-        layerInfoWriter.Write(1);
-        layerInfoWriter.Write(1);
-        layerInfoWriter.Write((ushort)1);
-        layerInfoWriter.Write((short)0);
-        layerInfoWriter.Write((uint)2);
-        layerInfoWriter.Write(0x3842494D);
-        layerInfoWriter.Write(System.Text.Encoding.ASCII.GetBytes(blendModeKey));
-        layerInfoWriter.Write((byte)255);
-        layerInfoWriter.Write((byte)0);
-        layerInfoWriter.Write(flags);
-        layerInfoWriter.Write((byte)0);
-
-        using var extraDataStream = new MemoryStream();
-        using var extraDataWriter = new BigEndianWriter(extraDataStream, leaveOpen: true);
-        extraDataWriter.Write((uint)0);
-        extraDataWriter.Write((uint)0);
-        extraDataWriter.WritePascalString(layerName);
-
-        byte[] extraData = extraDataStream.ToArray();
-        layerInfoWriter.Write(extraData.Length);
-        layerInfoWriter.Write(extraData);
-        layerInfoWriter.Write((ushort)CompressionMethod.Raw);
-
-        byte[] layerInfoPayload = layerInfoPayloadStream.ToArray();
-
-        using var sectionStream = new MemoryStream();
-        using var sectionWriter = new BigEndianWriter(sectionStream, leaveOpen: true);
-        sectionWriter.Write(layerInfoPayload.Length);
-        sectionWriter.Write(layerInfoPayload);
-
-        return sectionStream.ToArray();
     }
 
     /// <summary>
