@@ -392,7 +392,9 @@ public sealed class PsdImage : IDisposable
             _layers = layers;
         }
 
-        int channelImageDataLength = (int)Math.Max(0, layerInfoLength - memReader.Position);
+        int layerInfoLengthFieldSize = _header?.IsLargeDocument == true ? sizeof(long) : sizeof(int);
+        long layerInfoPayloadPosition = memReader.Position - layerInfoLengthFieldSize;
+        int channelImageDataLength = (int)Math.Max(0, layerInfoLength - layerInfoPayloadPosition);
         _layerChannelImageDataRaw = channelImageDataLength > 0
             ? memReader.ReadBytes(channelImageDataLength)
             : [];

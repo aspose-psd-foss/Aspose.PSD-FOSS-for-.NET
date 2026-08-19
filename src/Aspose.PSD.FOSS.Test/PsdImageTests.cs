@@ -583,6 +583,10 @@ public sealed class PsdImageTests : IDisposable
         using var reloaded = PsdImage.Load(outputFile);
         Assert.That(reloaded.Layers[0].BlendMode, Is.EqualTo(BlendMode.Multiply));
         Assert.That(reloaded.Layers[0].BlendModeKey, Is.EqualTo("mul "));
+
+        byte[] originalBytes = File.ReadAllBytes(testFile);
+        byte[] savedBytes = File.ReadAllBytes(outputFile);
+        Assert.That(ReadLayerInfoLength(originalBytes), Is.EqualTo(ReadLayerInfoLength(savedBytes)));
     }
 
     /// <summary>
@@ -1022,6 +1026,22 @@ public sealed class PsdImageTests : IDisposable
         byte[] sectionBytes = new byte[totalSectionLength];
         Array.Copy(documentBytes, resourcesLengthOffset, sectionBytes, 0, totalSectionLength);
         return sectionBytes;
+    }
+
+    /// <summary>
+    /// Reads the PSD layer info payload length field from a complete document byte array.
+    /// </summary>
+    /// <param name="documentBytes">The complete PSD document bytes.</param>
+    /// <returns>The stored layer info payload length.</returns>
+    private static int ReadLayerInfoLength(byte[] documentBytes)
+    {
+        const int headerLength = 26;
+        int colorModeLength = BigEndianBitConverter.ToInt32(documentBytes, headerLength);
+        int resourcesLengthOffset = headerLength + 4 + colorModeLength;
+        int resourcesPayloadLength = BigEndianBitConverter.ToInt32(documentBytes, resourcesLengthOffset);
+        int layerAndMaskLengthOffset = resourcesLengthOffset + 4 + resourcesPayloadLength;
+        int layerInfoLengthOffset = layerAndMaskLengthOffset + 4;
+        return BigEndianBitConverter.ToInt32(documentBytes, layerInfoLengthOffset);
     }
 
     private static byte[] BuildPsbWithSingleLayerDocument()
