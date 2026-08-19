@@ -6,32 +6,42 @@ namespace Aspose.PSD.FOSS;
 public enum ColorModes
 {
     /// <summary>
-    /// RGB color mode (Red, Green, Blue).
+    /// Bitmap color mode.
     /// </summary>
-    Rgb = 0,
-
-    /// <summary>
-    /// CMYK color mode (Cyan, Magenta, Yellow, Black).
-    /// </summary>
-    CMYK = 1,
+    Bitmap = 0,
 
     /// <summary>
     /// Grayscale color mode.
     /// </summary>
-    Grayscale = 2,
+    Grayscale = 1,
 
     /// <summary>
     /// Indexed color mode (using a color palette).
     /// </summary>
-    Indexed = 3,
+    Indexed = 2,
+
+    /// <summary>
+    /// RGB color mode (Red, Green, Blue).
+    /// </summary>
+    Rgb = 3,
+
+    /// <summary>
+    /// CMYK color mode (Cyan, Magenta, Yellow, Black).
+    /// </summary>
+    CMYK = 4,
+
+    /// <summary>
+    /// Multichannel color mode.
+    /// </summary>
+    Multichannel = 7,
 
     /// <summary>
     /// Duotone color mode (two-color gradient).
     /// </summary>
-    Duotone = 4,
+    Duotone = 8,
 
     /// <summary>
     /// LAB color mode.
     /// </summary>
-    Lab = 5
+    Lab = 9
 }

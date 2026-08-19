@@ -54,7 +54,7 @@ public sealed class PsdImageTests : IDisposable
         Assert.That(image.Height, Is.GreaterThan(0));
         Assert.That(image.Channels, Is.GreaterThan(0));
         Assert.That(image.BitsPerChannel, Is.EqualTo(8));
-        Assert.That(image.ColorMode, Is.EqualTo(ColorModes.Rgb).Or.EqualTo(ColorModes.Indexed));
+        Assert.That(image.ColorMode, Is.EqualTo(ColorModes.Rgb));
         Assert.That(image.Version, Is.GreaterThan(0).And.LessThanOrEqualTo(6));
         Assert.That(image.Layers.Length, Is.GreaterThan(0));
     }
@@ -144,6 +144,18 @@ public sealed class PsdImageTests : IDisposable
         return Path.Combine(artifactDirectory, fileName);
     }
 
+    private static string GetTestDataPath(string fileName)
+    {
+        string testDirectoryPath = Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", fileName);
+        if (File.Exists(testDirectoryPath))
+        {
+            return testDirectoryPath;
+        }
+
+        string repositoryPath = Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "../../../testdata", fileName));
+        return repositoryPath;
+    }
+
     /// <summary>
     /// Writes the artifact directory path for the current test to the NUnit output log.
     /// </summary>
@@ -170,6 +182,34 @@ public sealed class PsdImageTests : IDisposable
         }
 
         return builder.ToString();
+    }
+
+    private static void AssertByteExactRoundTrip(string fileName)
+    {
+        string testFile = GetTestDataPath(fileName);
+        string outputFile = GetPersistentArtifactPath(fileName);
+        byte[] originalBytes = File.ReadAllBytes(testFile);
+
+        using var image = PsdImage.Load(testFile);
+        image.Save(outputFile);
+        LogArtifactDirectory(outputFile);
+
+        byte[] savedBytes = File.ReadAllBytes(outputFile);
+        Assert.That(savedBytes, Is.EqualTo(originalBytes));
+    }
+
+    private static void AssertRenameSave(string fileName, int layerIndex, string newName)
+    {
+        string testFile = GetTestDataPath(fileName);
+        string outputFile = GetPersistentArtifactPath($"renamed_{fileName}");
+
+        using var image = PsdImage.Load(testFile);
+        image.Layers[layerIndex].Name = newName;
+        image.Save(outputFile);
+        LogArtifactDirectory(outputFile);
+
+        using var reloaded = PsdImage.Load(outputFile);
+        Assert.That(reloaded.Layers[layerIndex].Name, Is.EqualTo(newName));
     }
 
     /// <summary>
@@ -647,6 +687,239 @@ public sealed class PsdImageTests : IDisposable
 
         using var reloaded = PsdImage.Load(outputFile);
         Assert.That(reloaded.Layers[0].Bounds, Is.EqualTo(Rectangle.FromLTRB(20, 10, 50, 30)));
+    }
+
+    [Test]
+    public void Load_BasicRgbFixturePsd_ReturnsExpectedDocumentMetadata()
+    {
+        using var image = PsdImage.Load(GetTestDataPath("basic-rgb.psd"));
+
+        Assert.That(image.Width, Is.EqualTo(200));
+        Assert.That(image.Height, Is.EqualTo(200));
+        Assert.That(image.Channels, Is.EqualTo(3));
+        Assert.That(image.BitsPerChannel, Is.EqualTo(8));
+        Assert.That(image.ColorMode, Is.EqualTo(ColorModes.Rgb));
+        Assert.That(image.Version, Is.EqualTo(PsdHeader.PsdVersion));
+        Assert.That(image.LayerCount, Is.EqualTo(3));
+        Assert.That(image.ResourceCount, Is.EqualTo(26));
+        Assert.That(image.Compression, Is.EqualTo(CompressionMethod.RLE));
+    }
+
+    [Test]
+    public void Save_BasicRgbFixturePsd_RoundTripWithoutMutation_ByteExact()
+    {
+        AssertByteExactRoundTrip("basic-rgb.psd");
+    }
+
+    [Test]
+    public void Save_BasicRgbFixturePsd_AfterChangingLayerName_SavesCorrectly()
+    {
+        AssertRenameSave("basic-rgb.psd", layerIndex: 1, newName: "Renamed Rectangle");
+    }
+
+    [Test]
+    public void Load_BasicIndexedFixturePsd_ReturnsExpectedColorDataInfo()
+    {
+        using var image = PsdImage.Load(GetTestDataPath("basic-indexed.psd"));
+
+        Assert.That(image.Width, Is.EqualTo(200));
+        Assert.That(image.Height, Is.EqualTo(200));
+        Assert.That(image.Channels, Is.EqualTo(1));
+        Assert.That(image.ColorMode, Is.EqualTo(ColorModes.Indexed));
+        Assert.That(image.HasColorModeData, Is.True);
+        Assert.That(image.ColorDataInfo.Kind, Is.EqualTo(PsdColorDataKind.IndexedPalette));
+        Assert.That(image.ColorDataInfo.RawDataLength, Is.EqualTo(768));
+        Assert.That(image.LayerCount, Is.EqualTo(0));
+        Assert.That(image.ResourceCount, Is.EqualTo(24));
+    }
+
+    [Test]
+    public void Save_BasicIndexedFixturePsd_RoundTripWithoutMutation_ByteExact()
+    {
+        AssertByteExactRoundTrip("basic-indexed.psd");
+    }
+
+    [Test]
+    public void Load_BasicCmykFixturePsd_ReturnsExpectedDocumentMetadata()
+    {
+        using var image = PsdImage.Load(GetTestDataPath("basic-cmyk.psd"));
+
+        Assert.That(image.Width, Is.EqualTo(200));
+        Assert.That(image.Height, Is.EqualTo(200));
+        Assert.That(image.Channels, Is.EqualTo(4));
+        Assert.That(image.ColorMode, Is.EqualTo(ColorModes.CMYK));
+        Assert.That(image.LayerCount, Is.EqualTo(3));
+        Assert.That(image.ResourceCount, Is.EqualTo(28));
+        Assert.That(image.Compression, Is.EqualTo(CompressionMethod.RLE));
+        Assert.That(image.ImageDataInfo.RowByteCounts, Has.Count.EqualTo(800));
+    }
+
+    [Test]
+    public void Save_BasicCmykFixturePsd_RoundTripWithoutMutation_ByteExact()
+    {
+        AssertByteExactRoundTrip("basic-cmyk.psd");
+    }
+
+    [Test]
+    public void Load_RleFixturePsd_ReturnsExpectedImageDataInfo()
+    {
+        using var image = PsdImage.Load(GetTestDataPath("rle.psd"));
+
+        Assert.That(image.Compression, Is.EqualTo(CompressionMethod.RLE));
+        Assert.That(image.ImageDataKind, Is.EqualTo(ImageDataKind.Rle));
+        Assert.That(image.ImageDataInfo.RowLengthFieldSize, Is.EqualTo(sizeof(ushort)));
+        Assert.That(image.ImageDataInfo.RowByteCounts, Has.Count.EqualTo(600));
+        Assert.That(image.ImageDataInfo.CompressedPayloadLength, Is.EqualTo(5219));
+    }
+
+    [Test]
+    public void Save_RleFixturePsd_RoundTripWithoutMutation_ByteExact()
+    {
+        AssertByteExactRoundTrip("rle.psd");
+    }
+
+    [Test]
+    public void Load_ZipFixturePsd_ReturnsExpectedImageDataInfo()
+    {
+        using var image = PsdImage.Load(GetTestDataPath("zip.psd"));
+
+        Assert.That(image.Compression, Is.EqualTo(CompressionMethod.RLE));
+        Assert.That(image.ImageDataKind, Is.EqualTo(ImageDataKind.Rle));
+        Assert.That(image.ImageDataInfo.RowLengthFieldSize, Is.EqualTo(sizeof(ushort)));
+        Assert.That(image.ImageDataInfo.RowByteCounts, Has.Count.EqualTo(600));
+        Assert.That(image.ImageDataInfo.CompressedPayloadLength, Is.EqualTo(5219));
+    }
+
+    [Test]
+    public void Save_ZipFixturePsd_RoundTripWithoutMutation_ByteExact()
+    {
+        AssertByteExactRoundTrip("zip.psd");
+    }
+
+    [Test]
+    public void Load_BasicPsbFixture_ReturnsExpectedDocumentMetadata()
+    {
+        using var image = PsdImage.Load(GetTestDataPath("basic.psb"));
+
+        Assert.That(image.Version, Is.EqualTo(PsdHeader.PsbVersion));
+        Assert.That(image.IsLargeDocument, Is.True);
+        Assert.That(image.IsPsb, Is.True);
+        Assert.That(image.Width, Is.EqualTo(200));
+        Assert.That(image.Height, Is.EqualTo(200));
+        Assert.That(image.LayerCount, Is.EqualTo(0));
+        Assert.That(image.ResourceCount, Is.EqualTo(24));
+        Assert.That(image.Compression, Is.EqualTo(CompressionMethod.RLE));
+        Assert.That(image.ImageDataInfo.RowLengthFieldSize, Is.EqualTo(sizeof(uint)));
+    }
+
+    [Test]
+    public void Save_BasicPsbFixture_RoundTripWithoutMutation_ByteExact()
+    {
+        AssertByteExactRoundTrip("basic.psb");
+    }
+
+    [Test]
+    public void Load_LayeredPsbFixture_ReturnsExpectedLayerMetadata()
+    {
+        using var image = PsdImage.Load(GetTestDataPath("layered.psb"));
+
+        Assert.That(image.Version, Is.EqualTo(PsdHeader.PsbVersion));
+        Assert.That(image.LayerCount, Is.EqualTo(3));
+        Assert.That(image.Layers[0].Name, Is.EqualTo("Background"));
+        Assert.That(image.Layers[1].Name, Is.EqualTo("Rectangle 1"));
+        Assert.That(image.Layers[2].Name, Is.EqualTo("Ellipse 1"));
+        Assert.That(image.Layers[2].Opacity, Is.EqualTo(191));
+    }
+
+    [Test]
+    public void Save_LayeredPsbFixture_AfterChangingLayerName_SavesCorrectly()
+    {
+        AssertRenameSave("layered.psb", layerIndex: 1, newName: "Renamed Rectangle");
+    }
+
+    [Test]
+    public void Save_LayeredPsbFixture_AfterChangingLayerBlendMode_SavesCorrectly()
+    {
+        string testFile = GetTestDataPath("layered.psb");
+        string outputFile = GetPersistentArtifactPath("layered_psb_blend_mode_test.psb");
+
+        using var image = PsdImage.Load(testFile);
+        image.Layers[1].BlendMode = BlendMode.Multiply;
+        image.Save(outputFile);
+        LogArtifactDirectory(outputFile);
+
+        using var reloaded = PsdImage.Load(outputFile);
+        Assert.That(reloaded.Layers[1].BlendMode, Is.EqualTo(BlendMode.Multiply));
+        Assert.That(reloaded.Layers[1].BlendModeKey, Is.EqualTo("mul "));
+    }
+
+    [Test]
+    public void Load_ResourcesFixturePsd_ReturnsExpectedResourceSummaries()
+    {
+        using var image = PsdImage.Load(GetTestDataPath("resources.psd"));
+
+        Assert.That(image.ResourceCount, Is.EqualTo(28));
+        Assert.That(image.Resources[0].Kind, Is.EqualTo(PsdResourceKind.Unknown));
+        Assert.That(image.HasImageResources, Is.True);
+        Assert.That(image.Layers, Has.Length.EqualTo(3));
+    }
+
+    [Test]
+    public void Save_ResourcesFixturePsd_PreservesRawResourcesSection()
+    {
+        string testFile = GetTestDataPath("resources.psd");
+        byte[] originalBytes = File.ReadAllBytes(testFile);
+        string outputFile = GetPersistentArtifactPath("resources_fixture_roundtrip_test.psd");
+
+        using var image = PsdImage.Load(testFile);
+        image.Save(outputFile);
+        LogArtifactDirectory(outputFile);
+
+        byte[] savedBytes = File.ReadAllBytes(outputFile);
+        Assert.That(ExtractImageResourcesSection(savedBytes), Is.EqualTo(ExtractImageResourcesSection(originalBytes)));
+    }
+
+    [Test]
+    public void Load_LayerVariantsFixturePsd_ReturnsExpectedLayerFlags()
+    {
+        using var image = PsdImage.Load(GetTestDataPath("layer-variants.psd"));
+
+        Assert.That(image.LayerCount, Is.EqualTo(4));
+        Assert.That(image.Layers[1].IsVisible, Is.False);
+        Assert.That(image.Layers[2].BlendModeKey, Is.EqualTo("lbrn"));
+        Assert.That(image.Layers[3].Clipping, Is.EqualTo(1));
+        Assert.That(image.Layers[3].HasAdditionalLayerData, Is.True);
+    }
+
+    [Test]
+    public void Save_LayerVariantsFixturePsd_AfterChangingClipping_SavesCorrectly()
+    {
+        string testFile = GetTestDataPath("layer-variants.psd");
+        string outputFile = GetPersistentArtifactPath("layer_variants_clipping_test.psd");
+
+        using var image = PsdImage.Load(testFile);
+        image.Layers[3].Clipping = 0;
+        image.Save(outputFile);
+        LogArtifactDirectory(outputFile);
+
+        using var reloaded = PsdImage.Load(outputFile);
+        Assert.That(reloaded.Layers[3].Clipping, Is.EqualTo(0));
+    }
+
+    [Test]
+    public void Save_LayerVariantsFixturePsd_PreservesLayerAndMaskTail()
+    {
+        string testFile = GetTestDataPath("layer-variants.psd");
+        byte[] originalBytes = File.ReadAllBytes(testFile);
+        string outputFile = GetPersistentArtifactPath("layer_variants_tail_test.psd");
+
+        using var image = PsdImage.Load(testFile);
+        image.Layers[2].Name = "Ellipse 1 Updated";
+        image.Save(outputFile);
+        LogArtifactDirectory(outputFile);
+
+        byte[] savedBytes = File.ReadAllBytes(outputFile);
+        Assert.That(ReadLayerAndMaskTail(savedBytes), Is.EqualTo(ReadLayerAndMaskTail(originalBytes)));
     }
 
     /// <summary>
