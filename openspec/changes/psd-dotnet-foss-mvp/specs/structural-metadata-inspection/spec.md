@@ -7,17 +7,23 @@
 - **WHEN** пользователь загружает файл, содержащий image resources
 - **THEN** `image.Resources` возвращает read-only collection объектов summary по resources
 - **AND** каждый summary-объект предоставляет identifier ресурса, name, kind и длину payload
+- **AND** в текущем lightweight FOSS scope каждый успешно считанный resource summary имеет `Kind == Unknown`
 
-#### Scenario: Чтение derived properties известных resources
-- **WHEN** присутствует known resource kind
-- **THEN** соответствующий summary-объект ресурса предоставляет поддерживаемые derived scalar metadata, такие как global angle или ICC-untagged state
+#### Scenario: Unknown-only parse resource blocks
+- **WHEN** пользователь загружает файл, содержащий arbitrary image resource blocks
+- **THEN** система выполняет только общий PSD-level parse block envelope
+- **AND** каждый корректно считанный block материализуется как unknown resource без ID-specific semantic recognition
+- **AND** система не требует registry специализированных resource loaders для текущего FOSS scope
 
 #### Scenario: Чтение счётчиков и флагов присутствия resources
 - **WHEN** пользователь загружает файл
 - **THEN** `image.HasImageResources` показывает, присутствуют ли какие-либо resource blocks
 - **AND** `image.ResourceCount` возвращает количество распарсенных resource blocks
-- **AND** `image.HasIccProfile` показывает, присутствует ли ICC profile resource
-- **AND** `image.IsIccProfileUntagged` предоставляет распарсенный флаг untagged-profile, когда он доступен
+
+#### Scenario: Derived known-resource properties недоступны в unknown-only режиме
+- **WHEN** пользователь обращается к convenience properties, зависящим от semantic recognition specific resource IDs
+- **THEN** lightweight FOSS implementation не выводит derived values из image resources
+- **AND** такие свойства остаются unset или equivalent default values до появления отдельной специализированной поддержки
 
 ### Requirement: Предоставление inspection metadata по color mode data
 Система SHALL предоставлять read-only metadata по color mode data без вывода mutable raw section bytes как основного public contract.

@@ -29,6 +29,7 @@ Public API расширяется в пределах non-rendering scope за �
 - дополнительные простые layer properties (`bool`, `int`, `string`, `enum`)
 - read-only inspection DTO для image resources, image data, color mode data, layer channels, mask/blending metadata
 - безопасное расширение layer metadata editing для `BlendMode`, `Clipping` и layer geometry
+- lightweight unknown-only чтение global image resources без semantic recognition конкретных resource kinds
 
 ## Scope продукта
 
@@ -42,6 +43,7 @@ Public API расширяется в пределах non-rendering scope за �
 - Сохранение без рендеринга
 - Byte-for-byte round-trip без мутаций
 - Raw-preserve для неподдерживаемых/неизвестных данных, где это возможно
+- Unknown-only parse для image resources с сохранением identifier/name/raw payload length без ID-specific interpretation
 
 ## Вне scope
 
@@ -49,6 +51,7 @@ Public API расширяется в пределах non-rendering scope за �
 - Pixel editing
 - Export to PNG/JPEG/etc.
 - Полноценное редактирование image resources
+- Распознавание конкретных image resource kinds по их ID
 - Полноценное редактирование tagged blocks
 - Effects, text, vector, smart filters, adjustments
 

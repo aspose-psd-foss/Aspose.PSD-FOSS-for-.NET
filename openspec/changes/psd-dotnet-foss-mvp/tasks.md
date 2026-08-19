@@ -199,3 +199,11 @@
 - [x] 15.24 Добавить acceptance tests для новых mutable metadata fields `BlendMode`, `Clipping`, `Bounds` и coordinate properties
 - [x] 15.25 Обновить README для расширенного inspection/editing subset в public API
 - [x] 15.26 Обновить markdown documentation и samples для новых inspection/editing возможностей
+
+## 16. Lightweight unknown-only image resources
+
+- [ ] 16.1 Обновить OpenSpec proposal/design/specs под unknown-only чтение image resources без semantic recognition specific resource IDs
+- [ ] 16.2 Добавить выделенный internal class `UnknownResource` и материализовать каждый считанный image resource block как `UnknownResource`
+- [ ] 16.3 Убрать ID-specific classification/parsing из FOSS resource loading path, сохранив общий PSD block envelope parse и raw-preserve round-trip
+- [ ] 16.4 Обновить acceptance tests под unknown-only contract для resource summaries и document-level convenience properties
+- [ ] 16.5 Обновить README, markdown documentation и samples, чтобы они не имплицировали semantic recognition `GlobalAngle`/ICC resources в FOSS

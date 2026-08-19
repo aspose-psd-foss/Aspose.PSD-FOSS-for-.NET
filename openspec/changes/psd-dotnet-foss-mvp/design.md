@@ -46,6 +46,24 @@
 - Layer and Mask Information при отсутствии мутаций
 - Image Data
 
+### Unknown-only image resources
+Для секции Image Resources библиотека следует lightweight-подходу, вдохновлённому общей архитектурой основной библиотеки Aspose.PSD, но без её полной object model и без ID-specific loaders.
+
+На стороне FOSS это означает:
+
+- секция Image Resources читается как последовательность resource blocks;
+- каждый block проходит только общий PSD-level parse (`signature`, `resource id`, Pascal name, payload length, payload, padding);
+- каждый успешно считанный block материализуется как `UnknownResource`;
+- semantic recognition конкретных resource IDs не выполняется;
+- derived document-level convenience properties для известных resources не заполняются значениями и остаются unavailable;
+- raw section по-прежнему сохраняется byte-for-byte в no-mutation save path.
+
+Почему:
+
+- это сохраняет полезную structural visibility по global resources;
+- не тянет в FOSS реестр специализированных loaders и поддержку множества resource kinds;
+- минимизирует риск partial semantic rewrite для сложных или плохо покрытых ресурсов.
+
 ### Минимальная пересборка layer records
 При изменении поддерживаемых metadata-полей пересобирается только минимальная часть layer records, а остальные данные сохраняются raw, где возможно.
 
@@ -112,6 +130,13 @@ Public API расширяется в пределах structural PSD/PSB editing
 - parsed resource metadata;
 - parsed image data structure metadata;
 - parsed color mode data metadata.
+
+Для image resources под parsed resource metadata в текущем scope понимаются только:
+
+- resource identifier;
+- decoded Pascal name;
+- raw payload length;
+- факт того, что block был корректно прочитан как `UnknownResource`.
 
 ### Правила стабильности public API
 Расширение API должно следовать этим правилам:
