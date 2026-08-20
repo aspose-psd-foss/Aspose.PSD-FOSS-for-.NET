@@ -41,7 +41,7 @@ Do not use Aspose.PSD.FOSS when you need to:
 - Load PSD/PSB from file paths and streams
 - Read document properties: `Width`, `Height`, `Channels`, `BitsPerChannel`, `ColorMode`, `Version`
 - Read additional document metadata: `IsLargeDocument`, `IsPsb`, `LayerCount`, resource and merged-image summaries
-- Read layer metadata: `Name`, `Bounds`, `Width`, `Height`, `Top`, `Left`, `Bottom`, `Right`, `IsVisible`, `Opacity`, `Clipping`, `BlendMode`, `BlendModeKey`
+- Read layer metadata: `Name`, `Bounds` (`PsdRectangle`), `Width`, `Height`, `Top`, `Left`, `Bottom`, `Right`, `IsVisible`, `Opacity`, `Clipping`, `BlendMode`, `BlendModeKey`
 - Inspect parsed resources, color mode data, image data structure, layer channels, mask presence, and blending-range presence
 - Change `Name`, `IsVisible`, `Opacity`, `BlendMode`, `Clipping`, and layer geometry
 - Save without rendering
@@ -98,6 +98,7 @@ foreach (Layer layer in image.Layers)
 
 image.Layers[0].Name = "Updated layer";
 image.Layers[0].IsVisible = false;
+image.Layers[0].Bounds = PsdRectangle.FromLTRB(10, 20, 110, 120);
 image.Layers[0].Opacity = 128;
 image.Layers[0].BlendMode = BlendMode.Multiply;
 image.Save("output.psd");

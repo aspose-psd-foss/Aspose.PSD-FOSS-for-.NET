@@ -1,4 +1,3 @@
-using System.Drawing;
 using System.Linq;
 
 namespace Aspose.PSD.FOSS;
@@ -12,31 +11,6 @@ public class Layer
     /// Gets the fixed-size byte count of the layer record trailer fields.
     /// </summary>
     public const int LayerTrailerSize = 16;
-
-    /// <summary>
-    /// Stores the Adobe layer record signature value "8BIM".
-    /// </summary>
-    private const uint AdobeLayerSignature = 0x3842494D;
-
-    /// <summary>
-    /// Stores the Adobe layer record signature text.
-    /// </summary>
-    private const string AdobeLayerSignatureText = "8BIM";
-
-    /// <summary>
-    /// Stores the PSD blend mode key for the normal blend mode.
-    /// </summary>
-    private const string NormalBlendModeKey = "norm";
-
-    /// <summary>
-    /// Stores the PSD visibility bit that marks a layer as hidden when set.
-    /// </summary>
-    private const byte LayerInvisibleFlag = 0x02;
-
-    /// <summary>
-    /// Stores the reserved trailing byte in the layer record.
-    /// </summary>
-    private const byte LayerRecordReservedByte = 0;
 
     /// <summary>
     /// Stores the current layer name.
@@ -61,7 +35,7 @@ public class Layer
     /// <summary>
     /// Stores the original 4-byte PSD blend mode key.
     /// </summary>
-    private string _blendModeKey = NormalBlendModeKey;
+    private string _blendModeKey = LayerBlendModeMapper.NormalBlendModeKey;
 
     /// <summary>
     /// Gets or sets the Pascal layer name stored in the layer record.
@@ -81,7 +55,7 @@ public class Layer
     /// <summary>
     /// Gets the layer rectangle in PSD document coordinates.
     /// </summary>
-    public Rectangle Bounds
+    public PsdRectangle Bounds
     {
         get => _bounds;
         set
@@ -97,7 +71,7 @@ public class Layer
     /// <summary>
     /// Stores the current layer bounds in document coordinates.
     /// </summary>
-    private Rectangle _bounds;
+    private PsdRectangle _bounds;
 
     /// <summary>
     /// Gets the layer width in pixels.
@@ -119,7 +93,7 @@ public class Layer
         {
             if (Bounds.Top != value)
             {
-                Bounds = Rectangle.FromLTRB(Bounds.Left, value, Bounds.Right, Bounds.Bottom);
+                Bounds = PsdRectangle.FromLTRB(Bounds.Left, value, Bounds.Right, Bounds.Bottom);
             }
         }
     }
@@ -134,7 +108,7 @@ public class Layer
         {
             if (Bounds.Left != value)
             {
-                Bounds = Rectangle.FromLTRB(value, Bounds.Top, Bounds.Right, Bounds.Bottom);
+                Bounds = PsdRectangle.FromLTRB(value, Bounds.Top, Bounds.Right, Bounds.Bottom);
             }
         }
     }
@@ -149,7 +123,7 @@ public class Layer
         {
             if (Bounds.Bottom != value)
             {
-                Bounds = Rectangle.FromLTRB(Bounds.Left, Bounds.Top, Bounds.Right, value);
+                Bounds = PsdRectangle.FromLTRB(Bounds.Left, Bounds.Top, Bounds.Right, value);
             }
         }
     }
@@ -164,7 +138,7 @@ public class Layer
         {
             if (Bounds.Right != value)
             {
-                Bounds = Rectangle.FromLTRB(Bounds.Left, Bounds.Top, value, Bounds.Bottom);
+                Bounds = PsdRectangle.FromLTRB(Bounds.Left, Bounds.Top, value, Bounds.Bottom);
             }
         }
     }
@@ -231,7 +205,7 @@ public class Layer
             if (_blendMode != value)
             {
                 _blendMode = value;
-                _blendModeKey = GetBlendModeKey(value);
+                _blendModeKey = LayerBlendModeMapper.GetBlendModeKey(value);
                 HasMutated = true;
             }
         }
@@ -288,6 +262,26 @@ public class Layer
     internal LayerChannelInfo[] ChannelInfo { get; private set; } = [];
 
     /// <summary>
+    /// Gets the original PSD layer flags byte used when rewriting the layer record.
+    /// </summary>
+    internal byte RawFlags => _flags;
+
+    /// <summary>
+    /// Gets the raw layer mask subsection used by the layer record writer.
+    /// </summary>
+    internal LayerMaskData LayerMaskData => _layerMaskData;
+
+    /// <summary>
+    /// Gets the raw blending ranges subsection used by the layer record writer.
+    /// </summary>
+    internal LayerBlendingRangesData BlendingRangesData => _blendingRangesData;
+
+    /// <summary>
+    /// Gets the additional layer data bytes that follow the Pascal layer name.
+    /// </summary>
+    internal byte[] AdditionalLayerData => _additionalLayerData;
+
+    /// <summary>
     /// Stores the raw layer mask subsection including its length field.
     /// </summary>
     private LayerMaskData _layerMaskData = LayerMaskData.Empty;
@@ -323,130 +317,7 @@ public class Layer
     /// <returns>The parsed <see cref="Layer"/> instance.</returns>
     internal static Layer Load(BigEndianReader reader, bool isLargeDocument)
     {
-        int top = reader.ReadInt32();
-        int left = reader.ReadInt32();
-        int bottom = reader.ReadInt32();
-        int right = reader.ReadInt32();
-
-        ushort actualChannelCount = reader.ReadUInt16();
-
-        var channelInfoArray = new LayerChannelInfo[actualChannelCount];
-        
-        for (int i = 0; i < actualChannelCount; i++)
-        {
-            short channelId = reader.ReadInt16();
-            ulong dataLength = isLargeDocument ? reader.ReadUInt64() : reader.ReadUInt32();
-
-            channelInfoArray[i] = new LayerChannelInfo
-            {
-                ChannelId = channelId,
-                DataLength = dataLength
-            };
-        }
-
-        int signature = reader.ReadInt32();
-        if (signature != AdobeLayerSignature)
-        {
-            throw new PsdLoadException($"Invalid layer blend mode signature. Expected '{AdobeLayerSignatureText}'.");
-        }
-
-        byte[] blendModeKey = reader.ReadBytes(4);
-        string originalBlendModeKey = System.Text.Encoding.ASCII.GetString(blendModeKey);
-        BlendMode blendMode = ParseBlendModeKey(blendModeKey);
-
-        byte opacity = reader.ReadByte();
-        byte clipping = reader.ReadByte();
-        byte flags = reader.ReadByte();
-        byte filler = reader.ReadByte();
-
-        int extraLength = reader.ReadInt32();
-        if (extraLength < 0)
-        {
-            throw new PsdLoadException("Layer extra data length cannot be negative.");
-        }
-
-        string layerName = string.Empty;
-        LayerMaskData layerMaskData = LayerMaskData.Empty;
-        LayerBlendingRangesData blendingRangesData = LayerBlendingRangesData.Empty;
-        byte[] additionalLayerData = [];
-
-        if (extraLength > 0)
-        {
-            long extraStart = reader.Position;
-            long extraEnd = extraStart + extraLength;
-
-            layerMaskData = LayerMaskData.Load(reader, extraEnd);
-            if (reader.Position + 4 > extraEnd)
-            {
-                throw new PsdLoadException("Layer extra data is truncated before the blending ranges length field.");
-            }
-
-            blendingRangesData = LayerBlendingRangesData.Load(reader, extraEnd);
-
-            layerName = reader.ReadPascalStringAlignedTo4();
-
-            long remaining = extraEnd - reader.Position;
-            if (remaining < 0)
-            {
-                throw new PsdLoadException("Layer extra data parser read beyond the declared extra data boundary.");
-            }
-
-            if (remaining > 0)
-            {
-                additionalLayerData = reader.ReadBytes(PsdSectionReader.GetNestedMemoryBackedLength(reader, (ulong)remaining, extraEnd, "Additional layer data"));
-            }
-        }
-
-        var bounds = new Rectangle(left, top, right - left, bottom - top);
-        bool visible = (flags & LayerInvisibleFlag) == 0;
-
-        return new Layer
-        {
-            _name = layerName,
-            _bounds = bounds,
-            _isVisible = visible,
-            _opacity = opacity,
-            _flags = flags,
-            _blendModeKey = originalBlendModeKey,
-            _clipping = clipping,
-            _blendMode = blendMode,
-            ChannelInfo = channelInfoArray,
-            _layerMaskData = layerMaskData,
-            _blendingRangesData = blendingRangesData,
-            _additionalLayerData = additionalLayerData
-        };
-    }
-
-    /// <summary>
-    /// Maps a PSD blend mode key to the public <see cref="BlendMode"/> enum.
-    /// </summary>
-    /// <param name="key">The 4-byte PSD blend mode key.</param>
-    /// <returns>The mapped <see cref="BlendMode"/> value.</returns>
-    private static BlendMode ParseBlendModeKey(byte[] key)
-    {
-        if (key.Length < 4) return BlendMode.Normal;
-
-        string modeKey = System.Text.Encoding.ASCII.GetString(key);
-        return modeKey switch
-        {
-            NormalBlendModeKey => BlendMode.Normal,
-            "mul " => BlendMode.Multiply,
-            "scrn" => BlendMode.Screen,
-            "over" => BlendMode.Overlay,
-            "dark" => BlendMode.Darken,
-            "lite" => BlendMode.Lighten,
-            "div " => BlendMode.ColorDodge,
-            "burn" => BlendMode.ColorBurn,
-            "hlit" => BlendMode.HardLight,
-            "slit" => BlendMode.SoftLight,
-            "diff" => BlendMode.Difference,
-            "smud" => BlendMode.Exclusion,
-            "hue " => BlendMode.Hue,
-            "sat " => BlendMode.Saturation,
-            "colr" => BlendMode.Color,
-            "lum " => BlendMode.Luminosity,
-            _ => BlendMode.Normal
-        };
+        return LayerRecordReader.Load(reader, isLargeDocument);
     }
 
     /// <summary>
@@ -456,88 +327,53 @@ public class Layer
     /// <param name="isLargeDocument">true for PSB-sized layer channel lengths; otherwise, false.</param>
     internal void Write(BigEndianWriter writer, bool isLargeDocument)
     {
-        writer.Write(Bounds.Top);
-        writer.Write(Bounds.Left);
-        writer.Write(Bounds.Bottom);
-        writer.Write(Bounds.Right);
-        writer.Write((ushort)ChannelInfo.Length);
-
-        for (int i = 0; i < ChannelInfo.Length; i++)
-        {
-            writer.Write(ChannelInfo[i].ChannelId);
-            if (isLargeDocument)
-            {
-                writer.Write(ChannelInfo[i].DataLength);
-            }
-            else
-            {
-                writer.Write((uint)ChannelInfo[i].DataLength);
-            }
-        }
-
-        writer.Write(AdobeLayerSignature);
-        writer.Write(System.Text.Encoding.ASCII.GetBytes(_blendModeKey));
-        writer.Write(Opacity);
-        writer.Write(Clipping);
-
-        byte flags = _flags;
-        if (IsVisible)
-        {
-            flags = (byte)(flags & ~LayerInvisibleFlag);
-        }
-        else
-        {
-            flags = (byte)(flags | LayerInvisibleFlag);
-        }
-
-        writer.Write(flags);
-        writer.Write(LayerRecordReservedByte);
-        int extraDataLength = _layerMaskData.RawData.Length + _blendingRangesData.RawData.Length + GetPascalStringStorageLength(Name) + _additionalLayerData.Length;
-        writer.Write(extraDataLength);
-
-        writer.Write(_layerMaskData.RawData);
-        writer.Write(_blendingRangesData.RawData);
-        writer.WritePascalStringAlignedTo4(Name);
-        writer.Write(_additionalLayerData);
+        LayerRecordWriter.Write(this, writer, isLargeDocument);
     }
 
     /// <summary>
-    /// Maps the public <see cref="BlendMode"/> value back to a 4-byte PSD blend mode key.
+    /// Creates a layer instance from already-parsed PSD layer record fields without marking it as mutated.
     /// </summary>
-    /// <param name="mode">The blend mode value to encode.</param>
-    /// <returns>The encoded PSD blend mode key.</returns>
-    private static string GetBlendModeKey(BlendMode mode)
+    /// <param name="name">The parsed layer name.</param>
+    /// <param name="bounds">The parsed layer bounds in PSD document coordinates.</param>
+    /// <param name="isVisible">true when the layer is visible; otherwise, false.</param>
+    /// <param name="opacity">The parsed opacity byte.</param>
+    /// <param name="flags">The original PSD layer flags byte.</param>
+    /// <param name="blendModeKey">The original 4-byte PSD blend mode key.</param>
+    /// <param name="clipping">The parsed clipping value.</param>
+    /// <param name="blendMode">The public blend mode mapped from <paramref name="blendModeKey"/>.</param>
+    /// <param name="channelInfo">The parsed layer channel metadata.</param>
+    /// <param name="layerMaskData">The raw layer mask subsection.</param>
+    /// <param name="blendingRangesData">The raw blending ranges subsection.</param>
+    /// <param name="additionalLayerData">The additional layer data bytes after the Pascal layer name.</param>
+    /// <returns>The parsed layer domain object.</returns>
+    internal static Layer CreateParsed(
+        string name,
+        PsdRectangle bounds,
+        bool isVisible,
+        byte opacity,
+        byte flags,
+        string blendModeKey,
+        byte clipping,
+        BlendMode blendMode,
+        LayerChannelInfo[] channelInfo,
+        LayerMaskData layerMaskData,
+        LayerBlendingRangesData blendingRangesData,
+        byte[] additionalLayerData)
     {
-        return mode switch
+        return new Layer
         {
-            BlendMode.Normal => NormalBlendModeKey,
-            BlendMode.Multiply => "mul ",
-            BlendMode.Screen => "scrn",
-            BlendMode.Overlay => "over",
-            BlendMode.Darken => "dark",
-            BlendMode.Lighten => "lite",
-            BlendMode.ColorDodge => "div ",
-            BlendMode.ColorBurn => "burn",
-            BlendMode.HardLight => "hlit",
-            BlendMode.SoftLight => "slit",
-            BlendMode.Difference => "diff",
-            BlendMode.Exclusion => "smud",
-            BlendMode.Hue => "hue ",
-            BlendMode.Saturation => "sat ",
-            BlendMode.Color => "colr",
-            BlendMode.Luminosity => "lum ",
-            _ => NormalBlendModeKey
+            _name = name,
+            _bounds = bounds,
+            _isVisible = isVisible,
+            _opacity = opacity,
+            _flags = flags,
+            _blendModeKey = blendModeKey,
+            _clipping = clipping,
+            _blendMode = blendMode,
+            ChannelInfo = channelInfo,
+            _layerMaskData = layerMaskData,
+            _blendingRangesData = blendingRangesData,
+            _additionalLayerData = additionalLayerData
         };
     }
-
-    /// <summary>
-    /// Calculates the stored Pascal string size including the length byte and 4-byte padding.
-    /// </summary>
-    /// <param name="value">The layer name to measure.</param>
-    /// <returns>The number of bytes required to store the name in PSD format.</returns>
-    private int GetPascalStringStorageLength(string value)
-    {
-        return BigEndianWriter.GetPascalStringStorageLengthAlignedTo4(value);
-    }
-
 }

@@ -5,6 +5,9 @@ namespace Aspose.PSD.FOSS.Tests;
 /// </summary>
 internal sealed class NonSeekableReadStream : Stream
 {
+    /// <summary>
+    /// Stores the wrapped in-memory stream that provides the readable payload.
+    /// </summary>
     private readonly MemoryStream _innerStream;
 
     /// <summary>

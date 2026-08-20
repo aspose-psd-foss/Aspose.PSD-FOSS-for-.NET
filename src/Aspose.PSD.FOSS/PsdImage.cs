@@ -70,7 +70,7 @@ public sealed class PsdImage : IDisposable
     /// <summary>
     /// Gets the parsed layer collection.
     /// </summary>
-    public Layer[] Layers => _layers?.ToArray() ?? [];
+    public Layer[] Layers => _layerAndMaskSection.Layers.ToArray();
 
     /// <summary>
     /// Gets the number of parsed layers in the document.
@@ -80,22 +80,22 @@ public sealed class PsdImage : IDisposable
     /// <summary>
     /// Gets a value indicating whether the document contains at least one parsed layer.
     /// </summary>
-    public bool HasLayers => _layers?.Length > 0;
+    public bool HasLayers => _layerAndMaskSection.Layers.Length > 0;
 
     /// <summary>
     /// Gets a value indicating whether the document contains any parsed image resources.
     /// </summary>
-    public bool HasImageResources => _resourcesRaw.Length > 0 || _resources.Length > 0;
+    public bool HasImageResources => _imageResourcesSection.HasResources;
 
     /// <summary>
     /// Gets the number of parsed image resource blocks.
     /// </summary>
-    public int ResourceCount => _resources.Length;
+    public int ResourceCount => _imageResourcesSection.Resources.Length;
 
     /// <summary>
     /// Gets a read-only summary of the parsed image resource blocks.
     /// </summary>
-    public IReadOnlyList<PsdResourceInfo> Resources => _resources.Select(resource => resource.ToPublicInfo()).ToArray();
+    public IReadOnlyList<PsdResourceInfo> Resources => _imageResourcesSection.Resources.Select(resource => resource.ToPublicInfo()).ToArray();
 
     /// <summary>
     /// Gets a value indicating whether the document contains Color Mode Data bytes.
@@ -163,7 +163,7 @@ public sealed class PsdImage : IDisposable
     /// <summary>
     /// Gets the parsed image resources for internal verification and tests.
     /// </summary>
-    internal UnknownResource[] ParsedResources => _resources;
+    internal UnknownResource[] ParsedResources => _imageResourcesSection.Resources;
 
     /// <summary>
     /// Stores the parsed PSD header.
@@ -171,44 +171,19 @@ public sealed class PsdImage : IDisposable
     private PsdHeader? _header;
 
     /// <summary>
-    /// Stores the parsed layer records.
-    /// </summary>
-    private Layer[]? _layers;
-
-    /// <summary>
     /// Stores the parsed Color Mode Data section.
     /// </summary>
     private ColorData _colorData = ColorData.Empty;
 
     /// <summary>
-    /// Stores parsed image resource blocks.
+    /// Stores the parsed and raw-preserved Image Resources section.
     /// </summary>
-    private UnknownResource[] _resources = [];
+    private ImageResourcesSection _imageResourcesSection = ImageResourcesSection.Empty;
 
     /// <summary>
-    /// Stores the raw Image Resources section payload.
+    /// Stores the parsed and raw-preserved Layer and Mask Information section.
     /// </summary>
-    private byte[] _resourcesRaw = [];
-
-    /// <summary>
-    /// Stores the raw Layer and Mask Information section for byte-exact no-mutation saves.
-    /// </summary>
-    private byte[] _layerAndMaskInfoRaw = [];
-
-    /// <summary>
-    /// Stores the raw layer channel image data part of the layer info payload.
-    /// </summary>
-    private byte[] _layerChannelImageDataRaw = [];
-
-    /// <summary>
-    /// Stores the raw global mask info and any trailing bytes after the layer info payload.
-    /// </summary>
-    private byte[] _layerGlobalMaskAndTailRaw = [];
-
-    /// <summary>
-    /// Stores the original signed layer count value so the save path can preserve its sign.
-    /// </summary>
-    private short _layerCountRaw;
+    private LayerAndMaskSection _layerAndMaskSection = LayerAndMaskSection.Empty;
 
     /// <summary>
     /// Stores the parsed Image Data section.
@@ -335,27 +310,7 @@ public sealed class PsdImage : IDisposable
     /// <param name="reader">The reader positioned at the section length field.</param>
     private void LoadResources(BigEndianReader reader)
     {
-        uint resourcesLength = reader.ReadUInt32();
-        if (resourcesLength == 0) return;
-
-        _resourcesRaw = PsdSectionReader.ReadBytes(reader, resourcesLength, "Image Resources section");
-        long resourcesEnd = _resourcesRaw.Length;
-        var resourcesReader = new BigEndianReader(new MemoryStream(_resourcesRaw, writable: false), leaveOpen: true);
-
-        var resourcesList = new List<UnknownResource>();
-
-        while (resourcesReader.Position < resourcesEnd)
-        {
-            UnknownResource? resource = UnknownResource.Load(resourcesReader, resourcesEnd);
-            if (resource == null)
-            {
-                break;
-            }
-
-            resourcesList.Add(resource);
-        }
-
-        _resources = resourcesList.ToArray();
+        _imageResourcesSection = ImageResourcesSection.Load(reader);
     }
 
     /// <summary>
@@ -364,71 +319,7 @@ public sealed class PsdImage : IDisposable
     /// <param name="reader">The reader positioned at the section length field.</param>
     private void LoadLayerAndMaskInfo(BigEndianReader reader)
     {
-        ulong sectionLength = ReadLayerAndMaskSectionLength(reader);
-        if (sectionLength == 0)
-        {
-            _layerAndMaskInfoRaw = [];
-            _layerChannelImageDataRaw = [];
-            _layerGlobalMaskAndTailRaw = [];
-            return;
-        }
-
-        byte[] rawSectionBytes = PsdSectionReader.ReadBytes(reader, sectionLength, "Layer and Mask Information section");
-
-        var memReader = new BigEndianReader(new MemoryStream(rawSectionBytes, writable: false), leaveOpen: true);
-
-        long layerInfoLength = PsdSectionReader.ValidateSignedLength(
-            _header?.IsLargeDocument == true ? memReader.ReadInt64() : memReader.ReadInt32(),
-            "Layer Info section");
-        if (layerInfoLength > rawSectionBytes.Length - memReader.Position)
-        {
-            throw new PsdLoadException("Layer Info section length exceeds the enclosing Layer and Mask Information section.");
-        }
-
-        long layerInfoEnd = (_header?.IsLargeDocument == true ? sizeof(long) : sizeof(int)) + layerInfoLength;
-        if (layerInfoLength == 0)
-        {
-            _layerChannelImageDataRaw = [];
-            _layerGlobalMaskAndTailRaw = rawSectionBytes.Length > memReader.Position
-                ? memReader.ReadBytes(checked((int)(rawSectionBytes.Length - memReader.Position)))
-                : [];
-            _layerAndMaskInfoRaw = rawSectionBytes;
-            return;
-        }
-
-        if (layerInfoLength < sizeof(short))
-        {
-            throw new PsdLoadException("Layer Info section is too short to contain the layer count field.");
-        }
-
-        _layerCountRaw = memReader.ReadInt16();
-        short layerCount = _layerCountRaw < 0 ? (short)-_layerCountRaw : _layerCountRaw;
-        if (layerCount > 0)
-        {
-            var layers = new Layer[layerCount];
-            for (int i = 0; i < layerCount; i++)
-            {
-                layers[i] = Layer.Load(memReader, _header?.IsLargeDocument == true);
-            }
-            _layers = layers;
-        }
-
-        if (memReader.Position > layerInfoEnd)
-        {
-            throw new PsdLoadException("Layer records exceed the declared Layer Info section length.");
-        }
-
-        int channelImageDataLength = checked((int)(layerInfoEnd - memReader.Position));
-        _layerChannelImageDataRaw = channelImageDataLength > 0
-            ? memReader.ReadBytes(channelImageDataLength)
-            : [];
-
-        int globalMaskAndTailLength = Math.Max(0, rawSectionBytes.Length - (int)memReader.Position);
-        _layerGlobalMaskAndTailRaw = globalMaskAndTailLength > 0
-            ? memReader.ReadBytes(globalMaskAndTailLength)
-            : [];
-
-        _layerAndMaskInfoRaw = rawSectionBytes;
+        _layerAndMaskSection = LayerAndMaskSection.Load(reader, _header?.IsLargeDocument == true);
     }
 
     /// <summary>
@@ -475,15 +366,15 @@ public sealed class PsdImage : IDisposable
     {
         if (_disposed) throw new ObjectDisposedException(nameof(PsdImage));
 
-        var writer = new PsdWriter(stream, leaveOpen);
+        var writer = new BigEndianWriter(stream, leaveOpen);
         try
         {
-            writer.WriteSignature();
-            WriteHeader(writer.Writer);
-            WriteColorData(writer.Writer);
-            WriteResources(writer.Writer);
-            WriteLayerAndMaskInfo(writer.Writer);
-            WriteImageData(writer.Writer);
+            writer.Write((uint)PsdHeader.PsdSignature);
+            WriteHeader(writer);
+            WriteColorData(writer);
+            WriteResources(writer);
+            WriteLayerAndMaskInfo(writer);
+            WriteImageData(writer);
         }
         finally
         {
@@ -515,42 +406,7 @@ public sealed class PsdImage : IDisposable
     /// <param name="writer">The destination writer.</param>
     private void WriteResources(BigEndianWriter writer)
     {
-        if (_resourcesRaw.Length > 0)
-        {
-            writer.Write((uint)_resourcesRaw.Length);
-            writer.Write(_resourcesRaw);
-            return;
-        }
-
-        if (_resources.Length == 0)
-        {
-            writer.Write((uint)0);
-            return;
-        }
-
-        long resourcesStart = writer.Position;
-        writer.Write((uint)0);
-
-        foreach (var resource in _resources)
-        {
-            writer.Write((uint)0x3842494D);
-            writer.Write((short)resource.ResourceId);
-
-            writer.WritePascalStringAlignedTo2(resource.Name);
-
-            writer.Write((int)resource.Data.Length);
-            writer.Write(resource.Data);
-
-            if (resource.Data.Length % 2 == 1)
-            {
-                writer.Write((byte)0);
-            }
-        }
-
-        long resourcesEnd = writer.Position;
-        writer.Seek(resourcesStart, SeekOrigin.Begin);
-        writer.Write((int)(resourcesEnd - resourcesStart - 4));
-        writer.Seek(resourcesEnd, SeekOrigin.Begin);
+        _imageResourcesSection.Save(writer);
     }
 
     /// <summary>
@@ -559,72 +415,7 @@ public sealed class PsdImage : IDisposable
     /// <param name="writer">The destination writer.</param>
     private void WriteLayerAndMaskInfo(BigEndianWriter writer)
     {
-        if (_layerAndMaskInfoRaw.Length > 0 && (_layers == null || !_layers.Any(l => l.HasMutated)))
-        {
-            WriteLayerAndMaskSectionLength(writer, _layerAndMaskInfoRaw.Length);
-            writer.Write(_layerAndMaskInfoRaw);
-        }
-        else if (_layers != null && _layers.Length > 0)
-        {
-            WriteLayerSectionWithMutations(writer);
-        }
-        else
-        {
-            WriteLayerAndMaskSectionLength(writer, 0);
-        }
-    }
-
-    /// <summary>
-    /// Rebuilds the minimal mutable part of the Layer and Mask Information section.
-    /// </summary>
-    /// <param name="writer">The destination writer.</param>
-    private void WriteLayerSectionWithMutations(BigEndianWriter writer)
-    {
-        using var layerInfoPayloadStream = new MemoryStream();
-        using var layerInfoPayloadWriter = new BigEndianWriter(layerInfoPayloadStream, leaveOpen: true);
-
-        Layer[] layers = _layers ?? [];
-        short layerCount = _layerCountRaw < 0 ? (short)-layers.Length : (short)layers.Length;
-        layerInfoPayloadWriter.Write(layerCount);
-
-        foreach (var layer in layers)
-        {
-            layer.Write(layerInfoPayloadWriter, _header?.IsLargeDocument == true);
-        }
-
-        layerInfoPayloadWriter.Write(_layerChannelImageDataRaw);
-        byte[] layerInfoPayload = layerInfoPayloadStream.ToArray();
-
-        using var sectionStream = new MemoryStream();
-        using var sectionWriter = new BigEndianWriter(sectionStream, leaveOpen: true);
-        if (_header?.IsLargeDocument == true)
-        {
-            sectionWriter.Write((long)layerInfoPayload.Length);
-        }
-        else
-        {
-            sectionWriter.Write(layerInfoPayload.Length);
-        }
-        sectionWriter.Write(layerInfoPayload);
-        sectionWriter.Write(GetLayerGlobalMaskAndTailBytesForWrite());
-
-        byte[] sectionBytes = sectionStream.ToArray();
-        WriteLayerAndMaskSectionLength(writer, sectionBytes.Length);
-        writer.Write(sectionBytes);
-    }
-
-    /// <summary>
-    /// Returns the raw global layer mask and trailing bytes, synthesizing an empty global mask block when absent.
-    /// </summary>
-    /// <returns>The bytes to append after layer info inside the Layer and Mask section.</returns>
-    private byte[] GetLayerGlobalMaskAndTailBytesForWrite()
-    {
-        if (_layerGlobalMaskAndTailRaw.Length > 0)
-        {
-            return _layerGlobalMaskAndTailRaw;
-        }
-
-        return [0, 0, 0, 0];
+        _layerAndMaskSection.Save(writer, _header?.IsLargeDocument == true);
     }
 
     /// <summary>
@@ -650,30 +441,4 @@ public sealed class PsdImage : IDisposable
         }
     }
 
-    /// <summary>
-    /// Reads the outer Layer and Mask section length using PSD- or PSB-sized integers.
-    /// </summary>
-    /// <param name="reader">The reader positioned at the section length field.</param>
-    /// <returns>The declared section length in bytes.</returns>
-    private ulong ReadLayerAndMaskSectionLength(BigEndianReader reader)
-    {
-        return _header?.IsLargeDocument == true ? reader.ReadUInt64() : reader.ReadUInt32();
-    }
-
-    /// <summary>
-    /// Writes the outer Layer and Mask section length using PSD- or PSB-sized integers.
-    /// </summary>
-    /// <param name="writer">The writer positioned at the section length field.</param>
-    /// <param name="length">The section length in bytes.</param>
-    private void WriteLayerAndMaskSectionLength(BigEndianWriter writer, int length)
-    {
-        if (_header?.IsLargeDocument == true)
-        {
-            writer.Write((ulong)length);
-        }
-        else
-        {
-            writer.Write((uint)length);
-        }
-    }
 }

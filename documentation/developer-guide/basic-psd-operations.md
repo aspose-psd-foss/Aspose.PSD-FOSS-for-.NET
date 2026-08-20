@@ -59,7 +59,7 @@ Use `image.Layers` to enumerate parsed layer records.
 Supported layer metadata:
 
 - `Name`
-- `Bounds`
+- `Bounds` (`PsdRectangle` in PSD document coordinates)
 - `Width`
 - `Height`
 - `Top`
@@ -90,7 +90,7 @@ The current product scope supports changing:
 - `Opacity`
 - `BlendMode`
 - `Clipping`
-- `Bounds`
+- `Bounds` (`PsdRectangle`)
 - `Top`
 - `Left`
 - `Bottom`

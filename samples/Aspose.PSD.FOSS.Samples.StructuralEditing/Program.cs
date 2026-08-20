@@ -2,7 +2,6 @@
 // This sample applies supported non-rendering edits to layer metadata
 // and saves the updated PSD/PSB document while preserving unsupported raw sections.
 
-using System.Drawing;
 using Aspose.PSD.FOSS;
 using Aspose.PSD.FOSS.Samples.Common;
 
@@ -89,7 +88,7 @@ internal static class Program
         layer.Clipping = layer.Clipping == 0 ? (byte)1 : (byte)0;
         layer.BlendMode = layer.BlendMode == BlendMode.Normal ? BlendMode.Multiply : BlendMode.Normal;
 
-        Rectangle expandedBounds = Rectangle.FromLTRB(layer.Left, layer.Top, layer.Right + 1, layer.Bottom);
+        PsdRectangle expandedBounds = PsdRectangle.FromLTRB(layer.Left, layer.Top, layer.Right + 1, layer.Bottom);
         layer.Bounds = expandedBounds;
         layer.Left += 1;
         layer.Top += 1;
