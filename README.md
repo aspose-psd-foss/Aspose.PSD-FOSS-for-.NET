@@ -100,7 +100,7 @@ foreach (Layer layer in image.Layers)
 
 image.Layers[0].Name = "Updated layer";
 image.Layers[0].IsVisible = false;
-image.Layers[0].Bounds = Rectangle.FromLTRB(10, 20, 110, 120);
+image.Layers[0].Bounds = Rectangle.FromLeftTopRightBottom(10, 20, 110, 120);
 image.Layers[0].Opacity = 128;
 image.Layers[0].BlendMode = BlendMode.Multiply;
 image.Save("output.psd");

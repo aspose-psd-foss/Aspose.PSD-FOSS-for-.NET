@@ -143,7 +143,7 @@ public sealed class LayerSectionTests : PsdTestFixtureBase
         string outputFile = GetPersistentArtifactPath("layer_bounds_test.psd");
 
         using var image = PsdImage.Load(testFile);
-        Rectangle newBounds = Rectangle.FromLTRB(10, 20, 40, 60);
+        Rectangle newBounds = Rectangle.FromLeftTopRightBottom(10, 20, 40, 60);
         image.Layers[0].Bounds = newBounds;
         image.Save(outputFile);
         LogArtifactDirectory(outputFile);
@@ -172,7 +172,7 @@ public sealed class LayerSectionTests : PsdTestFixtureBase
         LogArtifactDirectory(outputFile);
 
         using var reloaded = PsdImage.Load(outputFile);
-        Assert.That(reloaded.Layers[0].Bounds, Is.EqualTo(Rectangle.FromLTRB(20, 10, 50, 30)));
+        Assert.That(reloaded.Layers[0].Bounds, Is.EqualTo(Rectangle.FromLeftTopRightBottom(20, 10, 50, 30)));
     }
 
 
@@ -188,7 +188,7 @@ public sealed class LayerSectionTests : PsdTestFixtureBase
         Layer layer = Layer.Load(reader, isLargeDocument: true);
 
         Assert.That(layer.Name, Is.EqualTo("Layer 1"));
-        Assert.That(layer.Bounds, Is.EqualTo(Rectangle.FromLTRB(0, 0, 1, 1)));
+        Assert.That(layer.Bounds, Is.EqualTo(Rectangle.FromLeftTopRightBottom(0, 0, 1, 1)));
         Assert.That(layer.Opacity, Is.EqualTo(200));
         Assert.That(layer.IsVisible, Is.True);
     }
