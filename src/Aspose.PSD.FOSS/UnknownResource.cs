@@ -54,18 +54,7 @@ internal sealed class UnknownResource
         }
 
         short resourceId = reader.ReadInt16();
-        byte nameLength = reader.ReadByte();
-        string name = string.Empty;
-        if (nameLength > 0)
-        {
-            byte[] nameBytes = reader.ReadBytes(nameLength);
-            name = System.Text.Encoding.ASCII.GetString(nameBytes);
-        }
-
-        if ((nameLength + 1) % 2 != 0)
-        {
-            reader.Skip(1);
-        }
+        string name = reader.ReadPascalStringAlignedTo2();
 
         int dataLength = reader.ReadInt32();
         if (dataLength < 0 || reader.Position + dataLength > sectionEnd)

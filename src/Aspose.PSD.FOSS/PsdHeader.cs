@@ -51,7 +51,7 @@ public sealed class PsdHeader
     public ColorModes ColorMode { get; private set; }
 
     /// <summary>
-    /// Gets the version of the PSD file format.
+    /// Gets the raw PSD container version: 1 for PSD and 2 for PSB.
     /// </summary>
     public int Version => (int)FormatVersion;
 
@@ -61,7 +61,7 @@ public sealed class PsdHeader
     internal PsdVersion FormatVersion { get; private set; }
 
     /// <summary>
-    /// Gets a value indicating whether the document is a PSB large document.
+    /// Gets a value indicating whether the document uses the PSB large-document container.
     /// </summary>
     public bool IsLargeDocument => FormatVersion == global::Aspose.PSD.FOSS.PsdVersion.Psb;
 

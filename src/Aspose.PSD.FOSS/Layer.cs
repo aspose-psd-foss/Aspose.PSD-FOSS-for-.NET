@@ -79,7 +79,7 @@ public class Layer
         }
     }
     /// <summary>
-    /// Gets the layer bounds in document coordinates.
+    /// Gets the layer rectangle in PSD document coordinates.
     /// </summary>
     public Rectangle Bounds
     {
@@ -383,7 +383,7 @@ public class Layer
 
             blendingRangesData = LayerBlendingRangesData.Load(reader, extraEnd);
 
-            layerName = reader.ReadPascalString();
+            layerName = reader.ReadPascalStringAlignedTo4();
 
             long remaining = extraEnd - reader.Position;
             if (remaining < 0)
@@ -497,7 +497,7 @@ public class Layer
 
         writer.Write(_layerMaskData.RawData);
         writer.Write(_blendingRangesData.RawData);
-        writer.WritePascalString(Name);
+        writer.WritePascalStringAlignedTo4(Name);
         writer.Write(_additionalLayerData);
     }
 
@@ -537,8 +537,7 @@ public class Layer
     /// <returns>The number of bytes required to store the name in PSD format.</returns>
     private int GetPascalStringStorageLength(string value)
     {
-        int length = string.IsNullOrEmpty(value) ? 0 : System.Text.Encoding.ASCII.GetByteCount(value);
-        return 1 + length + ((4 - ((length + 1) % 4)) % 4);
+        return BigEndianWriter.GetPascalStringStorageLengthAlignedTo4(value);
     }
 
 }

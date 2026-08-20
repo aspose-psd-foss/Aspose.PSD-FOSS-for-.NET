@@ -1,4 +1,3 @@
-using System.Drawing;
 using System.IO;
 
 namespace Aspose.PSD.FOSS;
@@ -49,7 +48,7 @@ public sealed class PsdImage : IDisposable
     public ColorModes ColorMode => _header?.ColorMode ?? ColorModes.Rgb;
 
     /// <summary>
-    /// Gets the PSD or PSB version value from the header.
+    /// Gets the raw PSD container version from the header: 1 for PSD and 2 for PSB.
     /// </summary>
     public int Version => _header?.Version ?? 1;
 
@@ -59,12 +58,12 @@ public sealed class PsdImage : IDisposable
     public PsdHeader Header => _header ?? throw new InvalidOperationException("PSD/PSB header is not loaded.");
 
     /// <summary>
-    /// Gets a value indicating whether the loaded document is a PSB large document.
+    /// Gets a value indicating whether the loaded document uses the PSB large-document container.
     /// </summary>
     public bool IsLargeDocument => _header?.IsLargeDocument == true;
 
     /// <summary>
-    /// Gets a value indicating whether the loaded document is a PSB file.
+    /// Gets a value indicating whether the loaded document is a PSB file; this is equivalent to <see cref="IsLargeDocument"/>.
     /// </summary>
     public bool IsPsb => IsLargeDocument;
 
@@ -537,15 +536,7 @@ public sealed class PsdImage : IDisposable
             writer.Write((uint)0x3842494D);
             writer.Write((short)resource.ResourceId);
 
-            byte[] nameBytes = System.Text.Encoding.ASCII.GetBytes(resource.Name);
-            writer.Write((byte)nameBytes.Length);
-            writer.Write(nameBytes);
-
-            // Odd padding: if (nameLength + 1) % 2 != 0, add 1 byte padding
-            if ((nameBytes.Length + 1) % 2 != 0)
-            {
-                writer.Write((byte)0);
-            }
+            writer.WritePascalStringAlignedTo2(resource.Name);
 
             writer.Write((int)resource.Data.Length);
             writer.Write(resource.Data);

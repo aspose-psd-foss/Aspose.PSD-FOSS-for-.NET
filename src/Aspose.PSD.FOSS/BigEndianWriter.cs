@@ -1,3 +1,5 @@
+using System.Buffers.Binary;
+
 namespace Aspose.PSD.FOSS;
 
 /// <summary>
@@ -91,10 +93,9 @@ internal sealed class BigEndianWriter : IDisposable
     /// <param name="value">The 16-bit signed integer to write.</param>
     public void Write(short value)
     {
-        byte[] buffer = new byte[2];
-        buffer[0] = (byte)((value >> 8) & 0xFF);
-        buffer[1] = (byte)(value & 0xFF);
-        _stream.Write(buffer, 0, 2);
+        Span<byte> buffer = stackalloc byte[sizeof(short)];
+        BinaryPrimitives.WriteInt16BigEndian(buffer, value);
+        _stream.Write(buffer);
     }
 
     /// <summary>
@@ -103,10 +104,9 @@ internal sealed class BigEndianWriter : IDisposable
     /// <param name="value">The 16-bit unsigned integer to write.</param>
     public void Write(ushort value)
     {
-        byte[] buffer = new byte[2];
-        buffer[0] = (byte)((value >> 8) & 0xFF);
-        buffer[1] = (byte)(value & 0xFF);
-        _stream.Write(buffer, 0, 2);
+        Span<byte> buffer = stackalloc byte[sizeof(ushort)];
+        BinaryPrimitives.WriteUInt16BigEndian(buffer, value);
+        _stream.Write(buffer);
     }
 
     /// <summary>
@@ -115,12 +115,9 @@ internal sealed class BigEndianWriter : IDisposable
     /// <param name="value">The 32-bit signed integer to write.</param>
     public void Write(int value)
     {
-        byte[] buffer = new byte[4];
-        buffer[0] = (byte)((value >> 24) & 0xFF);
-        buffer[1] = (byte)((value >> 16) & 0xFF);
-        buffer[2] = (byte)((value >> 8) & 0xFF);
-        buffer[3] = (byte)(value & 0xFF);
-        _stream.Write(buffer, 0, 4);
+        Span<byte> buffer = stackalloc byte[sizeof(int)];
+        BinaryPrimitives.WriteInt32BigEndian(buffer, value);
+        _stream.Write(buffer);
     }
 
     /// <summary>
@@ -129,12 +126,9 @@ internal sealed class BigEndianWriter : IDisposable
     /// <param name="value">The 32-bit unsigned integer to write.</param>
     public void Write(uint value)
     {
-        byte[] buffer = new byte[4];
-        buffer[0] = (byte)((value >> 24) & 0xFF);
-        buffer[1] = (byte)((value >> 16) & 0xFF);
-        buffer[2] = (byte)((value >> 8) & 0xFF);
-        buffer[3] = (byte)(value & 0xFF);
-        _stream.Write(buffer, 0, 4);
+        Span<byte> buffer = stackalloc byte[sizeof(uint)];
+        BinaryPrimitives.WriteUInt32BigEndian(buffer, value);
+        _stream.Write(buffer);
     }
 
     /// <summary>
@@ -143,16 +137,9 @@ internal sealed class BigEndianWriter : IDisposable
     /// <param name="value">The 64-bit signed integer to write.</param>
     public void Write(long value)
     {
-        byte[] buffer = new byte[8];
-        buffer[0] = (byte)((value >> 56) & 0xFF);
-        buffer[1] = (byte)((value >> 48) & 0xFF);
-        buffer[2] = (byte)((value >> 40) & 0xFF);
-        buffer[3] = (byte)((value >> 32) & 0xFF);
-        buffer[4] = (byte)((value >> 24) & 0xFF);
-        buffer[5] = (byte)((value >> 16) & 0xFF);
-        buffer[6] = (byte)((value >> 8) & 0xFF);
-        buffer[7] = (byte)(value & 0xFF);
-        _stream.Write(buffer, 0, 8);
+        Span<byte> buffer = stackalloc byte[sizeof(long)];
+        BinaryPrimitives.WriteInt64BigEndian(buffer, value);
+        _stream.Write(buffer);
     }
 
     /// <summary>
@@ -161,42 +148,86 @@ internal sealed class BigEndianWriter : IDisposable
     /// <param name="value">The 64-bit unsigned integer to write.</param>
     public void Write(ulong value)
     {
-        byte[] buffer = new byte[8];
-        buffer[0] = (byte)((value >> 56) & 0xFF);
-        buffer[1] = (byte)((value >> 48) & 0xFF);
-        buffer[2] = (byte)((value >> 40) & 0xFF);
-        buffer[3] = (byte)((value >> 32) & 0xFF);
-        buffer[4] = (byte)((value >> 24) & 0xFF);
-        buffer[5] = (byte)((value >> 16) & 0xFF);
-        buffer[6] = (byte)((value >> 8) & 0xFF);
-        buffer[7] = (byte)(value & 0xFF);
-        _stream.Write(buffer, 0, 8);
+        Span<byte> buffer = stackalloc byte[sizeof(ulong)];
+        BinaryPrimitives.WriteUInt64BigEndian(buffer, value);
+        _stream.Write(buffer);
     }
 
     /// <summary>
-    /// Writes a Pascal-style string to the stream.
+    /// Writes a PSD Pascal string whose length byte and payload are padded to a 4-byte boundary.
     /// </summary>
     /// <param name="value">The string to write.</param>
     public void WritePascalString(string value)
     {
-        if (string.IsNullOrEmpty(value))
+        WritePascalStringAlignedTo4(value);
+    }
+
+    /// <summary>
+    /// Writes a PSD resource Pascal string whose length byte and payload are padded to a 2-byte boundary.
+    /// </summary>
+    /// <param name="value">The ASCII string to write.</param>
+    /// <exception cref="PsdSaveException">Thrown when the encoded string is too long for a PSD Pascal string.</exception>
+    public void WritePascalStringAlignedTo2(string value)
+    {
+        WritePascalStringAlignedTo(value, boundary: 2);
+    }
+
+    /// <summary>
+    /// Writes a PSD layer Pascal string whose length byte and payload are padded to a 4-byte boundary.
+    /// </summary>
+    /// <param name="value">The ASCII string to write.</param>
+    /// <exception cref="PsdSaveException">Thrown when the encoded string is too long for a PSD Pascal string.</exception>
+    public void WritePascalStringAlignedTo4(string value)
+    {
+        WritePascalStringAlignedTo(value, boundary: 4);
+    }
+
+    /// <summary>
+    /// Returns the stored byte count for a PSD Pascal string aligned to a 4-byte boundary.
+    /// </summary>
+    /// <param name="value">The ASCII string to measure.</param>
+    /// <returns>The length byte, payload, and padding byte count.</returns>
+    public static int GetPascalStringStorageLengthAlignedTo4(string value)
+    {
+        int length = string.IsNullOrEmpty(value) ? 0 : System.Text.Encoding.ASCII.GetByteCount(value);
+        return 1 + length + GetPaddingLength(length, boundary: 4);
+    }
+
+    /// <summary>
+    /// Writes a Pascal string and pads it according to the enclosing PSD structure.
+    /// </summary>
+    /// <param name="value">The ASCII string to write.</param>
+    /// <param name="boundary">The byte boundary used by the enclosing structure.</param>
+    private void WritePascalStringAlignedTo(string value, int boundary)
+    {
+        byte[] bytes = System.Text.Encoding.ASCII.GetBytes(value);
+        if (bytes.Length > byte.MaxValue)
         {
-            Write((byte)0);
-            Write((byte)0);
-            Write((byte)0);
-            Write((byte)0);
-            return;
+            throw new PsdSaveException($"PSD Pascal string length {bytes.Length} exceeds the supported maximum {byte.MaxValue}.");
         }
 
-        byte[] bytes = System.Text.Encoding.ASCII.GetBytes(value);
         Write((byte)bytes.Length);
-        Write(bytes);
+        if (bytes.Length > 0)
+        {
+            Write(bytes);
+        }
 
-        int padding = (4 - (bytes.Length + 1) % 4) % 4;
+        int padding = GetPaddingLength(bytes.Length, boundary);
         for (int i = 0; i < padding; i++)
         {
             Write((byte)0);
         }
+    }
+
+    /// <summary>
+    /// Calculates padding after a Pascal string length byte and payload.
+    /// </summary>
+    /// <param name="payloadLength">The stored Pascal string payload length.</param>
+    /// <param name="boundary">The byte boundary used by the enclosing structure.</param>
+    /// <returns>The number of padding bytes to write.</returns>
+    private static int GetPaddingLength(int payloadLength, int boundary)
+    {
+        return (boundary - ((payloadLength + 1) % boundary)) % boundary;
     }
 
     /// <summary>
