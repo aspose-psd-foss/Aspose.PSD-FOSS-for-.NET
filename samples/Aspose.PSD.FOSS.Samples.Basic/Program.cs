@@ -3,9 +3,7 @@
 // using the supported Aspose.PSD-compatible public API subset.
 
 using Aspose.PSD;
-using Aspose.PSD.FileFormats.Core.Blending;
 using Aspose.PSD.FileFormats.Psd;
-using Aspose.PSD.FileFormats.Psd.Layers;
 using Aspose.PSD.FOSS.Samples.Common;
 
 namespace Aspose.PSD.FOSS.Samples.Basic;
@@ -65,14 +63,11 @@ internal static class Program
         Console.WriteLine("Header");
         Console.WriteLine($"  Width: {image.Width}");
         Console.WriteLine($"  Height: {image.Height}");
+        Console.WriteLine($"  Size: {image.Size}");
         Console.WriteLine($"  ChannelsCount: {image.ChannelsCount}");
         Console.WriteLine($"  BitsPerChannel: {image.BitsPerChannel}");
         Console.WriteLine($"  ColorMode: {image.ColorMode}");
         Console.WriteLine($"  Version: {image.Version}");
-        Console.WriteLine($"  IsLargeDocument: {image.IsLargeDocument}");
-        Console.WriteLine($"  IsPsb: {image.IsPsb}");
-        Console.WriteLine($"  LayerCount: {image.LayerCount}");
-        Console.WriteLine($"  HasLayers: {image.HasLayers}");
         Console.WriteLine();
     }
 
@@ -83,12 +78,11 @@ internal static class Program
     private static void PrintDocumentState(PsdImage image)
     {
         Console.WriteLine("Document State");
-        Console.WriteLine($"  HasColorModeData: {image.HasColorModeData}");
-        Console.WriteLine($"  HasImageResources: {image.HasImageResources}");
-        Console.WriteLine($"  ResourceCount: {image.ResourceCount}");
-        Console.WriteLine($"  HasMergedImageData: {image.HasMergedImageData}");
+        Console.WriteLine($"  Layers: {image.Layers.Length}");
+        Console.WriteLine($"  ImageResources: {image.ImageResources.Length}");
         Console.WriteLine($"  Compression: {image.Compression}");
-        Console.WriteLine($"  UsesPrediction: {image.UsesPrediction}");
+        Console.WriteLine($"  IsFlatten: {image.IsFlatten}");
+        Console.WriteLine($"  ActiveLayer: {image.ActiveLayer?.Name ?? "<none>"}");
     }
 
     /// <summary>

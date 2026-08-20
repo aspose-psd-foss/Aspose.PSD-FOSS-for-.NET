@@ -38,7 +38,7 @@ internal static class Program
     {
         using var image = (PsdImage)Image.Load(inputPath);
 
-        PrintSampleDescription(inputPath, image.LayerCount);
+        PrintSampleDescription(inputPath, image.Layers.Length);
 
         for (int i = 0; i < image.Layers.Length; i++)
         {

@@ -41,9 +41,9 @@ internal static class Program
     {
         using var image = (PsdImage)Image.Load(inputPath);
 
-        PrintSampleDescription(inputPath, outputPath, image.LayerCount);
+        PrintSampleDescription(inputPath, outputPath, image.Layers.Length);
 
-        if (!image.HasLayers)
+        if (image.Layers.Length == 0)
         {
             Console.WriteLine("The document has no layers, so no supported mutations were applied.");
             return;

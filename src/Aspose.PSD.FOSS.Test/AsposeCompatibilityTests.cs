@@ -109,14 +109,45 @@ public sealed class AsposeCompatibilityTests : PsdTestFixtureBase
     {
         using var image = (PsdImage)Image.Load(GetTestDataPath("test.psd"));
         Layer[] layers = image.Layers;
+        int version = image.Version;
 
         image.ColorMode = ColorModes.Rgb;
         image.Layers = layers;
         image.GlobalAngle = 45;
+        image.Version = version;
 
         Assert.That(image.ColorMode, Is.EqualTo(ColorModes.Rgb));
         Assert.That(image.Layers, Has.Length.EqualTo(layers.Length));
         Assert.That(image.GlobalAngle, Is.EqualTo(45));
+        Assert.That(image.Version, Is.EqualTo(version));
+    }
+
+    /// <summary>
+    /// Tests that official-style PSD image resource and document state properties expose the supported compatibility subset.
+    /// </summary>
+    [Test]
+    public void PsdImageResources_WithOfficialShape_ExposeReadSurfaceAndRejectUnsupportedRewrites()
+    {
+        using var image = (PsdImage)Image.Load(GetTestDataPath("test.psd"));
+
+        ResourceBlock[] imageResources = image.ImageResources;
+        LayerResource[] globalLayerResources = image.GlobalLayerResources;
+        GlobalLayerMaskInfo globalLayerMaskInfo = image.GlobalLayerMaskInfo;
+        Layer? activeLayer = image.ActiveLayer;
+
+        Assert.That(image.Size, Is.EqualTo(new Size(image.Width, image.Height)));
+        Assert.That(imageResources, Is.Not.Empty);
+        Assert.That(imageResources[0].ID, Is.Not.EqualTo(0));
+        Assert.That(imageResources[0].DataSize, Is.GreaterThanOrEqualTo(0));
+        Assert.That(globalLayerResources, Is.Empty);
+        Assert.That(globalLayerMaskInfo, Is.Not.Null);
+        Assert.That(activeLayer, Is.SameAs(image.Layers[0]));
+        Assert.That(image.IsFlatten, Is.False);
+        Assert.That(image.HasTransparencyData, Is.False);
+        Assert.That(() => image.ImageResources = imageResources, Throws.TypeOf<NotSupportedException>());
+        Assert.That(() => image.GlobalLayerResources = globalLayerResources, Throws.TypeOf<NotSupportedException>());
+        Assert.That(() => image.ActiveLayer = activeLayer, Throws.TypeOf<NotSupportedException>());
+        Assert.That(() => image.HasTransparencyData = true, Throws.TypeOf<NotSupportedException>());
     }
 
     /// <summary>

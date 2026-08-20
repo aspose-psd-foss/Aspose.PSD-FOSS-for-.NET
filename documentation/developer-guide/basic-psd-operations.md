@@ -23,19 +23,18 @@ Supported document metadata:
 - `BitsPerChannel`
 - `ColorMode`
 - `Version`
-- `IsLargeDocument`
-- `IsPsb`
-- `LayerCount`
-- `HasImageResources`
-- `ResourceCount`
-- `HasColorModeData`
-- `HasMergedImageData`
+- `Size`
+- `Bounds`
 - `Compression`
-- `UsesPrediction`
+- `ImageResources`
+- `GlobalLayerResources`
+- `GlobalLayerMaskInfo`
+- `IsFlatten`
+- `ActiveLayer`
 
 Internal diagnostics preserve parsed resource, color data, image data, channel, mask, and blending-range details for tests and implementation verification. These DTOs are intentionally not part of the public API because they do not exist in the commercial Aspose.PSD surface.
 
-`GlobalAngle`, `HasIccProfile`, and `IsIccProfileUntagged` remain public for now, but they are not reconstructed from resource IDs and therefore stay at default values in the current lightweight implementation.
+Some official properties are present as explicit compatibility stubs and throw `NotSupportedException` when the current FOSS build cannot safely update the underlying PSD structures.
 
 ## Inspect Layers
 

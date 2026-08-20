@@ -179,4 +179,18 @@ internal sealed class PsdHeader
     {
         ColorMode = colorMode;
     }
+
+    /// <summary>
+    /// Updates the PSD container version.
+    /// </summary>
+    /// <param name="version">The PSD container version to store.</param>
+    internal void SetVersion(int version)
+    {
+        if (version != (int)Psd.PsdVersion.Psd && version != (int)Psd.PsdVersion.Psb)
+        {
+            throw new ArgumentOutOfRangeException(nameof(version), version, "Supported PSD versions are 1 (PSD) and 2 (PSB).");
+        }
+
+        FormatVersion = (Psd.PsdVersion)version;
+    }
 }

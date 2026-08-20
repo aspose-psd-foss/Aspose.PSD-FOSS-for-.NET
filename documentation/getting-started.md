@@ -50,11 +50,12 @@ using var image = (PsdImage)Image.Load("input.psd");
 
 Console.WriteLine(image.Width);
 Console.WriteLine(image.Height);
+Console.WriteLine(image.ChannelsCount);
 Console.WriteLine(image.BitsPerChannel);
 Console.WriteLine(image.ColorMode);
-Console.WriteLine(image.IsPsb);
+Console.WriteLine(image.Version);
 Console.WriteLine(image.Compression);
-Console.WriteLine(image.LayerCount);
+Console.WriteLine(image.Layers.Length);
 
 foreach (Layer layer in image.Layers)
 {

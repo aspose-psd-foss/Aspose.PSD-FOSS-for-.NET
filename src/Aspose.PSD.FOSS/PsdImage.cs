@@ -1,5 +1,6 @@
 using Aspose.PSD.FileFormats.Psd.Layers;
 using System.IO;
+using System.Linq;
 
 namespace Aspose.PSD.FileFormats.Psd;
 
@@ -36,7 +37,7 @@ public sealed class PsdImage : Image
     /// <summary>
     /// Gets the document channel count from the PSD header.
     /// </summary>
-    public int Channels => _header?.Channels ?? 0;
+    internal int Channels => _header?.Channels ?? 0;
 
     /// <summary>
     /// Gets the number of bits stored per channel.
@@ -53,9 +54,13 @@ public sealed class PsdImage : Image
     }
 
     /// <summary>
-    /// Gets the raw PSD container version from the header: 1 for PSD and 2 for PSB.
+    /// Gets or sets the PSD container version.
     /// </summary>
-    public int Version => _header?.Version ?? 1;
+    public int Version
+    {
+        get => _header?.Version ?? (int)PsdVersion.Psd;
+        set => Header.SetVersion(value);
+    }
 
     /// <summary>
     /// Gets the parsed PSD/PSB header object.
@@ -65,12 +70,12 @@ public sealed class PsdImage : Image
     /// <summary>
     /// Gets a value indicating whether the loaded document uses the PSB large-document container.
     /// </summary>
-    public bool IsLargeDocument => _header?.IsLargeDocument == true;
+    internal bool IsLargeDocument => _header?.IsLargeDocument == true;
 
     /// <summary>
     /// Gets a value indicating whether the loaded document is a PSB file; this is equivalent to <see cref="IsLargeDocument"/>.
     /// </summary>
-    public bool IsPsb => IsLargeDocument;
+    internal bool IsPsb => IsLargeDocument;
 
     /// <summary>
     /// Gets the parsed layer collection.
@@ -87,24 +92,75 @@ public sealed class PsdImage : Image
     public int ChannelsCount => Channels;
 
     /// <summary>
+    /// Gets the image size.
+    /// </summary>
+    public Size Size => new(Width, Height);
+
+    /// <summary>
+    /// Gets or sets the active layer.
+    /// </summary>
+    public Layer? ActiveLayer
+    {
+        get => Layers.FirstOrDefault();
+        set => throw new NotSupportedException("Changing the active layer is not supported by this FOSS build.");
+    }
+
+    /// <summary>
     /// Gets the number of parsed layers in the document.
     /// </summary>
-    public int LayerCount => Layers.Length;
+    internal int LayerCount => Layers.Length;
 
     /// <summary>
     /// Gets a value indicating whether the document contains at least one parsed layer.
     /// </summary>
-    public bool HasLayers => _layerAndMaskSection.Layers.Length > 0;
+    internal bool HasLayers => _layerAndMaskSection.Layers.Length > 0;
 
     /// <summary>
     /// Gets a value indicating whether the document contains any parsed image resources.
     /// </summary>
-    public bool HasImageResources => _imageResourcesSection.HasResources;
+    internal bool HasImageResources => _imageResourcesSection.HasResources;
 
     /// <summary>
     /// Gets the number of parsed image resource blocks.
     /// </summary>
-    public int ResourceCount => _imageResourcesSection.Resources.Length;
+    internal int ResourceCount => _imageResourcesSection.Resources.Length;
+
+    /// <summary>
+    /// Gets or sets the PSD image resources.
+    /// </summary>
+    public ResourceBlock[] ImageResources
+    {
+        get => _imageResourcesSection.Resources.Select(resource => new PreservedResourceBlock(resource)).Cast<ResourceBlock>().ToArray();
+        set => throw new NotSupportedException("Changing image resources is not supported by this FOSS build.");
+    }
+
+    /// <summary>
+    /// Gets or sets the global layer resources.
+    /// </summary>
+    public LayerResource[] GlobalLayerResources
+    {
+        get => [];
+        set => throw new NotSupportedException("Changing global layer resources is not supported by this FOSS build.");
+    }
+
+    /// <summary>
+    /// Gets the global layer mask info.
+    /// </summary>
+    public GlobalLayerMaskInfo GlobalLayerMaskInfo => GlobalLayerMaskInfo.Empty;
+
+    /// <summary>
+    /// Gets a value indicating whether the PSD image is flattened.
+    /// </summary>
+    public bool IsFlatten => _layerAndMaskSection.Layers.Length == 0;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether first alpha channel contains the transparency data for the merged result when specifying layers data.
+    /// </summary>
+    public bool HasTransparencyData
+    {
+        get => false;
+        set => throw new NotSupportedException("Changing transparency data semantics is not supported by this FOSS build.");
+    }
 
     /// <summary>
     /// Gets a read-only summary of the parsed image resource blocks.
@@ -114,7 +170,7 @@ public sealed class PsdImage : Image
     /// <summary>
     /// Gets a value indicating whether the document contains Color Mode Data bytes.
     /// </summary>
-    public bool HasColorModeData => _colorData.RawData.Length > 0;
+    internal bool HasColorModeData => _colorData.RawData.Length > 0;
 
     /// <summary>
     /// Gets a read-only summary of the parsed Color Mode Data section.
@@ -129,7 +185,7 @@ public sealed class PsdImage : Image
     /// <summary>
     /// Gets a value indicating whether the document contains merged image data payload bytes.
     /// </summary>
-    public bool HasMergedImageData => _imageData.RawData.Length > 0;
+    internal bool HasMergedImageData => _imageData.RawData.Length > 0;
 
     /// <summary>
     /// Gets the compression method used by the merged image data section.
@@ -149,7 +205,7 @@ public sealed class PsdImage : Image
     /// <summary>
     /// Gets a value indicating whether ZIP prediction is used by the merged image data payload.
     /// </summary>
-    public bool UsesPrediction => _imageData.Structure.UsesPrediction;
+    internal bool UsesPrediction => _imageData.Structure.UsesPrediction;
 
     /// <summary>
     /// Gets the parsed global angle from the image resources, when present.
@@ -161,13 +217,13 @@ public sealed class PsdImage : Image
     /// Gets a value indicating whether an embedded ICC profile resource is present.
     /// The current lightweight unknown-only parser does not reconstruct ID-specific semantic values.
     /// </summary>
-    public bool HasIccProfile => false;
+    internal bool HasIccProfile => false;
 
     /// <summary>
     /// Gets the parsed untagged ICC profile flag, when the corresponding resource is present.
     /// The current lightweight unknown-only parser does not reconstruct ID-specific semantic values.
     /// </summary>
-    public bool? IsIccProfileUntagged => null;
+    internal bool? IsIccProfileUntagged => null;
 
     /// <summary>
     /// Gets the parsed color mode data details for internal verification and tests.
