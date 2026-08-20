@@ -1,3 +1,4 @@
+using Aspose.PSD.FileFormats.Psd;
 using System.IO;
 using NUnit.Framework;
 

@@ -1,4 +1,4 @@
-namespace Aspose.PSD.FOSS;
+namespace Aspose.PSD.FileFormats.Psd.Layers;
 
 /// <summary>
 /// Provides a read-only summary of one parsed layer channel record.

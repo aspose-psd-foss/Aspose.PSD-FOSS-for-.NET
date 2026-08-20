@@ -1,6 +1,6 @@
 using System.Collections.ObjectModel;
 
-namespace Aspose.PSD.FOSS;
+namespace Aspose.PSD.FileFormats.Psd;
 
 /// <summary>
 /// Provides a read-only summary of the PSD merged image data structure.

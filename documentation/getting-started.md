@@ -41,9 +41,12 @@ The fastest way to understand the project is:
 ## First Example
 
 ```csharp
-using Aspose.PSD.FOSS;
+using Aspose.PSD;
+using Aspose.PSD.FileFormats.Core.Blending;
+using Aspose.PSD.FileFormats.Psd;
+using Aspose.PSD.FileFormats.Psd.Layers;
 
-using PsdImage image = PsdImage.Load("input.psd");
+using var image = (PsdImage)Image.Load("input.psd");
 
 Console.WriteLine(image.Width);
 Console.WriteLine(image.Height);
@@ -67,9 +70,12 @@ foreach (Layer layer in image.Layers)
 ## Save After a Simple Change
 
 ```csharp
-using Aspose.PSD.FOSS;
+using Aspose.PSD;
+using Aspose.PSD.FileFormats.Core.Blending;
+using Aspose.PSD.FileFormats.Psd;
+using Aspose.PSD.FileFormats.Psd.Layers;
 
-using PsdImage image = PsdImage.Load("input.psd");
+using var image = (PsdImage)Image.Load("input.psd");
 image.Layers[0].Name = "Updated layer";
 image.Layers[0].IsVisible = false;
 image.Layers[0].Opacity = 128;

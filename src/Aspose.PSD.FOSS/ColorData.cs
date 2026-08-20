@@ -1,4 +1,4 @@
-namespace Aspose.PSD.FOSS;
+namespace Aspose.PSD.FileFormats.Psd;
 
 /// <summary>
 /// Stores the PSD Color Mode Data section as raw bytes plus mode-aware parsed structure when available.

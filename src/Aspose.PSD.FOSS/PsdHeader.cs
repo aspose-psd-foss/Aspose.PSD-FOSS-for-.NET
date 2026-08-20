@@ -1,4 +1,4 @@
-namespace Aspose.PSD.FOSS;
+namespace Aspose.PSD.FileFormats.Psd;
 
 /// <summary>
 /// Contains the header information of a Photoshop document.
@@ -63,7 +63,7 @@ public sealed class PsdHeader
     /// <summary>
     /// Gets a value indicating whether the document uses the PSB large-document container.
     /// </summary>
-    public bool IsLargeDocument => FormatVersion == global::Aspose.PSD.FOSS.PsdVersion.Psb;
+    public bool IsLargeDocument => FormatVersion == Psd.PsdVersion.Psb;
 
     /// <summary>
     /// Loads the fixed PSD/PSB file header from the reader.
@@ -79,12 +79,12 @@ public sealed class PsdHeader
         }
 
         ushort rawVersion = reader.ReadUInt16();
-        if (rawVersion != (ushort)global::Aspose.PSD.FOSS.PsdVersion.Psd && rawVersion != (ushort)global::Aspose.PSD.FOSS.PsdVersion.Psb)
+        if (rawVersion != (ushort)Psd.PsdVersion.Psd && rawVersion != (ushort)Psd.PsdVersion.Psb)
         {
             throw new PsdLoadException($"Unsupported PSD version: {rawVersion}. Supported versions: {PsdVersion} (PSD) and {PsbVersion} (PSB).");
         }
 
-        global::Aspose.PSD.FOSS.PsdVersion version = (global::Aspose.PSD.FOSS.PsdVersion)rawVersion;
+        global::Aspose.PSD.FileFormats.Psd.PsdVersion version = (global::Aspose.PSD.FileFormats.Psd.PsdVersion)rawVersion;
 
         byte[] reserved = reader.ReadBytes(6);
         if (reserved.Any(value => value != 0))
@@ -134,7 +134,7 @@ public sealed class PsdHeader
             throw new PsdLoadException($"PSD header channel count {channels} is outside the supported range 1-56.");
         }
 
-        int maxDimension = version == global::Aspose.PSD.FOSS.PsdVersion.Psb ? 300000 : 30000;
+        int maxDimension = version == global::Aspose.PSD.FileFormats.Psd.PsdVersion.Psb ? 300000 : 30000;
         if (height < 1 || height > maxDimension)
         {
             throw new PsdLoadException($"PSD header height {height} is outside the supported range 1-{maxDimension} for this document version.");
@@ -169,5 +169,14 @@ public sealed class PsdHeader
         writer.Write(Width);
         writer.Write((ushort)BitDepth);
         writer.Write((ushort)ColorMode);
+    }
+
+    /// <summary>
+    /// Updates the header color mode for the compatibility subset that rewrites header metadata.
+    /// </summary>
+    /// <param name="colorMode">The color mode to store.</param>
+    internal void SetColorMode(ColorModes colorMode)
+    {
+        ColorMode = colorMode;
     }
 }

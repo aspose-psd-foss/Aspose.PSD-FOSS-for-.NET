@@ -1,4 +1,6 @@
-namespace Aspose.PSD.FOSS;
+using Aspose.PSD.FileFormats.Core.Blending;
+
+namespace Aspose.PSD.FileFormats.Psd;
 
 /// <summary>
 /// Maps between PSD blend mode keys and the public <see cref="BlendMode"/> enum.
@@ -28,12 +30,16 @@ internal static class LayerBlendModeMapper
             NormalBlendModeKey => BlendMode.Normal,
             "mul " => BlendMode.Multiply,
             "scrn" => BlendMode.Screen,
+            "diss" => BlendMode.Dissolve,
             "over" => BlendMode.Overlay,
             "dark" => BlendMode.Darken,
             "lite" => BlendMode.Lighten,
             "div " => BlendMode.ColorDodge,
+            "idiv" => BlendMode.ColorBurn,
             "burn" => BlendMode.ColorBurn,
+            "hLit" => BlendMode.HardLight,
             "hlit" => BlendMode.HardLight,
+            "sLit" => BlendMode.SoftLight,
             "slit" => BlendMode.SoftLight,
             "diff" => BlendMode.Difference,
             "smud" => BlendMode.Exclusion,
@@ -41,6 +47,17 @@ internal static class LayerBlendModeMapper
             "sat " => BlendMode.Saturation,
             "colr" => BlendMode.Color,
             "lum " => BlendMode.Luminosity,
+            "lbrn" => BlendMode.LinearBurn,
+            "lddg" => BlendMode.LinearDodge,
+            "vLit" => BlendMode.VividLight,
+            "lLit" => BlendMode.LinearLight,
+            "pLit" => BlendMode.PinLight,
+            "hMix" => BlendMode.HardMix,
+            "pass" => BlendMode.PassThrough,
+            "dkCl" => BlendMode.DarkerColor,
+            "lgCl" => BlendMode.LighterColor,
+            "fsub" => BlendMode.Subtract,
+            "fdiv" => BlendMode.Divide,
             _ => BlendMode.Normal
         };
     }
@@ -57,19 +74,31 @@ internal static class LayerBlendModeMapper
             BlendMode.Normal => NormalBlendModeKey,
             BlendMode.Multiply => "mul ",
             BlendMode.Screen => "scrn",
+            BlendMode.Dissolve => "diss",
             BlendMode.Overlay => "over",
             BlendMode.Darken => "dark",
             BlendMode.Lighten => "lite",
             BlendMode.ColorDodge => "div ",
-            BlendMode.ColorBurn => "burn",
-            BlendMode.HardLight => "hlit",
-            BlendMode.SoftLight => "slit",
+            BlendMode.ColorBurn => "idiv",
+            BlendMode.HardLight => "hLit",
+            BlendMode.SoftLight => "sLit",
             BlendMode.Difference => "diff",
             BlendMode.Exclusion => "smud",
             BlendMode.Hue => "hue ",
             BlendMode.Saturation => "sat ",
             BlendMode.Color => "colr",
             BlendMode.Luminosity => "lum ",
+            BlendMode.LinearBurn => "lbrn",
+            BlendMode.LinearDodge => "lddg",
+            BlendMode.VividLight => "vLit",
+            BlendMode.LinearLight => "lLit",
+            BlendMode.PinLight => "pLit",
+            BlendMode.HardMix => "hMix",
+            BlendMode.PassThrough => "pass",
+            BlendMode.DarkerColor => "dkCl",
+            BlendMode.LighterColor => "lgCl",
+            BlendMode.Subtract => "fsub",
+            BlendMode.Divide => "fdiv",
             _ => NormalBlendModeKey
         };
     }

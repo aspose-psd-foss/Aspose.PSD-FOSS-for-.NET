@@ -1,4 +1,4 @@
-namespace Aspose.PSD.FOSS;
+namespace Aspose.PSD.FileFormats.Psd;
 
 /// <summary>
 /// Stores one channel metadata entry from a layer record.

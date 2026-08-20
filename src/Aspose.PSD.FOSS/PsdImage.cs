@@ -1,11 +1,12 @@
+using Aspose.PSD.FileFormats.Psd.Layers;
 using System.IO;
 
-namespace Aspose.PSD.FOSS;
+namespace Aspose.PSD.FileFormats.Psd;
 
 /// <summary>
 /// Represents a PSD image that can be loaded, inspected, and saved without rendering.
 /// </summary>
-public sealed class PsdImage : IDisposable
+public sealed class PsdImage : Image
 {
     /// <summary>
     /// Stores the underlying source or destination stream.
@@ -25,12 +26,12 @@ public sealed class PsdImage : IDisposable
     /// <summary>
     /// Gets the document width in pixels.
     /// </summary>
-    public int Width => _header?.Width ?? 0;
+    public override int Width => _header?.Width ?? 0;
 
     /// <summary>
     /// Gets the document height in pixels.
     /// </summary>
-    public int Height => _header?.Height ?? 0;
+    public override int Height => _header?.Height ?? 0;
 
     /// <summary>
     /// Gets the document channel count from the PSD header.
@@ -45,7 +46,11 @@ public sealed class PsdImage : IDisposable
     /// <summary>
     /// Gets the PSD color mode reported by the header.
     /// </summary>
-    public ColorModes ColorMode => _header?.ColorMode ?? ColorModes.Rgb;
+    public ColorModes ColorMode
+    {
+        get => _header?.ColorMode ?? ColorModes.Rgb;
+        set => Header.SetColorMode(value);
+    }
 
     /// <summary>
     /// Gets the raw PSD container version from the header: 1 for PSD and 2 for PSB.
@@ -70,7 +75,16 @@ public sealed class PsdImage : IDisposable
     /// <summary>
     /// Gets the parsed layer collection.
     /// </summary>
-    public Layer[] Layers => _layerAndMaskSection.Layers.ToArray();
+    public Layer[] Layers
+    {
+        get => _layerAndMaskSection.Layers.ToArray();
+        set => _layerAndMaskSection = _layerAndMaskSection.WithLayers(value ?? []);
+    }
+
+    /// <summary>
+    /// Gets the PSD channels count.
+    /// </summary>
+    public int ChannelsCount => Channels;
 
     /// <summary>
     /// Gets the number of parsed layers in the document.
@@ -141,7 +155,7 @@ public sealed class PsdImage : IDisposable
     /// Gets the parsed global angle from the image resources, when present.
     /// The current lightweight unknown-only parser does not reconstruct ID-specific semantic values.
     /// </summary>
-    public int? GlobalAngle => null;
+    public int GlobalAngle { get; set; }
 
     /// <summary>
     /// Gets a value indicating whether an embedded ICC profile resource is present.
@@ -206,7 +220,7 @@ public sealed class PsdImage : IDisposable
     /// </summary>
     /// <param name="filePath">The path to the PSD file.</param>
     /// <returns>A loaded <see cref="PsdImage"/> instance.</returns>
-    public static PsdImage Load(string filePath)
+    public static new PsdImage Load(string filePath)
     {
         if (filePath == null) throw new ArgumentNullException(nameof(filePath));
         if (!File.Exists(filePath)) throw new FileNotFoundException($"File not found: {filePath}");
@@ -220,7 +234,7 @@ public sealed class PsdImage : IDisposable
     /// </summary>
     /// <param name="stream">The input stream containing PSD data.</param>
     /// <returns>A loaded <see cref="PsdImage"/> instance.</returns>
-    public static PsdImage Load(Stream stream)
+    public static new PsdImage Load(Stream stream)
     {
         if (stream == null) throw new ArgumentNullException(nameof(stream));
 
@@ -339,7 +353,7 @@ public sealed class PsdImage : IDisposable
     /// Saves the image to a file path.
     /// </summary>
     /// <param name="filePath">The destination file path.</param>
-    public void Save(string filePath)
+    public override void Save(string filePath)
     {
         if (filePath == null) throw new ArgumentNullException(nameof(filePath));
 
@@ -351,7 +365,7 @@ public sealed class PsdImage : IDisposable
     /// Saves the image to a writable stream.
     /// </summary>
     /// <param name="stream">The destination stream.</param>
-    public void Save(Stream stream)
+    public override void Save(Stream stream)
     {
         if (stream == null) throw new ArgumentNullException(nameof(stream));
         Save(stream, leaveOpen: true);
@@ -430,7 +444,7 @@ public sealed class PsdImage : IDisposable
     /// <summary>
     /// Releases the image and optionally the underlying stream.
     /// </summary>
-    public void Dispose()
+    public override void Dispose()
     {
         if (_disposed) return;
         _disposed = true;

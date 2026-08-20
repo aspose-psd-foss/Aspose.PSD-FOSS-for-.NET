@@ -1,4 +1,4 @@
-namespace Aspose.PSD.FOSS;
+namespace Aspose.PSD.FileFormats.Psd;
 
 /// <summary>
 /// Describes the validated structural layout of the PSD Image Data payload.

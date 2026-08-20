@@ -13,7 +13,7 @@ The library currently supports four main workflows:
 
 ## Load a PSD or PSB Document
 
-Use `PsdImage.Load(string)` or `PsdImage.Load(Stream)` to open a document.
+Use `Image.Load(string)` or `Image.Load(Stream)` and cast the result to `PsdImage` to open a PSD/PSB document in the Aspose.PSD-compatible style.
 
 Supported document metadata:
 
@@ -50,7 +50,7 @@ These APIs are intended for structural inspection rather than semantic reconstru
 In the current lightweight image-resource implementation:
 
 - `Resources` returns unknown-only resource summaries with identifier, Pascal name, and payload length;
-- `GlobalAngle`, `HasIccProfile`, and `IsIccProfileUntagged` remain part of the public API, but they are not reconstructed from resource IDs and therefore stay unset/default.
+- `GlobalAngle`, `HasIccProfile`, and `IsIccProfileUntagged` remain part of the public API, but they are not reconstructed from resource IDs and therefore stay at default values.
 
 ## Inspect Layers
 
@@ -59,7 +59,7 @@ Use `image.Layers` to enumerate parsed layer records.
 Supported layer metadata:
 
 - `Name`
-- `Bounds` (`PsdRectangle` in PSD document coordinates)
+- `Bounds` (`Rectangle` in PSD document coordinates)
 - `Width`
 - `Height`
 - `Top`
@@ -90,7 +90,7 @@ The current product scope supports changing:
 - `Opacity`
 - `BlendMode`
 - `Clipping`
-- `Bounds` (`PsdRectangle`)
+- `Bounds` (`Rectangle`)
 - `Top`
 - `Left`
 - `Bottom`

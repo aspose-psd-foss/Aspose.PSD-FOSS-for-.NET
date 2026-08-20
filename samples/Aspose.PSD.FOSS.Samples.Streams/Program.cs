@@ -2,7 +2,10 @@
 // This sample demonstrates Load(Stream) and Save(Stream) by round-tripping
 // a PSD/PSB document through in-memory streams without rendering.
 
-using Aspose.PSD.FOSS;
+using Aspose.PSD;
+using Aspose.PSD.FileFormats.Core.Blending;
+using Aspose.PSD.FileFormats.Psd;
+using Aspose.PSD.FileFormats.Psd.Layers;
 using Aspose.PSD.FOSS.Samples.Common;
 
 namespace Aspose.PSD.FOSS.Samples.Streams;
@@ -40,7 +43,7 @@ internal static class Program
 
         using var inputStream = new MemoryStream(inputBytes);
         long originalPosition = inputStream.Position;
-        using PsdImage image = PsdImage.Load(inputStream);
+        using var image = (PsdImage)Image.Load(inputStream);
 
         PrintSampleDescription(inputPath, outputPath, inputBytes.Length, originalPosition, inputStream.Position);
 

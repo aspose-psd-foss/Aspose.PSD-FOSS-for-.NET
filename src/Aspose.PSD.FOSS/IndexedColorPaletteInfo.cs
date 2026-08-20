@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Drawing;
 
-namespace Aspose.PSD.FOSS;
+namespace Aspose.PSD.FileFormats.Psd;
 
 /// <summary>
 /// Provides a read-only view over an indexed-color PSD palette.

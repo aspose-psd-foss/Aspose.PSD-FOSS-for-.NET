@@ -2,7 +2,10 @@
 // This sample loads a PSD/PSB document and prints supported layer metadata,
 // channel summaries, and raw mask/blending-range subsection presence flags.
 
-using Aspose.PSD.FOSS;
+using Aspose.PSD;
+using Aspose.PSD.FileFormats.Core.Blending;
+using Aspose.PSD.FileFormats.Psd;
+using Aspose.PSD.FileFormats.Psd.Layers;
 using Aspose.PSD.FOSS.Samples.Common;
 
 namespace Aspose.PSD.FOSS.Samples.Layers;
@@ -34,7 +37,7 @@ internal static class Program
     /// <param name="inputPath">The input PSD or PSB file path.</param>
     private static void RunLayerInspection(string inputPath)
     {
-        using PsdImage image = PsdImage.Load(inputPath);
+        using var image = (PsdImage)Image.Load(inputPath);
 
         PrintSampleDescription(inputPath, image.LayerCount);
 

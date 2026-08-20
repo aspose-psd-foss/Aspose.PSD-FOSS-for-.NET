@@ -1,3 +1,5 @@
+using Aspose.PSD.FileFormats.Psd;
+using Aspose.PSD.FileFormats.Psd.Layers;
 using System.IO;
 using NUnit.Framework;
 
@@ -26,7 +28,7 @@ public sealed class InspectionDtoTests : PsdTestFixtureBase
         Assert.That(image.Resources[2].GlobalAngle, Is.Null);
         Assert.That(image.HasIccProfile, Is.False);
         Assert.That(image.IsIccProfileUntagged, Is.Null);
-        Assert.That(image.GlobalAngle, Is.Null);
+        Assert.That(image.GlobalAngle, Is.EqualTo(0));
 
         Assert.That(image.ColorDataInfo.Kind, Is.EqualTo(PsdColorDataKind.None));
         Assert.That(image.ColorDataInfo.RawDataLength, Is.EqualTo(0));

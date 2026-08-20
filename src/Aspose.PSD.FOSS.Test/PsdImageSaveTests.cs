@@ -1,3 +1,4 @@
+using Aspose.PSD.FileFormats.Psd;
 using System.IO;
 using NUnit.Framework;
 
@@ -160,7 +161,7 @@ public sealed class PsdImageSaveTests : PsdTestFixtureBase
         LogArtifactDirectory(outputFile);
 
         using var reloaded = PsdImage.Load(outputFile);
-        Assert.That(reloaded.Layers[0].BlendModeKey, Is.EqualTo("norm"));
+        Assert.That(reloaded.Layers[0].RawBlendModeKey, Is.EqualTo("norm"));
         Assert.That(reloaded.Layers[0].IsVisible, Is.True);
     }
 }

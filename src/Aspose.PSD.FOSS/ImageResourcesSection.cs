@@ -1,4 +1,4 @@
-namespace Aspose.PSD.FOSS;
+namespace Aspose.PSD.FileFormats.Psd;
 
 /// <summary>
 /// Represents the PSD Image Resources section as raw-preserved bytes plus unknown-only parsed summaries.

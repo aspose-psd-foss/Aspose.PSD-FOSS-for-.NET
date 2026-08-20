@@ -1,4 +1,7 @@
-namespace Aspose.PSD.FOSS;
+using Aspose.PSD.FileFormats.Core.Blending;
+using Aspose.PSD.FileFormats.Psd.Layers;
+
+namespace Aspose.PSD.FileFormats.Psd;
 
 /// <summary>
 /// Reads PSD/PSB layer records into <see cref="Layer"/> instances.
@@ -100,7 +103,7 @@ internal static class LayerRecordReader
             }
         }
 
-        PsdRectangle bounds = PsdRectangle.FromLTRB(left, top, right, bottom);
+        Rectangle bounds = Rectangle.FromLTRB(left, top, right, bottom);
         bool visible = (flags & LayerInvisibleFlag) == 0;
 
         return Layer.CreateParsed(

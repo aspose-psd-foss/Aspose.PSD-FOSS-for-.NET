@@ -1,4 +1,6 @@
-namespace Aspose.PSD.FOSS;
+using Aspose.PSD.FileFormats.Psd.Layers;
+
+namespace Aspose.PSD.FileFormats.Psd;
 
 /// <summary>
 /// Represents the PSD/PSB Layer and Mask Information section and its raw-preserved save state.
@@ -18,18 +20,21 @@ internal sealed class LayerAndMaskSection
     /// <param name="layerGlobalMaskAndTailRaw">The raw global mask and trailing section bytes.</param>
     /// <param name="layerCountRaw">The original signed layer count value.</param>
     /// <param name="layers">The parsed layer records.</param>
+    /// <param name="hasLayerCollectionMutated">true when the public layer collection was replaced; otherwise, false.</param>
     private LayerAndMaskSection(
         byte[] rawSectionBytes,
         byte[] layerChannelImageDataRaw,
         byte[] layerGlobalMaskAndTailRaw,
         short layerCountRaw,
-        Layer[] layers)
+        Layer[] layers,
+        bool hasLayerCollectionMutated = false)
     {
         RawSectionBytes = rawSectionBytes;
         LayerChannelImageDataRaw = layerChannelImageDataRaw;
         LayerGlobalMaskAndTailRaw = layerGlobalMaskAndTailRaw;
         LayerCountRaw = layerCountRaw;
         Layers = layers;
+        HasLayerCollectionMutated = hasLayerCollectionMutated;
     }
 
     /// <summary>
@@ -56,6 +61,11 @@ internal sealed class LayerAndMaskSection
     /// Gets the parsed layer records.
     /// </summary>
     public Layer[] Layers { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether the public layer collection was replaced.
+    /// </summary>
+    public bool HasLayerCollectionMutated { get; }
 
     /// <summary>
     /// Loads the section using PSD- or PSB-sized outer and layer-info lengths.
@@ -139,7 +149,7 @@ internal sealed class LayerAndMaskSection
     /// <param name="isLargeDocument">true for PSB-sized lengths; otherwise, false.</param>
     public void Save(BigEndianWriter writer, bool isLargeDocument)
     {
-        if (RawSectionBytes.Length > 0 && !Layers.Any(layer => layer.HasMutated))
+        if (RawSectionBytes.Length > 0 && !HasLayerCollectionMutated && !Layers.Any(layer => layer.HasMutated))
         {
             WriteSectionLength(writer, RawSectionBytes.Length, isLargeDocument);
             writer.Write(RawSectionBytes);
@@ -153,6 +163,22 @@ internal sealed class LayerAndMaskSection
         }
 
         WriteLayerSectionWithMutations(writer, isLargeDocument);
+    }
+
+    /// <summary>
+    /// Creates a section copy with a replaced layer collection and marks it for rewriting on save.
+    /// </summary>
+    /// <param name="layers">The replacement layer collection.</param>
+    /// <returns>The section copy.</returns>
+    public LayerAndMaskSection WithLayers(Layer[] layers)
+    {
+        return new LayerAndMaskSection(
+            RawSectionBytes,
+            LayerChannelImageDataRaw,
+            LayerGlobalMaskAndTailRaw,
+            LayerCountRaw,
+            layers.ToArray(),
+            hasLayerCollectionMutated: true);
     }
 
     /// <summary>

@@ -1,3 +1,5 @@
+using Aspose.PSD.FileFormats.Core.Blending;
+using Aspose.PSD.FileFormats.Psd;
 using System.IO;
 using NUnit.Framework;
 
@@ -151,7 +153,7 @@ public sealed class FixtureDocumentTests : PsdTestFixtureBase
 
         using var reloaded = PsdImage.Load(outputFile);
         Assert.That(reloaded.Layers[1].BlendMode, Is.EqualTo(BlendMode.Multiply));
-        Assert.That(reloaded.Layers[1].BlendModeKey, Is.EqualTo("mul "));
+        Assert.That(reloaded.Layers[1].BlendModeKey, Is.EqualTo(BlendMode.Multiply));
     }
 
 
@@ -165,7 +167,8 @@ public sealed class FixtureDocumentTests : PsdTestFixtureBase
 
         Assert.That(image.LayerCount, Is.EqualTo(4));
         Assert.That(image.Layers[1].IsVisible, Is.False);
-        Assert.That(image.Layers[2].BlendModeKey, Is.EqualTo("lbrn"));
+        Assert.That(image.Layers[2].BlendModeKey, Is.EqualTo(BlendMode.LinearBurn));
+        Assert.That(image.Layers[2].RawBlendModeKey, Is.EqualTo("lbrn"));
         Assert.That(image.Layers[3].Clipping, Is.EqualTo(1));
         Assert.That(image.Layers[3].HasAdditionalLayerData, Is.True);
     }

@@ -1,6 +1,6 @@
 using System.Buffers.Binary;
 
-namespace Aspose.PSD.FOSS;
+namespace Aspose.PSD.FileFormats.Psd;
 
 /// <summary>
 /// Reads big-endian data from a stream.

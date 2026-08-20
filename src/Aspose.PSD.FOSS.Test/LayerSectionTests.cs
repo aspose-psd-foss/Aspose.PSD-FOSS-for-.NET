@@ -1,3 +1,7 @@
+using Aspose.PSD;
+using Aspose.PSD.FileFormats.Core.Blending;
+using Aspose.PSD.FileFormats.Psd;
+using Aspose.PSD.FileFormats.Psd.Layers;
 using System.IO;
 using NUnit.Framework;
 
@@ -75,7 +79,7 @@ public sealed class LayerSectionTests : PsdTestFixtureBase
         Assert.That(firstLayer.Bottom, Is.EqualTo(firstLayer.Bounds.Bottom));
         Assert.That(firstLayer.Right, Is.EqualTo(firstLayer.Bounds.Right));
         Assert.That(firstLayer.ChannelCount, Is.GreaterThan(0));
-        Assert.That(firstLayer.BlendModeKey, Has.Length.EqualTo(4));
+        Assert.That(firstLayer.RawBlendModeKey, Has.Length.EqualTo(4));
         Assert.That(firstLayer.HasMaskData, Is.False);
         Assert.That(firstLayer.HasBlendingRangesData, Is.EqualTo(firstLayer.BlendingRangesInfo.RawDataLength > 4));
         Assert.That(firstLayer.HasAdditionalLayerData, Is.True);
@@ -98,7 +102,7 @@ public sealed class LayerSectionTests : PsdTestFixtureBase
 
         using var reloaded = PsdImage.Load(outputFile);
         Assert.That(reloaded.Layers[0].BlendMode, Is.EqualTo(BlendMode.Multiply));
-        Assert.That(reloaded.Layers[0].BlendModeKey, Is.EqualTo("mul "));
+        Assert.That(reloaded.Layers[0].BlendModeKey, Is.EqualTo(BlendMode.Multiply));
 
         byte[] originalBytes = File.ReadAllBytes(testFile);
         byte[] savedBytes = File.ReadAllBytes(outputFile);
@@ -139,7 +143,7 @@ public sealed class LayerSectionTests : PsdTestFixtureBase
         string outputFile = GetPersistentArtifactPath("layer_bounds_test.psd");
 
         using var image = PsdImage.Load(testFile);
-        PsdRectangle newBounds = PsdRectangle.FromLTRB(10, 20, 40, 60);
+        Rectangle newBounds = Rectangle.FromLTRB(10, 20, 40, 60);
         image.Layers[0].Bounds = newBounds;
         image.Save(outputFile);
         LogArtifactDirectory(outputFile);
@@ -168,7 +172,7 @@ public sealed class LayerSectionTests : PsdTestFixtureBase
         LogArtifactDirectory(outputFile);
 
         using var reloaded = PsdImage.Load(outputFile);
-        Assert.That(reloaded.Layers[0].Bounds, Is.EqualTo(PsdRectangle.FromLTRB(20, 10, 50, 30)));
+        Assert.That(reloaded.Layers[0].Bounds, Is.EqualTo(Rectangle.FromLTRB(20, 10, 50, 30)));
     }
 
 
@@ -184,7 +188,7 @@ public sealed class LayerSectionTests : PsdTestFixtureBase
         Layer layer = Layer.Load(reader, isLargeDocument: true);
 
         Assert.That(layer.Name, Is.EqualTo("Layer 1"));
-        Assert.That(layer.Bounds, Is.EqualTo(PsdRectangle.FromLTRB(0, 0, 1, 1)));
+        Assert.That(layer.Bounds, Is.EqualTo(Rectangle.FromLTRB(0, 0, 1, 1)));
         Assert.That(layer.Opacity, Is.EqualTo(200));
         Assert.That(layer.IsVisible, Is.True);
     }

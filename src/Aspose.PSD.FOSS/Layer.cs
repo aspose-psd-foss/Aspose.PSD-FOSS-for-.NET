@@ -1,6 +1,8 @@
+using Aspose.PSD.FileFormats.Core.Blending;
+using Aspose.PSD.FileFormats.Psd;
 using System.Linq;
 
-namespace Aspose.PSD.FOSS;
+namespace Aspose.PSD.FileFormats.Psd.Layers;
 
 /// <summary>
 /// Represents a single PSD layer with basic metadata used by the FOSS library.
@@ -55,7 +57,7 @@ public class Layer
     /// <summary>
     /// Gets the layer rectangle in PSD document coordinates.
     /// </summary>
-    public PsdRectangle Bounds
+    public Rectangle Bounds
     {
         get => _bounds;
         set
@@ -71,7 +73,7 @@ public class Layer
     /// <summary>
     /// Stores the current layer bounds in document coordinates.
     /// </summary>
-    private PsdRectangle _bounds;
+    private Rectangle _bounds;
 
     /// <summary>
     /// Gets the layer width in pixels.
@@ -93,7 +95,7 @@ public class Layer
         {
             if (Bounds.Top != value)
             {
-                Bounds = PsdRectangle.FromLTRB(Bounds.Left, value, Bounds.Right, Bounds.Bottom);
+                Bounds = Rectangle.FromLTRB(Bounds.Left, value, Bounds.Right, Bounds.Bottom);
             }
         }
     }
@@ -108,7 +110,7 @@ public class Layer
         {
             if (Bounds.Left != value)
             {
-                Bounds = PsdRectangle.FromLTRB(value, Bounds.Top, Bounds.Right, Bounds.Bottom);
+                Bounds = Rectangle.FromLTRB(value, Bounds.Top, Bounds.Right, Bounds.Bottom);
             }
         }
     }
@@ -123,7 +125,7 @@ public class Layer
         {
             if (Bounds.Bottom != value)
             {
-                Bounds = PsdRectangle.FromLTRB(Bounds.Left, Bounds.Top, Bounds.Right, value);
+                Bounds = Rectangle.FromLTRB(Bounds.Left, Bounds.Top, Bounds.Right, value);
             }
         }
     }
@@ -138,7 +140,7 @@ public class Layer
         {
             if (Bounds.Right != value)
             {
-                Bounds = PsdRectangle.FromLTRB(Bounds.Left, Bounds.Top, value, Bounds.Bottom);
+                Bounds = Rectangle.FromLTRB(Bounds.Left, Bounds.Top, value, Bounds.Bottom);
             }
         }
     }
@@ -217,9 +219,18 @@ public class Layer
     private BlendMode _blendMode;
 
     /// <summary>
-    /// Gets the original 4-byte PSD blend mode key.
+    /// Gets or sets the layer blend mode key.
     /// </summary>
-    public string BlendModeKey => _blendModeKey;
+    public BlendMode BlendModeKey
+    {
+        get => _blendMode;
+        set => BlendMode = value;
+    }
+
+    /// <summary>
+    /// Gets the original raw 4-byte PSD blend mode key for diagnostics and raw-preserve verification.
+    /// </summary>
+    public string RawBlendModeKey => _blendModeKey;
 
     /// <summary>
     /// Gets the number of parsed channel records in the layer.
@@ -348,7 +359,7 @@ public class Layer
     /// <returns>The parsed layer domain object.</returns>
     internal static Layer CreateParsed(
         string name,
-        PsdRectangle bounds,
+        Rectangle bounds,
         bool isVisible,
         byte opacity,
         byte flags,

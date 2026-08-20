@@ -1,3 +1,6 @@
+using Aspose.PSD;
+using Aspose.PSD.FileFormats.Core.Blending;
+using Aspose.PSD.FileFormats.Psd;
 using System.IO;
 using NUnit.Framework;
 
@@ -48,10 +51,10 @@ public sealed class PsdImageLoadTests : PsdTestFixtureBase
         var firstLayer = image.Layers[0];
 
         Assert.That(firstLayer.Name, Is.EqualTo("Background copy"));
-        Assert.That(firstLayer.Bounds, Is.Not.EqualTo(default(PsdRectangle)));
+        Assert.That(firstLayer.Bounds, Is.Not.EqualTo(default(Rectangle)));
         Assert.That(firstLayer.IsVisible, Is.True);
         Assert.That(firstLayer.Opacity, Is.GreaterThanOrEqualTo(0).And.LessThanOrEqualTo(255));
-        Assert.That(firstLayer.BlendMode, Is.Not.EqualTo(BlendMode.Normal).Or.EqualTo(default(BlendMode)));
+        Assert.That(firstLayer.BlendMode, Is.EqualTo(BlendMode.Normal));
 
         Assert.That(image.Layers[1].Name, Is.EqualTo("Pattern Fill 1"));
     }

@@ -1,4 +1,6 @@
-namespace Aspose.PSD.FOSS;
+using Aspose.PSD.FileFormats.Psd.Layers;
+
+namespace Aspose.PSD.FileFormats.Psd;
 
 /// <summary>
 /// Writes PSD/PSB layer records from the in-memory <see cref="Layer"/> model.
@@ -48,7 +50,7 @@ internal static class LayerRecordWriter
         }
 
         writer.Write(AdobeLayerSignature);
-        writer.Write(System.Text.Encoding.ASCII.GetBytes(layer.BlendModeKey));
+        writer.Write(System.Text.Encoding.ASCII.GetBytes(layer.RawBlendModeKey));
         writer.Write(layer.Opacity);
         writer.Write(layer.Clipping);
         writer.Write(GetFlagsForWrite(layer));

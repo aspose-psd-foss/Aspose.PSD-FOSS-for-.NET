@@ -1,9 +1,9 @@
-namespace Aspose.PSD.FOSS;
+namespace Aspose.PSD.FileFormats.Psd;
 
 /// <summary>
 /// Defines the compression methods used for image data in PSD files.
 /// </summary>
-public enum CompressionMethod
+public enum CompressionMethod : short
 {
     /// <summary>
     /// Raw (uncompressed) data.
@@ -18,10 +18,20 @@ public enum CompressionMethod
     /// <summary>
     /// ZIP (lossless) compression.
     /// </summary>
-    ZIP = 2,
+    ZipWithoutPrediction = 2,
 
     /// <summary>
     /// RZ (a variant of RLE) compression.
     /// </summary>
-    RZ = 3
+    ZipWithPrediction = 3,
+
+    /// <summary>
+    /// Compatibility alias for ZIP without prediction.
+    /// </summary>
+    ZIP = ZipWithoutPrediction,
+
+    /// <summary>
+    /// Compatibility alias for ZIP with prediction.
+    /// </summary>
+    RZ = ZipWithPrediction
 }
