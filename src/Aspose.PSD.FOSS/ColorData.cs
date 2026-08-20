@@ -8,20 +8,20 @@ internal sealed class ColorData
     /// <summary>
     /// Gets the semantic interpretation applied to the raw color mode payload.
     /// </summary>
-    public ColorDataKind Kind { get; }
+    public PsdColorDataKind Kind { get; }
 
     /// <summary>
     /// Gets an empty color data section.
     /// </summary>
-    public static ColorData Empty { get; } = new([], ColorDataKind.None);
+    public static ColorData Empty { get; } = new([], PsdColorDataKind.None);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ColorData"/> class.
     /// </summary>
     /// <param name="rawData">The raw color mode data payload.</param>
-    /// <param name="kind">The semantic interpretation of the payload.</param>
+    /// <param name="kind">The public semantic interpretation of the payload.</param>
     /// <param name="indexedPalette">The parsed indexed palette, when present.</param>
-    public ColorData(byte[] rawData, ColorDataKind kind, IndexedColorPalette? indexedPalette = null)
+    public ColorData(byte[] rawData, PsdColorDataKind kind, IndexedColorPalette? indexedPalette = null)
     {
         RawData = rawData;
         Kind = kind;
@@ -56,10 +56,10 @@ internal sealed class ColorData
         return colorMode switch
         {
             ColorModes.Indexed when rawData.Length == IndexedColorPalette.ExpectedRawLength
-                => new ColorData(rawData, ColorDataKind.IndexedPalette, IndexedColorPalette.Parse(rawData)),
-            ColorModes.Rgb => new ColorData(rawData, ColorDataKind.RgbPayload),
-            ColorModes.CMYK => new ColorData(rawData, ColorDataKind.CmykPayload),
-            _ => new ColorData(rawData, ColorDataKind.RawPreserved)
+                => new ColorData(rawData, PsdColorDataKind.IndexedPalette, IndexedColorPalette.Parse(rawData)),
+            ColorModes.Rgb => new ColorData(rawData, PsdColorDataKind.RgbPayload),
+            ColorModes.CMYK => new ColorData(rawData, PsdColorDataKind.CmykPayload),
+            _ => new ColorData(rawData, PsdColorDataKind.RawPreserved)
         };
     }
 
@@ -82,6 +82,6 @@ internal sealed class ColorData
     /// <returns>The public color data summary.</returns>
     public PsdColorDataInfo ToPublicInfo()
     {
-        return new PsdColorDataInfo(Kind.ToPublicKind(), RawData.Length, IndexedPalette?.ToPublicInfo());
+        return new PsdColorDataInfo(Kind, RawData.Length, IndexedPalette?.ToPublicInfo());
     }
 }

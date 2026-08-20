@@ -35,7 +35,7 @@ public sealed class ColorDataTests : PsdTestFixtureBase
 
         ColorData colorData = ColorData.Load(reader, ColorModes.Rgb);
 
-        Assert.That(colorData.Kind, Is.EqualTo(ColorDataKind.RgbPayload));
+        Assert.That(colorData.Kind, Is.EqualTo(PsdColorDataKind.RgbPayload));
         Assert.That(colorData.RawData, Is.EqualTo(payload));
         Assert.That(colorData.IndexedPalette, Is.Null);
     }
@@ -53,7 +53,7 @@ public sealed class ColorDataTests : PsdTestFixtureBase
 
         ColorData colorData = ColorData.Load(reader, ColorModes.Indexed);
 
-        Assert.That(colorData.Kind, Is.EqualTo(ColorDataKind.IndexedPalette));
+        Assert.That(colorData.Kind, Is.EqualTo(PsdColorDataKind.IndexedPalette));
         Assert.That(colorData.RawData, Is.EqualTo(payload));
         Assert.That(colorData.IndexedPalette, Is.Not.Null);
         Assert.That(colorData.IndexedPalette!.Entries, Has.Length.EqualTo(256));
@@ -74,7 +74,7 @@ public sealed class ColorDataTests : PsdTestFixtureBase
 
         ColorData colorData = ColorData.Load(reader, ColorModes.CMYK);
 
-        Assert.That(colorData.Kind, Is.EqualTo(ColorDataKind.CmykPayload));
+        Assert.That(colorData.Kind, Is.EqualTo(PsdColorDataKind.CmykPayload));
         Assert.That(colorData.RawData, Is.EqualTo(payload));
         Assert.That(colorData.IndexedPalette, Is.Null);
     }
