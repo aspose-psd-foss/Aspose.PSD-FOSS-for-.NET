@@ -73,8 +73,8 @@ internal static class LayerRecordReader
         }
 
         string layerName = string.Empty;
-        LayerMaskData layerMaskData = LayerMaskData.Empty;
-        LayerBlendingRangesData blendingRangesData = LayerBlendingRangesData.Empty;
+        RawLayerMaskSection layerMaskData = RawLayerMaskSection.Empty;
+        RawLayerBlendingRangesSection blendingRangesData = RawLayerBlendingRangesSection.Empty;
         byte[] additionalLayerData = [];
 
         if (extraLength > 0)
@@ -82,13 +82,13 @@ internal static class LayerRecordReader
             long extraStart = reader.Position;
             long extraEnd = extraStart + extraLength;
 
-            layerMaskData = LayerMaskData.Load(reader, extraEnd);
+            layerMaskData = RawLayerMaskSection.Load(reader, extraEnd);
             if (reader.Position + sizeof(uint) > extraEnd)
             {
                 throw new PsdLoadException("Layer extra data is truncated before the blending ranges length field.");
             }
 
-            blendingRangesData = LayerBlendingRangesData.Load(reader, extraEnd);
+            blendingRangesData = RawLayerBlendingRangesSection.Load(reader, extraEnd);
             layerName = reader.ReadPascalStringAlignedTo4();
 
             long remaining = extraEnd - reader.Position;

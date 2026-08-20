@@ -81,9 +81,9 @@ internal static class Program
         Console.WriteLine($"  Clipping: {layer.Clipping}");
         Console.WriteLine($"  BlendMode: {layer.BlendMode}");
         Console.WriteLine($"  BlendModeKey: {layer.BlendModeKey}");
-        Console.WriteLine($"  ChannelCount: {layer.ChannelCount}");
-        Console.WriteLine($"  HasMaskData: {layer.HasMaskData}");
-        Console.WriteLine($"  HasBlendingRangesData: {layer.HasBlendingRangesData}");
+        Console.WriteLine($"  ChannelsCount: {layer.ChannelsCount}");
+        Console.WriteLine($"  HasLayerMaskData: {layer.LayerMaskData is not null}");
+        Console.WriteLine($"  BlendingRangesLength: {layer.LayerBlendingRangesData.Length}");
         Console.WriteLine($"  HasAdditionalLayerData: {layer.HasAdditionalLayerData}");
 
         Console.WriteLine();

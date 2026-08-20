@@ -44,6 +44,38 @@ public sealed class AsposeCompatibilityTests : PsdTestFixtureBase
     }
 
     /// <summary>
+    /// Tests that official-style layer channel properties expose parsed channel metadata and reject unsupported channel rewrites.
+    /// </summary>
+    [Test]
+    public void LayerChannels_WithOfficialShape_ExposeParsedMetadataAndRejectRewrites()
+    {
+        using var image = (PsdImage)Image.Load(GetTestDataPath("test.psd"));
+        Layer layer = image.Layers[0];
+
+        ChannelInformation[] channelInformation = layer.ChannelInformation;
+
+        Assert.That(layer.ChannelsCount, Is.EqualTo(channelInformation.Length));
+        Assert.That(channelInformation, Is.Not.Empty);
+        Assert.That(channelInformation[0].Length, Is.GreaterThan(0));
+        Assert.That(() => layer.ChannelInformation = channelInformation, Throws.TypeOf<NotSupportedException>());
+    }
+
+    /// <summary>
+    /// Tests that official-style layer mask and blending range properties expose supported metadata and reject unsupported semantic rewrites.
+    /// </summary>
+    [Test]
+    public void LayerMaskAndBlendingRanges_WithOfficialShape_ExposeSupportedReadSurface()
+    {
+        using var image = (PsdImage)Image.Load(GetTestDataPath("test.psd"));
+        Layer layer = image.Layers[0];
+
+        Assert.That(layer.LayerMaskData, Is.Null);
+        Assert.That(layer.LayerBlendingRangesData.Length, Is.GreaterThanOrEqualTo(4));
+        Assert.That(() => layer.LayerMaskData = null, Throws.TypeOf<NotSupportedException>());
+        Assert.That(() => layer.LayerBlendingRangesData = new Aspose.PSD.FileFormats.Psd.Layers.LayerBlendingRangesData(), Throws.TypeOf<NotSupportedException>());
+    }
+
+    /// <summary>
     /// Tests that the Aspose.PSD-compatible rectangle value types expose mutable location and size members.
     /// </summary>
     [Test]

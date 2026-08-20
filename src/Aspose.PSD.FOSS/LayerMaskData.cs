@@ -1,66 +1,86 @@
-namespace Aspose.PSD.FileFormats.Psd;
+namespace Aspose.PSD.FileFormats.Psd.Layers;
 
 /// <summary>
-/// Stores the raw layer mask subsection including its leading length field.
+/// Defines the base class for PSD layer mask data.
 /// </summary>
-internal sealed class LayerMaskData
+public abstract class LayerMaskData
 {
     /// <summary>
-    /// Gets an empty layer mask subsection.
+    /// Stores the layer mask image data.
     /// </summary>
-    public static LayerMaskData Empty { get; } = new([]);
+    private byte[] _imageData = [];
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="LayerMaskData"/> class.
+    /// Stores the layer mask rectangle.
     /// </summary>
-    /// <param name="rawData">The raw subsection bytes including the length field.</param>
-    public LayerMaskData(byte[] rawData)
+    private Rectangle _maskRectangle;
+
+    /// <summary>
+    /// Gets or sets the bottom layer mask position.
+    /// </summary>
+    public int Bottom
     {
-        RawData = rawData;
+        get => _maskRectangle.Bottom;
+        set => _maskRectangle.Bottom = value;
     }
 
     /// <summary>
-    /// Gets the raw subsection bytes including the length field.
+    /// Gets the size of the layer mask data.
     /// </summary>
-    public byte[] RawData { get; }
+    public int DataSize => _imageData.Length;
 
     /// <summary>
-    /// Loads the layer mask subsection from the reader.
+    /// Gets or sets the default layer mask color.
     /// </summary>
-    /// <param name="reader">The reader positioned at the subsection length field.</param>
-    /// <param name="sectionEnd">The byte position of the end of the enclosing layer extra data.</param>
-    /// <returns>The loaded <see cref="LayerMaskData"/> instance.</returns>
-    public static LayerMaskData Load(BigEndianReader reader, long sectionEnd)
+    public byte DefaultColor { get; set; }
+
+    /// <summary>
+    /// Gets or sets the layer mask flags.
+    /// </summary>
+    public LayerMaskFlags Flags { get; set; }
+
+    /// <summary>
+    /// Gets or sets the layer mask image data.
+    /// </summary>
+    public byte[] ImageData
     {
-        uint length = reader.ReadUInt32();
-        int payloadLength = PsdSectionReader.GetNestedMemoryBackedLength(reader, length, sectionEnd, "Layer mask subsection");
-        if (payloadLength > int.MaxValue - sizeof(uint))
-        {
-            throw new PsdLoadException("Layer mask subsection is too large to preserve in memory with its length field.");
-        }
-
-        byte[] rawData = new byte[4 + payloadLength];
-        WriteUInt32BigEndian(rawData, 0, length);
-        if (payloadLength > 0)
-        {
-            byte[] payload = reader.ReadBytes(payloadLength);
-            Buffer.BlockCopy(payload, 0, rawData, 4, payloadLength);
-        }
-
-        return new LayerMaskData(rawData);
+        get => _imageData;
+        set => _imageData = value ?? throw new ArgumentNullException(nameof(value));
     }
 
     /// <summary>
-    /// Writes a 32-bit unsigned integer into a byte buffer in big-endian byte order.
+    /// Gets or sets the left layer mask position.
     /// </summary>
-    /// <param name="buffer">The target buffer.</param>
-    /// <param name="offset">The destination offset in the buffer.</param>
-    /// <param name="value">The value to encode.</param>
-    private static void WriteUInt32BigEndian(byte[] buffer, int offset, uint value)
+    public int Left
     {
-        buffer[offset] = (byte)((value >> 24) & 0xFF);
-        buffer[offset + 1] = (byte)((value >> 16) & 0xFF);
-        buffer[offset + 2] = (byte)((value >> 8) & 0xFF);
-        buffer[offset + 3] = (byte)(value & 0xFF);
+        get => _maskRectangle.Left;
+        set => _maskRectangle.Left = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the mask rectangle.
+    /// </summary>
+    public Rectangle MaskRectangle
+    {
+        get => _maskRectangle;
+        set => _maskRectangle = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the right layer mask position.
+    /// </summary>
+    public int Right
+    {
+        get => _maskRectangle.Right;
+        set => _maskRectangle.Right = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the top layer mask position.
+    /// </summary>
+    public int Top
+    {
+        get => _maskRectangle.Top;
+        set => _maskRectangle.Top = value;
     }
 }

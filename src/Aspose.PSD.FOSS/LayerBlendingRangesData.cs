@@ -1,66 +1,48 @@
-namespace Aspose.PSD.FileFormats.Psd;
+namespace Aspose.PSD.FileFormats.Psd.Layers;
 
 /// <summary>
-/// Stores the raw blending ranges subsection including its leading length field.
+/// Represents PSD layer blending ranges data.
 /// </summary>
-internal sealed class LayerBlendingRangesData
+public class LayerBlendingRangesData
 {
-    /// <summary>
-    /// Gets an empty blending ranges subsection.
-    /// </summary>
-    public static LayerBlendingRangesData Empty { get; } = new([]);
-
     /// <summary>
     /// Initializes a new instance of the <see cref="LayerBlendingRangesData"/> class.
     /// </summary>
-    /// <param name="rawData">The raw subsection bytes including the length field.</param>
-    public LayerBlendingRangesData(byte[] rawData)
+    public LayerBlendingRangesData()
     {
-        RawData = rawData;
     }
 
     /// <summary>
-    /// Gets the raw subsection bytes including the length field.
+    /// Initializes a new instance of the <see cref="LayerBlendingRangesData"/> class with a known raw length.
     /// </summary>
-    public byte[] RawData { get; }
-
-    /// <summary>
-    /// Loads the blending ranges subsection from the reader.
-    /// </summary>
-    /// <param name="reader">The reader positioned at the subsection length field.</param>
-    /// <param name="sectionEnd">The byte position of the end of the enclosing layer extra data.</param>
-    /// <returns>The loaded <see cref="LayerBlendingRangesData"/> instance.</returns>
-    public static LayerBlendingRangesData Load(BigEndianReader reader, long sectionEnd)
+    /// <param name="length">The raw blending ranges subsection length in bytes.</param>
+    private LayerBlendingRangesData(int length)
     {
-        uint length = reader.ReadUInt32();
-        int payloadLength = PsdSectionReader.GetNestedMemoryBackedLength(reader, length, sectionEnd, "Layer blending ranges subsection");
-        if (payloadLength > int.MaxValue - sizeof(uint))
-        {
-            throw new PsdLoadException("Layer blending ranges subsection is too large to preserve in memory with its length field.");
-        }
-
-        byte[] rawData = new byte[4 + payloadLength];
-        WriteUInt32BigEndian(rawData, 0, length);
-        if (payloadLength > 0)
-        {
-            byte[] payload = reader.ReadBytes(payloadLength);
-            Buffer.BlockCopy(payload, 0, rawData, 4, payloadLength);
-        }
-
-        return new LayerBlendingRangesData(rawData);
+        Length = length;
     }
 
     /// <summary>
-    /// Writes a 32-bit unsigned integer into a byte buffer in big-endian byte order.
+    /// Gets or sets the composite blend range.
     /// </summary>
-    /// <param name="buffer">The target buffer.</param>
-    /// <param name="offset">The destination offset in the buffer.</param>
-    /// <param name="value">The value to encode.</param>
-    private static void WriteUInt32BigEndian(byte[] buffer, int offset, uint value)
+    public BlendRange CompositeBlendRange { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets the per-channel blend ranges.
+    /// </summary>
+    public BlendRange[] ChannelBlendRanges { get; set; } = [];
+
+    /// <summary>
+    /// Gets the blending ranges data length in bytes.
+    /// </summary>
+    public int Length { get; private set; }
+
+    /// <summary>
+    /// Creates public blending ranges data from a preserved raw subsection length.
+    /// </summary>
+    /// <param name="length">The raw subsection length in bytes.</param>
+    /// <returns>The public blending ranges data.</returns>
+    internal static LayerBlendingRangesData FromRawLength(int length)
     {
-        buffer[offset] = (byte)((value >> 24) & 0xFF);
-        buffer[offset + 1] = (byte)((value >> 16) & 0xFF);
-        buffer[offset + 2] = (byte)((value >> 8) & 0xFF);
-        buffer[offset + 3] = (byte)(value & 0xFF);
+        return new LayerBlendingRangesData(length);
     }
 }

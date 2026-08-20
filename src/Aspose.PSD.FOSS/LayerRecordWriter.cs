@@ -56,8 +56,8 @@ internal static class LayerRecordWriter
         writer.Write(GetFlagsForWrite(layer));
         writer.Write(LayerRecordReservedByte);
         writer.Write(GetExtraDataLength(layer));
-        writer.Write(layer.LayerMaskData.RawData);
-        writer.Write(layer.BlendingRangesData.RawData);
+        writer.Write(layer.RawLayerMaskSection.RawData);
+        writer.Write(layer.RawLayerBlendingRangesSection.RawData);
         writer.WritePascalStringAlignedTo4(layer.Name);
         writer.Write(layer.AdditionalLayerData);
     }
@@ -82,8 +82,8 @@ internal static class LayerRecordWriter
     /// <returns>The extra data byte count.</returns>
     private static int GetExtraDataLength(Layer layer)
     {
-        return layer.LayerMaskData.RawData.Length
-            + layer.BlendingRangesData.RawData.Length
+        return layer.RawLayerMaskSection.RawData.Length
+            + layer.RawLayerBlendingRangesSection.RawData.Length
             + BigEndianWriter.GetPascalStringStorageLengthAlignedTo4(layer.Name)
             + layer.AdditionalLayerData.Length;
     }

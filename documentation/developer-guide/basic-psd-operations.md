@@ -56,9 +56,10 @@ Supported layer metadata:
 - `Clipping`
 - `BlendMode`
 - `BlendModeKey`
-- `ChannelCount`
-- `HasMaskData`
-- `HasBlendingRangesData`
+- `ChannelsCount`
+- `ChannelInformation`
+- `LayerMaskData`
+- `LayerBlendingRangesData`
 - `HasAdditionalLayerData`
 
 Layer channel, mask, and blending-range DTOs are internal diagnostics, not public API.

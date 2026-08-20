@@ -78,10 +78,10 @@ public sealed class LayerSectionTests : PsdTestFixtureBase
         Assert.That(firstLayer.Left, Is.EqualTo(firstLayer.Bounds.Left));
         Assert.That(firstLayer.Bottom, Is.EqualTo(firstLayer.Bounds.Bottom));
         Assert.That(firstLayer.Right, Is.EqualTo(firstLayer.Bounds.Right));
-        Assert.That(firstLayer.ChannelCount, Is.GreaterThan(0));
+        Assert.That(firstLayer.ChannelsCount, Is.GreaterThan(0));
         Assert.That(firstLayer.RawBlendModeKey, Has.Length.EqualTo(4));
-        Assert.That(firstLayer.HasMaskData, Is.False);
-        Assert.That(firstLayer.HasBlendingRangesData, Is.EqualTo(firstLayer.BlendingRangesInfo.RawDataLength > 4));
+        Assert.That(firstLayer.LayerMaskData, Is.Null);
+        Assert.That(firstLayer.LayerBlendingRangesData.Length, Is.EqualTo(firstLayer.BlendingRangesInfo.RawDataLength));
         Assert.That(firstLayer.HasAdditionalLayerData, Is.True);
     }
 

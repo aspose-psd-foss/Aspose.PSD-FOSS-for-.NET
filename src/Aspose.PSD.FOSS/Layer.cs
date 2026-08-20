@@ -233,9 +233,18 @@ public class Layer
     public string RawBlendModeKey => _blendModeKey;
 
     /// <summary>
-    /// Gets the number of parsed channel records in the layer.
+    /// Gets the layer's channels count.
     /// </summary>
-    public int ChannelCount => ChannelInfo.Length;
+    public int ChannelsCount => ChannelInfo.Length;
+
+    /// <summary>
+    /// Gets or sets the channel information.
+    /// </summary>
+    public ChannelInformation[] ChannelInformation
+    {
+        get => ChannelInfo.Select(Aspose.PSD.FileFormats.Psd.Layers.ChannelInformation.FromLayerChannelInfo).ToArray();
+        set => throw new NotSupportedException("Changing layer channel information is not supported by this FOSS build.");
+    }
 
     /// <summary>
     /// Gets a read-only summary of the parsed layer channel records.
@@ -245,12 +254,12 @@ public class Layer
     /// <summary>
     /// Gets a value indicating whether the layer contains a non-empty layer mask subsection.
     /// </summary>
-    public bool HasMaskData => _layerMaskData.RawData.Length > sizeof(uint);
+    internal bool HasMaskData => _layerMaskData.RawData.Length > sizeof(uint);
 
     /// <summary>
     /// Gets a value indicating whether the layer contains a non-empty blending ranges subsection.
     /// </summary>
-    public bool HasBlendingRangesData => _blendingRangesData.RawData.Length > sizeof(uint);
+    internal bool HasBlendingRangesData => _blendingRangesData.RawData.Length > sizeof(uint);
 
     /// <summary>
     /// Gets a value indicating whether the layer contains trailing opaque additional layer data.
@@ -280,12 +289,39 @@ public class Layer
     /// <summary>
     /// Gets the raw layer mask subsection used by the layer record writer.
     /// </summary>
-    internal LayerMaskData LayerMaskData => _layerMaskData;
+    internal RawLayerMaskSection RawLayerMaskSection => _layerMaskData;
 
     /// <summary>
     /// Gets the raw blending ranges subsection used by the layer record writer.
     /// </summary>
-    internal LayerBlendingRangesData BlendingRangesData => _blendingRangesData;
+    internal RawLayerBlendingRangesSection RawLayerBlendingRangesSection => _blendingRangesData;
+
+    /// <summary>
+    /// Gets or sets the layer mask data.
+    /// </summary>
+    public LayerMaskData? LayerMaskData
+    {
+        get
+        {
+            if (!HasMaskData)
+            {
+                return null;
+            }
+
+            throw new NotSupportedException("Semantic layer mask data is not supported by this FOSS build.");
+        }
+
+        set => throw new NotSupportedException("Changing layer mask data is not supported by this FOSS build.");
+    }
+
+    /// <summary>
+    /// Gets or sets the layer blending ranges data.
+    /// </summary>
+    public LayerBlendingRangesData LayerBlendingRangesData
+    {
+        get => LayerBlendingRangesData.FromRawLength(_blendingRangesData.RawData.Length);
+        set => throw new NotSupportedException("Changing layer blending ranges data is not supported by this FOSS build.");
+    }
 
     /// <summary>
     /// Gets the additional layer data bytes that follow the Pascal layer name.
@@ -295,12 +331,12 @@ public class Layer
     /// <summary>
     /// Stores the raw layer mask subsection including its length field.
     /// </summary>
-    private LayerMaskData _layerMaskData = LayerMaskData.Empty;
+    private RawLayerMaskSection _layerMaskData = RawLayerMaskSection.Empty;
 
     /// <summary>
     /// Stores the raw blending ranges subsection including its length field.
     /// </summary>
-    private LayerBlendingRangesData _blendingRangesData = LayerBlendingRangesData.Empty;
+    private RawLayerBlendingRangesSection _blendingRangesData = RawLayerBlendingRangesSection.Empty;
 
     /// <summary>
     /// Stores all remaining additional layer data after the Pascal layer name.
@@ -367,8 +403,8 @@ public class Layer
         byte clipping,
         BlendMode blendMode,
         LayerChannelInfo[] channelInfo,
-        LayerMaskData layerMaskData,
-        LayerBlendingRangesData blendingRangesData,
+        RawLayerMaskSection layerMaskData,
+        RawLayerBlendingRangesSection blendingRangesData,
         byte[] additionalLayerData)
     {
         return new Layer
