@@ -106,8 +106,8 @@ internal sealed class ImageData
         {
             CompressionMethod.Raw => ImageDataStructure.CreateRaw(rawData.Length),
             CompressionMethod.RLE => ParseRleStructure(rawData, isLargeDocument, height, channelCount),
-            CompressionMethod.ZIP => ImageDataStructure.CreateZip(rawData.Length, usesPrediction: false),
-            CompressionMethod.RZ => ImageDataStructure.CreateZip(rawData.Length, usesPrediction: true),
+            CompressionMethod.ZipWithoutPrediction => ImageDataStructure.CreateZip(rawData.Length, usesPrediction: false),
+            CompressionMethod.ZipWithPrediction => ImageDataStructure.CreateZip(rawData.Length, usesPrediction: true),
             _ => ImageDataStructure.CreateUnknown(rawData.Length),
         };
     }

@@ -21,17 +21,7 @@ public enum CompressionMethod : short
     ZipWithoutPrediction = 2,
 
     /// <summary>
-    /// RZ (a variant of RLE) compression.
+    /// ZIP compression with prediction.
     /// </summary>
-    ZipWithPrediction = 3,
-
-    /// <summary>
-    /// Compatibility alias for ZIP without prediction.
-    /// </summary>
-    ZIP = ZipWithoutPrediction,
-
-    /// <summary>
-    /// Compatibility alias for ZIP with prediction.
-    /// </summary>
-    RZ = ZipWithPrediction
+    ZipWithPrediction = 3
 }

@@ -3,7 +3,7 @@ namespace Aspose.PSD.FileFormats.Psd;
 /// <summary>
 /// Defines the color modes supported by PSD files.
 /// </summary>
-public enum ColorModes
+public enum ColorModes : short
 {
     /// <summary>
     /// Bitmap color mode.
@@ -28,7 +28,7 @@ public enum ColorModes
     /// <summary>
     /// CMYK color mode (Cyan, Magenta, Yellow, Black).
     /// </summary>
-    CMYK = 4,
+    Cmyk = 4,
 
     /// <summary>
     /// Multichannel color mode.

@@ -3,7 +3,7 @@ namespace Aspose.PSD.FileFormats.Psd;
 /// <summary>
 /// Represents the supported PSD container versions.
 /// </summary>
-internal enum PsdVersion : ushort
+public enum PsdVersion : byte
 {
     /// <summary>
     /// Standard PSD document format.

@@ -73,7 +73,7 @@ public sealed class ColorDataTests : PsdTestFixtureBase
         using var stream = new MemoryStream(BuildColorDataSection(payload));
         using var reader = new BigEndianReader(stream, leaveOpen: true);
 
-        ColorData colorData = ColorData.Load(reader, ColorModes.CMYK);
+        ColorData colorData = ColorData.Load(reader, ColorModes.Cmyk);
 
         Assert.That(colorData.Kind, Is.EqualTo(PsdColorDataKind.CmykPayload));
         Assert.That(colorData.RawData, Is.EqualTo(payload));

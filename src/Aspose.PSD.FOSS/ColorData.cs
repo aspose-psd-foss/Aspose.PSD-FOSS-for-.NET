@@ -58,7 +58,7 @@ internal sealed class ColorData
             ColorModes.Indexed when rawData.Length == IndexedColorPalette.ExpectedRawLength
                 => new ColorData(rawData, PsdColorDataKind.IndexedPalette, IndexedColorPalette.Parse(rawData)),
             ColorModes.Rgb => new ColorData(rawData, PsdColorDataKind.RgbPayload),
-            ColorModes.CMYK => new ColorData(rawData, PsdColorDataKind.CmykPayload),
+            ColorModes.Cmyk => new ColorData(rawData, PsdColorDataKind.CmykPayload),
             _ => new ColorData(rawData, PsdColorDataKind.RawPreserved)
         };
     }
