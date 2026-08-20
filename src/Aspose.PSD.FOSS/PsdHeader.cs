@@ -3,7 +3,7 @@ namespace Aspose.PSD.FileFormats.Psd;
 /// <summary>
 /// Contains the header information of a Photoshop document.
 /// </summary>
-public sealed class PsdHeader
+internal sealed class PsdHeader
 {
     /// <summary>
     /// Shared PSD/PSB file signature value (0x38425053 = '8BPS').

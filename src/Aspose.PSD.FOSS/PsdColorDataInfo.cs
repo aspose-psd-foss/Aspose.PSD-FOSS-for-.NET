@@ -3,7 +3,7 @@ namespace Aspose.PSD.FileFormats.Psd;
 /// <summary>
 /// Provides a read-only summary of the PSD Color Mode Data section.
 /// </summary>
-public sealed class PsdColorDataInfo
+internal sealed class PsdColorDataInfo
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="PsdColorDataInfo"/> class.

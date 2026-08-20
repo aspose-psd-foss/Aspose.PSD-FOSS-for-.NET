@@ -3,7 +3,7 @@ namespace Aspose.PSD.FileFormats.Psd;
 /// <summary>
 /// Provides a read-only summary of one parsed PSD image resource block.
 /// </summary>
-public sealed class PsdResourceInfo
+internal sealed class PsdResourceInfo
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="PsdResourceInfo"/> class.

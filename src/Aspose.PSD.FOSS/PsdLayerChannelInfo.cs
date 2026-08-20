@@ -3,7 +3,7 @@ namespace Aspose.PSD.FileFormats.Psd.Layers;
 /// <summary>
 /// Provides a read-only summary of one parsed layer channel record.
 /// </summary>
-public sealed class PsdLayerChannelInfo
+internal sealed class PsdLayerChannelInfo
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="PsdLayerChannelInfo"/> class.

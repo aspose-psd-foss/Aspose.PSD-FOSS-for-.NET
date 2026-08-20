@@ -6,7 +6,7 @@ namespace Aspose.PSD.FileFormats.Psd;
 /// <summary>
 /// Provides a read-only view over an indexed-color PSD palette.
 /// </summary>
-public sealed class IndexedColorPaletteInfo
+internal sealed class IndexedColorPaletteInfo
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="IndexedColorPaletteInfo"/> class.

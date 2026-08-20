@@ -5,7 +5,7 @@ namespace Aspose.PSD.FileFormats.Psd;
 /// <summary>
 /// Provides a read-only summary of the PSD merged image data structure.
 /// </summary>
-public sealed class PsdImageDataInfo
+internal sealed class PsdImageDataInfo
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="PsdImageDataInfo"/> class.

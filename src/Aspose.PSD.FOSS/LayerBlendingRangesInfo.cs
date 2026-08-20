@@ -3,7 +3,7 @@ namespace Aspose.PSD.FileFormats.Psd.Layers;
 /// <summary>
 /// Provides a read-only summary of the parsed layer blending ranges subsection.
 /// </summary>
-public sealed class LayerBlendingRangesInfo
+internal sealed class LayerBlendingRangesInfo
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="LayerBlendingRangesInfo"/> class.

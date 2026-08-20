@@ -240,7 +240,7 @@ public class Layer
     /// <summary>
     /// Gets a read-only summary of the parsed layer channel records.
     /// </summary>
-    public IReadOnlyList<PsdLayerChannelInfo> Channels => ChannelInfo.Select(channel => new PsdLayerChannelInfo(channel.ChannelId, channel.DataLength)).ToArray();
+    internal IReadOnlyList<PsdLayerChannelInfo> Channels => ChannelInfo.Select(channel => new PsdLayerChannelInfo(channel.ChannelId, channel.DataLength)).ToArray();
 
     /// <summary>
     /// Gets a value indicating whether the layer contains a non-empty layer mask subsection.
@@ -260,12 +260,12 @@ public class Layer
     /// <summary>
     /// Gets a read-only summary of the parsed layer mask subsection.
     /// </summary>
-    public LayerMaskInfo MaskInfo => new(HasMaskData, _layerMaskData.RawData.Length);
+    internal LayerMaskInfo MaskInfo => new(HasMaskData, _layerMaskData.RawData.Length);
 
     /// <summary>
     /// Gets a read-only summary of the parsed blending ranges subsection.
     /// </summary>
-    public LayerBlendingRangesInfo BlendingRangesInfo => new(HasBlendingRangesData, _blendingRangesData.RawData.Length);
+    internal LayerBlendingRangesInfo BlendingRangesInfo => new(HasBlendingRangesData, _blendingRangesData.RawData.Length);
 
     /// <summary>
     /// Stores the parsed per-channel metadata from the layer record.

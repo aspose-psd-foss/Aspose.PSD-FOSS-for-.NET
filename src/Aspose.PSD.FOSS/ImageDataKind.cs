@@ -3,7 +3,7 @@ namespace Aspose.PSD.FileFormats.Psd;
 /// <summary>
 /// Identifies the structural shape of the PSD Image Data payload.
 /// </summary>
-public enum ImageDataKind
+internal enum ImageDataKind
 {
     /// <summary>
     /// The payload is raw pixel data.

@@ -19,11 +19,10 @@ Supported document metadata:
 
 - `Width`
 - `Height`
-- `Channels`
+- `ChannelsCount`
 - `BitsPerChannel`
 - `ColorMode`
 - `Version`
-- `Header`
 - `IsLargeDocument`
 - `IsPsb`
 - `LayerCount`
@@ -32,25 +31,11 @@ Supported document metadata:
 - `HasColorModeData`
 - `HasMergedImageData`
 - `Compression`
-- `ImageDataKind`
 - `UsesPrediction`
 
-Additional read-only inspection API:
+Internal diagnostics preserve parsed resource, color data, image data, channel, mask, and blending-range details for tests and implementation verification. These DTOs are intentionally not part of the public API because they do not exist in the commercial Aspose.PSD surface.
 
-- `Resources`
-- `GlobalAngle`
-- `HasIccProfile`
-- `IsIccProfileUntagged`
-- `ColorDataInfo`
-- `IndexedPalette`
-- `ImageDataInfo`
-
-These APIs are intended for structural inspection rather than semantic reconstruction of the full Photoshop feature set.
-
-In the current lightweight image-resource implementation:
-
-- `Resources` returns unknown-only resource summaries with identifier, Pascal name, and payload length;
-- `GlobalAngle`, `HasIccProfile`, and `IsIccProfileUntagged` remain part of the public API, but they are not reconstructed from resource IDs and therefore stay at default values.
+`GlobalAngle`, `HasIccProfile`, and `IsIccProfileUntagged` remain public for now, but they are not reconstructed from resource IDs and therefore stay at default values in the current lightweight implementation.
 
 ## Inspect Layers
 
@@ -75,11 +60,8 @@ Supported layer metadata:
 - `HasMaskData`
 - `HasBlendingRangesData`
 - `HasAdditionalLayerData`
-- `Channels`
-- `MaskInfo`
-- `BlendingRangesInfo`
 
-The library exposes small inspection DTOs for channels, resources, color data, image data, masks, and blending ranges so callers can read useful structure without parsing raw sections themselves.
+Layer channel, mask, and blending-range DTOs are internal diagnostics, not public API.
 
 ## Modify Layers
 

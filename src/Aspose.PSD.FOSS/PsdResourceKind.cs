@@ -3,7 +3,7 @@ namespace Aspose.PSD.FileFormats.Psd;
 /// <summary>
 /// Identifies the semantic classification exposed for an image resource block.
 /// </summary>
-public enum PsdResourceKind
+internal enum PsdResourceKind
 {
     /// <summary>
     /// The resource is not parsed semantically and remains raw-preserved only.

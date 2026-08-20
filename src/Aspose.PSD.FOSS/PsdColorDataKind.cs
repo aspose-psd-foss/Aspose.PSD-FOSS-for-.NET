@@ -3,7 +3,7 @@ namespace Aspose.PSD.FileFormats.Psd;
 /// <summary>
 /// Describes how the Color Mode Data payload was interpreted for the loaded document.
 /// </summary>
-public enum PsdColorDataKind
+internal enum PsdColorDataKind
 {
     /// <summary>
     /// No color mode payload was present.

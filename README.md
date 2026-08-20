@@ -39,10 +39,10 @@ Do not use Aspose.PSD.FOSS when you need to:
 
 - Aspose.PSD-style API for common PSD metadata scenarios
 - Load PSD/PSB from file paths and streams
-- Read document properties: `Width`, `Height`, `Channels`, `BitsPerChannel`, `ColorMode`, `Version`
-- Read additional document metadata: `IsLargeDocument`, `IsPsb`, `LayerCount`, resource and merged-image summaries
+- Read document properties: `Width`, `Height`, `ChannelsCount`, `BitsPerChannel`, `ColorMode`, `Version`
+- Read additional document metadata: `IsLargeDocument`, `IsPsb`, `LayerCount`, resource and merged-image flags
 - Read layer metadata: `Name`, `Bounds` `Rectangle`, `Width`, `Height`, `Top`, `Left`, `Bottom`, `Right`, `IsVisible`, `Opacity`, `Clipping`, `BlendMode`, `BlendModeKey`
-- Inspect parsed resources, color mode data, image data structure, layer channels, mask presence, and blending-range presence
+- Inspect supported high-level presence flags for resources, color mode data, merged image data, masks, and blending ranges
 - Change `Name`, `IsVisible`, `Opacity`, `BlendMode`, `Clipping`, and layer geometry
 - Save without rendering
 - Preserve unsupported sections as raw bytes where possible
@@ -86,14 +86,13 @@ Console.WriteLine(image.BitsPerChannel);
 Console.WriteLine(image.ColorMode);
 Console.WriteLine(image.IsPsb);
 Console.WriteLine(image.Compression);
-Console.WriteLine(image.ResourceCount);
+Console.WriteLine(image.LayerCount);
 
 foreach (Layer layer in image.Layers)
 {
     Console.WriteLine(layer.Name);
     Console.WriteLine(layer.Bounds);
     Console.WriteLine(layer.BlendModeKey);
-    Console.WriteLine(layer.ChannelCount);
     Console.WriteLine(layer.IsVisible);
     Console.WriteLine(layer.Opacity);
     Console.WriteLine(layer.BlendMode);
@@ -126,8 +125,8 @@ Sample/workflow matrix:
 
 | Sample | Main workflow | What it demonstrates |
 |---|---|---|
-| `Aspose.PSD.FOSS.Samples.Basic` | Document inspection | Header fields, document flags, unknown-only resource summaries, color mode data, and merged image data inspection |
-| `Aspose.PSD.FOSS.Samples.Layers` | Layer inspection | Layer metadata, derived geometry, channel summaries, mask summaries, and blending-range summaries |
+| `Aspose.PSD.FOSS.Samples.Basic` | Document inspection | Aspose.PSD-compatible document metadata and supported state flags |
+| `Aspose.PSD.FOSS.Samples.Layers` | Layer inspection | Layer metadata, derived geometry, blend mode, mask presence, and blending-range presence |
 | `Aspose.PSD.FOSS.Samples.StructuralEditing` | Supported metadata editing | Renaming layers, changing visibility, opacity, clipping, blend mode, and geometry, then saving without rendering |
 | `Aspose.PSD.FOSS.Samples.Streams` | Stream-based round trip | Loading from a stream, saving to a stream, and working with in-memory PSD/PSB data |
 
@@ -156,7 +155,7 @@ Markdown documentation is available in the repository:
 - Load PSD files
 - Load the currently supported PSB subset
 - Read document properties from the file header
-- Read structural metadata from Color Mode Data, Image Resources, Layer and Mask Information, and merged image data
+- Read supported high-level metadata from Color Mode Data, Image Resources, Layer and Mask Information, and merged image data
 - Change `Name`, `IsVisible`, `Opacity`, `BlendMode`, `Clipping`, and layer geometry
 - Save PSD/PSB without rendering
 

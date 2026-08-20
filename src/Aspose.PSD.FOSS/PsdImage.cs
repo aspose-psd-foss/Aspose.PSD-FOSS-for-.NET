@@ -60,7 +60,7 @@ public sealed class PsdImage : Image
     /// <summary>
     /// Gets the parsed PSD/PSB header object.
     /// </summary>
-    public PsdHeader Header => _header ?? throw new InvalidOperationException("PSD/PSB header is not loaded.");
+    internal PsdHeader Header => _header ?? throw new InvalidOperationException("PSD/PSB header is not loaded.");
 
     /// <summary>
     /// Gets a value indicating whether the loaded document uses the PSB large-document container.
@@ -109,7 +109,7 @@ public sealed class PsdImage : Image
     /// <summary>
     /// Gets a read-only summary of the parsed image resource blocks.
     /// </summary>
-    public IReadOnlyList<PsdResourceInfo> Resources => _imageResourcesSection.Resources.Select(resource => resource.ToPublicInfo()).ToArray();
+    internal IReadOnlyList<PsdResourceInfo> Resources => _imageResourcesSection.Resources.Select(resource => resource.ToPublicInfo()).ToArray();
 
     /// <summary>
     /// Gets a value indicating whether the document contains Color Mode Data bytes.
@@ -119,12 +119,12 @@ public sealed class PsdImage : Image
     /// <summary>
     /// Gets a read-only summary of the parsed Color Mode Data section.
     /// </summary>
-    public PsdColorDataInfo ColorDataInfo => _colorData.ToPublicInfo();
+    internal PsdColorDataInfo ColorDataInfo => _colorData.ToPublicInfo();
 
     /// <summary>
     /// Gets the parsed indexed palette summary, when the Color Mode Data section contains one.
     /// </summary>
-    public IndexedColorPaletteInfo? IndexedPalette => ColorDataInfo.IndexedPalette;
+    internal IndexedColorPaletteInfo? IndexedPalette => ColorDataInfo.IndexedPalette;
 
     /// <summary>
     /// Gets a value indicating whether the document contains merged image data payload bytes.
@@ -139,12 +139,12 @@ public sealed class PsdImage : Image
     /// <summary>
     /// Gets a read-only summary of the parsed merged image data structure.
     /// </summary>
-    public PsdImageDataInfo ImageDataInfo => _imageData.ToPublicInfo();
+    internal PsdImageDataInfo ImageDataInfo => _imageData.ToPublicInfo();
 
     /// <summary>
     /// Gets the structural kind of the merged image data payload.
     /// </summary>
-    public ImageDataKind ImageDataKind => _imageData.Structure.Kind;
+    internal ImageDataKind ImageDataKind => _imageData.Structure.Kind;
 
     /// <summary>
     /// Gets a value indicating whether ZIP prediction is used by the merged image data payload.
