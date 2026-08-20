@@ -33,17 +33,18 @@ internal sealed class LayerMaskData
     public static LayerMaskData Load(BigEndianReader reader, long sectionEnd)
     {
         uint length = reader.ReadUInt32();
-        byte[] rawData = new byte[4 + length];
-        WriteUInt32BigEndian(rawData, 0, length);
-        if (length > 0)
+        int payloadLength = PsdSectionReader.GetNestedMemoryBackedLength(reader, length, sectionEnd, "Layer mask subsection");
+        if (payloadLength > int.MaxValue - sizeof(uint))
         {
-            if (reader.Position + length > sectionEnd)
-            {
-                throw new EndOfStreamException();
-            }
+            throw new PsdLoadException("Layer mask subsection is too large to preserve in memory with its length field.");
+        }
 
-            byte[] payload = reader.ReadBytes((int)length);
-            Buffer.BlockCopy(payload, 0, rawData, 4, (int)length);
+        byte[] rawData = new byte[4 + payloadLength];
+        WriteUInt32BigEndian(rawData, 0, length);
+        if (payloadLength > 0)
+        {
+            byte[] payload = reader.ReadBytes(payloadLength);
+            Buffer.BlockCopy(payload, 0, rawData, 4, payloadLength);
         }
 
         return new LayerMaskData(rawData);

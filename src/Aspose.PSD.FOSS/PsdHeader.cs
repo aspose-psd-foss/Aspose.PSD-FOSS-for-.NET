@@ -29,22 +29,27 @@ public sealed class PsdHeader
     /// Gets the width of the image in pixels.
     /// </summary>
     public int Width { get; private set; }
+
     /// <summary>
     /// Gets the height of the image in pixels.
     /// </summary>
     public int Height { get; private set; }
+
     /// <summary>
     /// Gets the number of channels in the image (e.g., 3 for RGB).
     /// </summary>
     public int Channels { get; private set; }
+
     /// <summary>
     /// Gets the bit depth per channel (e.g., 8, 16, 32).
     /// </summary>
     public int BitDepth { get; private set; }
+
     /// <summary>
     /// Gets the color mode of the image.
     /// </summary>
     public ColorModes ColorMode { get; private set; }
+
     /// <summary>
     /// Gets the version of the PSD file format.
     /// </summary>
@@ -81,13 +86,19 @@ public sealed class PsdHeader
 
         global::Aspose.PSD.FOSS.PsdVersion version = (global::Aspose.PSD.FOSS.PsdVersion)rawVersion;
 
-        reader.Skip(6);
+        byte[] reserved = reader.ReadBytes(6);
+        if (reserved.Any(value => value != 0))
+        {
+            throw new PsdLoadException("PSD header reserved bytes must be zero.");
+        }
 
         int channels = reader.ReadUInt16();
         int height = reader.ReadInt32();
         int width = reader.ReadInt32();
         int bitDepth = reader.ReadUInt16();
         ColorModes colorMode = (ColorModes)reader.ReadUInt16();
+
+        ValidateHeaderFields(version, channels, height, width, bitDepth, colorMode);
 
         return new PsdHeader
         {
@@ -98,6 +109,51 @@ public sealed class PsdHeader
             ColorMode = colorMode,
             FormatVersion = version
         };
+    }
+
+    /// <summary>
+    /// Validates PSD/PSB header invariants before exposing the parsed document state.
+    /// </summary>
+    /// <param name="version">The parsed PSD container version.</param>
+    /// <param name="channels">The declared channel count.</param>
+    /// <param name="height">The declared document height.</param>
+    /// <param name="width">The declared document width.</param>
+    /// <param name="bitDepth">The declared bits per channel.</param>
+    /// <param name="colorMode">The declared PSD color mode.</param>
+    /// <exception cref="PsdLoadException">Thrown when a header field is outside the supported PSD/PSB range.</exception>
+    private static void ValidateHeaderFields(
+        PsdVersion version,
+        int channels,
+        int height,
+        int width,
+        int bitDepth,
+        ColorModes colorMode)
+    {
+        if (channels is < 1 or > 56)
+        {
+            throw new PsdLoadException($"PSD header channel count {channels} is outside the supported range 1-56.");
+        }
+
+        int maxDimension = version == global::Aspose.PSD.FOSS.PsdVersion.Psb ? 300000 : 30000;
+        if (height < 1 || height > maxDimension)
+        {
+            throw new PsdLoadException($"PSD header height {height} is outside the supported range 1-{maxDimension} for this document version.");
+        }
+
+        if (width < 1 || width > maxDimension)
+        {
+            throw new PsdLoadException($"PSD header width {width} is outside the supported range 1-{maxDimension} for this document version.");
+        }
+
+        if (bitDepth is not (1 or 8 or 16 or 32))
+        {
+            throw new PsdLoadException($"PSD header bit depth {bitDepth} is not supported. Supported values are 1, 8, 16, and 32.");
+        }
+
+        if (!Enum.IsDefined(colorMode))
+        {
+            throw new PsdLoadException($"PSD header color mode {(ushort)colorMode} is not recognized by this implementation.");
+        }
     }
 
     /// <summary>

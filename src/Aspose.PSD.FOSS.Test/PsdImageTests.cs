@@ -382,6 +382,49 @@ public sealed class PsdImageTests : IDisposable
     }
 
     /// <summary>
+    /// Tests that non-zero reserved header bytes are rejected.
+    /// </summary>
+    [Test]
+    public void Load_HeaderWithNonZeroReservedBytes_ThrowsPsdLoadException()
+    {
+        byte[] bytes = BuildHeaderBytes(PsdHeader.PsdVersion);
+        bytes[6] = 1;
+        using var stream = new MemoryStream(bytes);
+        using var reader = new BigEndianReader(stream, leaveOpen: true);
+
+        Assert.That(() => PsdHeader.Load(reader), Throws.InstanceOf<PsdLoadException>());
+    }
+
+    /// <summary>
+    /// Tests that invalid PSD header field ranges are rejected at the file boundary.
+    /// </summary>
+    /// <param name="channels">The channel count to encode.</param>
+    /// <param name="width">The document width to encode.</param>
+    /// <param name="height">The document height to encode.</param>
+    /// <param name="bitDepth">The bit depth to encode.</param>
+    /// <param name="colorMode">The raw color mode to encode.</param>
+    [TestCase(0, 1, 1, 8, (ushort)ColorModes.Rgb)]
+    [TestCase(57, 1, 1, 8, (ushort)ColorModes.Rgb)]
+    [TestCase(3, 0, 1, 8, (ushort)ColorModes.Rgb)]
+    [TestCase(3, 1, 0, 8, (ushort)ColorModes.Rgb)]
+    [TestCase(3, 30001, 1, 8, (ushort)ColorModes.Rgb)]
+    [TestCase(3, 1, 1, 12, (ushort)ColorModes.Rgb)]
+    [TestCase(3, 1, 1, 8, 99)]
+    public void Load_HeaderWithInvalidField_ThrowsPsdLoadException(
+        int channels,
+        int width,
+        int height,
+        int bitDepth,
+        int colorMode)
+    {
+        byte[] bytes = BuildHeaderBytes(PsdHeader.PsdVersion, (ushort)channels, width, height, (ushort)bitDepth, (ColorModes)colorMode);
+        using var stream = new MemoryStream(bytes);
+        using var reader = new BigEndianReader(stream, leaveOpen: true);
+
+        Assert.That(() => PsdHeader.Load(reader), Throws.InstanceOf<PsdLoadException>());
+    }
+
+    /// <summary>
     /// Tests that a malformed color mode length field is rejected with <see cref="PsdLoadException"/>.
     /// </summary>
     [Test]
@@ -493,6 +536,36 @@ public sealed class PsdImageTests : IDisposable
         using var stream = new MemoryStream(bytes);
 
         Assert.That(() => PsdImage.Load(stream), Throws.InstanceOf<PsdLoadException>());
+    }
+
+    /// <summary>
+    /// Tests that malformed layer extra data is rejected instead of being silently normalized.
+    /// </summary>
+    [Test]
+    public void Load_LayerExtraDataLengthExceedsBoundary_ThrowsPsdLoadException()
+    {
+        byte[] layerBytes = BuildLayerRecordBytesWithExtraData([
+            0x00, 0x00, 0x00, 0x10,
+            0x00, 0x00, 0x00, 0x00
+        ]);
+        using var stream = new MemoryStream(layerBytes);
+        using var reader = new BigEndianReader(stream, leaveOpen: true);
+
+        Assert.That(() => Layer.Load(reader, isLargeDocument: false), Throws.InstanceOf<PsdLoadException>());
+    }
+
+    /// <summary>
+    /// Tests that a negative layer extra data length is rejected.
+    /// </summary>
+    [Test]
+    public void Load_LayerExtraDataNegativeLength_ThrowsPsdLoadException()
+    {
+        byte[] layerBytes = BuildLayerRecordBytesWithExtraData([]);
+        WriteUInt32BigEndian(layerBytes, 30, 0xFFFFFFFF);
+        using var stream = new MemoryStream(layerBytes);
+        using var reader = new BigEndianReader(stream, leaveOpen: true);
+
+        Assert.That(() => Layer.Load(reader, isLargeDocument: false), Throws.InstanceOf<PsdLoadException>());
     }
 
     /// <summary>
@@ -1198,6 +1271,33 @@ public sealed class PsdImageTests : IDisposable
     }
 
     /// <summary>
+    /// Builds a minimal PSD layer record with caller-controlled extra data bytes.
+    /// </summary>
+    /// <param name="extraData">The layer extra data payload to append after the fixed layer record fields.</param>
+    /// <returns>The encoded layer record bytes.</returns>
+    private static byte[] BuildLayerRecordBytesWithExtraData(byte[] extraData)
+    {
+        using var stream = new MemoryStream();
+        using var writer = new BigEndianWriter(stream, leaveOpen: true);
+
+        writer.Write(0);
+        writer.Write(0);
+        writer.Write(1);
+        writer.Write(1);
+        writer.Write((ushort)0);
+        writer.Write(0x3842494D);
+        writer.Write(System.Text.Encoding.ASCII.GetBytes("norm"));
+        writer.Write((byte)255);
+        writer.Write((byte)0);
+        writer.Write((byte)0);
+        writer.Write((byte)0);
+        writer.Write(extraData.Length);
+        writer.Write(extraData);
+
+        return stream.ToArray();
+    }
+
+    /// <summary>
     /// Extracts the full Image Resources section, including its 4-byte length field.
     /// </summary>
     /// <param name="documentBytes">The complete PSD document bytes.</param>
@@ -1290,113 +1390,4 @@ public sealed class PsdImageTests : IDisposable
         return stream.ToArray();
     }
 
-    /// <summary>
-    /// Wraps a readable in-memory stream and intentionally disables seeking.
-    /// </summary>
-    private sealed class NonSeekableReadStream : Stream
-    {
-        private readonly MemoryStream _innerStream;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="NonSeekableReadStream"/> class.
-        /// </summary>
-        /// <param name="data">The bytes exposed by the stream.</param>
-        public NonSeekableReadStream(byte[] data)
-        {
-            _innerStream = new MemoryStream(data, writable: false);
-        }
-
-        /// <summary>
-        /// Gets a value indicating whether the stream supports reading.
-        /// </summary>
-        public override bool CanRead => true;
-
-        /// <summary>
-        /// Gets a value indicating whether the stream supports seeking.
-        /// </summary>
-        public override bool CanSeek => false;
-
-        /// <summary>
-        /// Gets a value indicating whether the stream supports writing.
-        /// </summary>
-        public override bool CanWrite => false;
-
-        /// <summary>
-        /// Gets the total length of the stream.
-        /// </summary>
-        public override long Length => _innerStream.Length;
-
-        /// <summary>
-        /// Gets or sets the current stream position.
-        /// </summary>
-        public override long Position
-        {
-            get => _innerStream.Position;
-            set => throw new NotSupportedException();
-        }
-
-        /// <summary>
-        /// Flushes buffered state.
-        /// </summary>
-        public override void Flush()
-        {
-        }
-
-        /// <summary>
-        /// Reads bytes from the stream.
-        /// </summary>
-        /// <param name="buffer">The destination buffer.</param>
-        /// <param name="offset">The zero-based destination offset.</param>
-        /// <param name="count">The requested byte count.</param>
-        /// <returns>The number of bytes actually read.</returns>
-        public override int Read(byte[] buffer, int offset, int count)
-        {
-            return _innerStream.Read(buffer, offset, count);
-        }
-
-        /// <summary>
-        /// Seeks within the stream.
-        /// </summary>
-        /// <param name="offset">The byte offset relative to the origin.</param>
-        /// <param name="origin">The reference origin.</param>
-        /// <returns>The new stream position.</returns>
-        public override long Seek(long offset, SeekOrigin origin)
-        {
-            throw new NotSupportedException();
-        }
-
-        /// <summary>
-        /// Changes the stream length.
-        /// </summary>
-        /// <param name="value">The new stream length.</param>
-        public override void SetLength(long value)
-        {
-            throw new NotSupportedException();
-        }
-
-        /// <summary>
-        /// Writes bytes to the stream.
-        /// </summary>
-        /// <param name="buffer">The source buffer.</param>
-        /// <param name="offset">The zero-based source offset.</param>
-        /// <param name="count">The number of bytes to write.</param>
-        public override void Write(byte[] buffer, int offset, int count)
-        {
-            throw new NotSupportedException();
-        }
-
-        /// <summary>
-        /// Releases resources used by the wrapped stream.
-        /// </summary>
-        /// <param name="disposing">true when called from <see cref="Dispose()"/>; otherwise, false.</param>
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                _innerStream.Dispose();
-            }
-
-            base.Dispose(disposing);
-        }
-    }
 }

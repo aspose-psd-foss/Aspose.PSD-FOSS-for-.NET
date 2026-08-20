@@ -71,7 +71,7 @@ public sealed class PsdImage : IDisposable
     /// <summary>
     /// Gets the parsed layer collection.
     /// </summary>
-    public Layer[] Layers => _layers ?? [];
+    public Layer[] Layers => _layers?.ToArray() ?? [];
 
     /// <summary>
     /// Gets the number of parsed layers in the document.
@@ -339,7 +339,7 @@ public sealed class PsdImage : IDisposable
         uint resourcesLength = reader.ReadUInt32();
         if (resourcesLength == 0) return;
 
-        _resourcesRaw = reader.ReadBytes((int)resourcesLength);
+        _resourcesRaw = PsdSectionReader.ReadBytes(reader, resourcesLength, "Image Resources section");
         long resourcesEnd = _resourcesRaw.Length;
         var resourcesReader = new BigEndianReader(new MemoryStream(_resourcesRaw, writable: false), leaveOpen: true);
 
@@ -365,7 +365,7 @@ public sealed class PsdImage : IDisposable
     /// <param name="reader">The reader positioned at the section length field.</param>
     private void LoadLayerAndMaskInfo(BigEndianReader reader)
     {
-        long sectionLength = ReadLayerAndMaskSectionLength(reader);
+        ulong sectionLength = ReadLayerAndMaskSectionLength(reader);
         if (sectionLength == 0)
         {
             _layerAndMaskInfoRaw = [];
@@ -374,14 +374,36 @@ public sealed class PsdImage : IDisposable
             return;
         }
 
-        byte[] rawSectionBytes = reader.ReadBytes((int)sectionLength);
+        byte[] rawSectionBytes = PsdSectionReader.ReadBytes(reader, sectionLength, "Layer and Mask Information section");
 
         var memReader = new BigEndianReader(new MemoryStream(rawSectionBytes, writable: false), leaveOpen: true);
 
-        long layerInfoLength = _header?.IsLargeDocument == true ? memReader.ReadInt64() : memReader.ReadInt32();
+        long layerInfoLength = PsdSectionReader.ValidateSignedLength(
+            _header?.IsLargeDocument == true ? memReader.ReadInt64() : memReader.ReadInt32(),
+            "Layer Info section");
+        if (layerInfoLength > rawSectionBytes.Length - memReader.Position)
+        {
+            throw new PsdLoadException("Layer Info section length exceeds the enclosing Layer and Mask Information section.");
+        }
+
+        long layerInfoEnd = (_header?.IsLargeDocument == true ? sizeof(long) : sizeof(int)) + layerInfoLength;
+        if (layerInfoLength == 0)
+        {
+            _layerChannelImageDataRaw = [];
+            _layerGlobalMaskAndTailRaw = rawSectionBytes.Length > memReader.Position
+                ? memReader.ReadBytes(checked((int)(rawSectionBytes.Length - memReader.Position)))
+                : [];
+            _layerAndMaskInfoRaw = rawSectionBytes;
+            return;
+        }
+
+        if (layerInfoLength < sizeof(short))
+        {
+            throw new PsdLoadException("Layer Info section is too short to contain the layer count field.");
+        }
+
         _layerCountRaw = memReader.ReadInt16();
         short layerCount = _layerCountRaw < 0 ? (short)-_layerCountRaw : _layerCountRaw;
-
         if (layerCount > 0)
         {
             var layers = new Layer[layerCount];
@@ -392,9 +414,12 @@ public sealed class PsdImage : IDisposable
             _layers = layers;
         }
 
-        int layerInfoLengthFieldSize = _header?.IsLargeDocument == true ? sizeof(long) : sizeof(int);
-        long layerInfoPayloadPosition = memReader.Position - layerInfoLengthFieldSize;
-        int channelImageDataLength = (int)Math.Max(0, layerInfoLength - layerInfoPayloadPosition);
+        if (memReader.Position > layerInfoEnd)
+        {
+            throw new PsdLoadException("Layer records exceed the declared Layer Info section length.");
+        }
+
+        int channelImageDataLength = checked((int)(layerInfoEnd - memReader.Position));
         _layerChannelImageDataRaw = channelImageDataLength > 0
             ? memReader.ReadBytes(channelImageDataLength)
             : [];
@@ -639,9 +664,9 @@ public sealed class PsdImage : IDisposable
     /// </summary>
     /// <param name="reader">The reader positioned at the section length field.</param>
     /// <returns>The declared section length in bytes.</returns>
-    private long ReadLayerAndMaskSectionLength(BigEndianReader reader)
+    private ulong ReadLayerAndMaskSectionLength(BigEndianReader reader)
     {
-        return _header?.IsLargeDocument == true ? (long)reader.ReadUInt64() : reader.ReadUInt32();
+        return _header?.IsLargeDocument == true ? reader.ReadUInt64() : reader.ReadUInt32();
     }
 
     /// <summary>

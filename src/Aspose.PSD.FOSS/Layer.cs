@@ -360,6 +360,10 @@ public class Layer
         byte filler = reader.ReadByte();
 
         int extraLength = reader.ReadInt32();
+        if (extraLength < 0)
+        {
+            throw new PsdLoadException("Layer extra data length cannot be negative.");
+        }
 
         string layerName = string.Empty;
         LayerMaskData layerMaskData = LayerMaskData.Empty;
@@ -371,28 +375,25 @@ public class Layer
             long extraStart = reader.Position;
             long extraEnd = extraStart + extraLength;
 
-            try
+            layerMaskData = LayerMaskData.Load(reader, extraEnd);
+            if (reader.Position + 4 > extraEnd)
             {
-                layerMaskData = LayerMaskData.Load(reader, extraEnd);
-                if (reader.Position + 4 > extraEnd)
-                    throw new EndOfStreamException();
-                blendingRangesData = LayerBlendingRangesData.Load(reader, extraEnd);
-
-                layerName = reader.ReadPascalString();
-
-                long remaining = extraEnd - reader.Position;
-                if (remaining > 0)
-                {
-                    additionalLayerData = reader.ReadBytes((int)remaining);
-                }
+                throw new PsdLoadException("Layer extra data is truncated before the blending ranges length field.");
             }
-            catch (EndOfStreamException)
+
+            blendingRangesData = LayerBlendingRangesData.Load(reader, extraEnd);
+
+            layerName = reader.ReadPascalString();
+
+            long remaining = extraEnd - reader.Position;
+            if (remaining < 0)
             {
-                reader.Seek(extraEnd, SeekOrigin.Begin);
-                layerName = string.Empty;
-                layerMaskData = LayerMaskData.Empty;
-                blendingRangesData = LayerBlendingRangesData.Empty;
-                additionalLayerData = [];
+                throw new PsdLoadException("Layer extra data parser read beyond the declared extra data boundary.");
+            }
+
+            if (remaining > 0)
+            {
+                additionalLayerData = reader.ReadBytes(PsdSectionReader.GetNestedMemoryBackedLength(reader, (ulong)remaining, extraEnd, "Additional layer data"));
             }
         }
 
@@ -540,19 +541,4 @@ public class Layer
         return 1 + length + ((4 - ((length + 1) % 4)) % 4);
     }
 
-    /// <summary>
-    /// Stores one channel metadata entry from a layer record.
-    /// </summary>
-    internal struct LayerChannelInfo
-    {
-        /// <summary>
-        /// Gets or sets the PSD channel identifier.
-        /// </summary>
-        public short ChannelId;
-
-        /// <summary>
-        /// Gets or sets the declared byte length of the channel data payload.
-        /// </summary>
-        public ulong DataLength;
-    }
 }
