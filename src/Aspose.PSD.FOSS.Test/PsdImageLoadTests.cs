@@ -17,7 +17,7 @@ public sealed class PsdImageLoadTests : PsdTestFixtureBase
     /// Verifies image dimensions, channels, bits per channel, color mode, version, and layer count.
     /// </summary>
     [Test]
-    public void Load_DocumentProperties_ReturnsCorrectValues()
+    public void Load_Document_ReadsProperties()
     {
         string testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd");
 
@@ -40,7 +40,7 @@ public sealed class PsdImageLoadTests : PsdTestFixtureBase
     /// Verifies layer count, bounds, visibility, opacity, and blend mode.
     /// </summary>
     [Test]
-    public void Load_LayerProperties_ReturnsCorrectValues()
+    public void Load_Layer_ReadsProperties()
     {
         string testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd");
 
@@ -64,7 +64,7 @@ public sealed class PsdImageLoadTests : PsdTestFixtureBase
     /// Tests that layers can be accessed by index.
     /// </summary>
     [Test]
-    public void Load_Layers_CanBeAccessedByIndex()
+    public void Load_Layers_Indexable()
     {
         string testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd");
 
@@ -79,7 +79,7 @@ public sealed class PsdImageLoadTests : PsdTestFixtureBase
     /// Tests that loading from a seekable stream preserves the original stream position.
     /// </summary>
     [Test]
-    public void Load_FromSeekableStream_PreservesPosition()
+    public void Load_Seekable_PreservesPosition()
     {
         byte[] bytes = File.ReadAllBytes(Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd"));
         byte[] prefix = [1, 2, 3, 4, 5];
@@ -99,7 +99,7 @@ public sealed class PsdImageLoadTests : PsdTestFixtureBase
     /// Tests that loading from a non-seekable stream still succeeds.
     /// </summary>
     [Test]
-    public void Load_FromNonSeekableStream_LoadsSuccessfully()
+    public void Load_NonSeekableStream_Succeeds()
     {
         byte[] bytes = File.ReadAllBytes(Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd"));
         using var stream = new NonSeekableReadStream(bytes);
@@ -114,7 +114,7 @@ public sealed class PsdImageLoadTests : PsdTestFixtureBase
     /// Tests that loading from a null stream throws <see cref="ArgumentNullException"/>.
     /// </summary>
     [Test]
-    public void Load_NullStream_ThrowsArgumentNullException()
+    public void Load_NullStream_Throws()
     {
         Assert.That(() => PsdImage.Load((Stream)null!), Throws.InstanceOf<ArgumentNullException>());
     }
@@ -124,7 +124,7 @@ public sealed class PsdImageLoadTests : PsdTestFixtureBase
     /// Tests that loading a missing file path throws <see cref="FileNotFoundException"/>.
     /// </summary>
     [Test]
-    public void Load_MissingFilePath_ThrowsFileNotFoundException()
+    public void Load_MissingFile_Throws()
     {
         string missingFile = Path.Combine(_testDir, "missing.psd");
         Assert.That(() => PsdImage.Load(missingFile), Throws.InstanceOf<FileNotFoundException>());
@@ -135,7 +135,7 @@ public sealed class PsdImageLoadTests : PsdTestFixtureBase
     /// Tests that loading a file with an invalid signature throws <see cref="PsdLoadException"/>.
     /// </summary>
     [Test]
-    public void Load_InvalidSignature_ThrowsPsdLoadException()
+    public void Load_InvalidSignature_Throws()
     {
         using var stream = new MemoryStream(BuildHeaderBytes(PsdHeader.PsdVersion));
         using var reader = new BigEndianReader(stream, leaveOpen: true);
@@ -151,7 +151,7 @@ public sealed class PsdImageLoadTests : PsdTestFixtureBase
     /// Tests that simple document-level inspection properties expose the parsed structural state.
     /// </summary>
     [Test]
-    public void Load_DocumentSimpleInspectionProperties_ReturnExpectedValues()
+    public void Load_DocumentInspection_ReadsValues()
     {
         using var image = PsdImage.Load(Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd"));
 

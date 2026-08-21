@@ -14,7 +14,7 @@ public sealed class PsdHeaderTests : PsdTestFixtureBase
     /// Tests that non-zero reserved header bytes are rejected.
     /// </summary>
     [Test]
-    public void Load_HeaderWithNonZeroReservedBytes_ThrowsPsdLoadException()
+    public void Load_NonZeroReserved_Throws()
     {
         byte[] bytes = BuildHeaderBytes(PsdHeader.PsdVersion);
         bytes[6] = 1;
@@ -40,7 +40,7 @@ public sealed class PsdHeaderTests : PsdTestFixtureBase
     [TestCase(3, 30001, 1, 8, (ushort)ColorModes.Rgb)]
     [TestCase(3, 1, 1, 12, (ushort)ColorModes.Rgb)]
     [TestCase(3, 1, 1, 8, 99)]
-    public void Load_HeaderWithInvalidField_ThrowsPsdLoadException(
+    public void Load_InvalidHeaderField_Throws(
         int channels,
         int width,
         int height,
@@ -59,7 +59,7 @@ public sealed class PsdHeaderTests : PsdTestFixtureBase
     /// Tests that a minimal PSD without layers loads correctly.
     /// </summary>
     [Test]
-    public void Load_PsdHeader_ReturnsExpectedMetadata()
+    public void Load_PsdHeader_ReadsMetadata()
     {
         using var stream = new MemoryStream(BuildHeaderBytes(PsdHeader.PsdVersion));
         using var reader = new BigEndianReader(stream, leaveOpen: true);
@@ -79,7 +79,7 @@ public sealed class PsdHeaderTests : PsdTestFixtureBase
     /// Tests that a minimal synthetic PSB file loads expected document metadata without layers.
     /// </summary>
     [Test]
-    public void Load_PsbHeader_ReturnsExpectedMetadata()
+    public void Load_PsbHeader_ReadsMetadata()
     {
         using var stream = new MemoryStream(BuildHeaderBytes(PsdHeader.PsbVersion));
         using var reader = new BigEndianReader(stream, leaveOpen: true);

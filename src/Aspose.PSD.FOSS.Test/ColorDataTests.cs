@@ -14,7 +14,7 @@ public sealed class ColorDataTests : PsdTestFixtureBase
     /// Tests that a malformed color mode length field is rejected with <see cref="PsdLoadException"/>.
     /// </summary>
     [Test]
-    public void Load_ColorModeLengthExceedsAvailableBytes_ThrowsPsdLoadException()
+    public void Load_TooLongColorMode_Throws()
     {
         byte[] bytes = File.ReadAllBytes(Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd"));
         WriteUInt32BigEndian(bytes, 26, 100000);
@@ -28,7 +28,7 @@ public sealed class ColorDataTests : PsdTestFixtureBase
     /// Tests that unexpected RGB color mode data is classified explicitly and preserved.
     /// </summary>
     [Test]
-    public void Load_RgbColorModeData_ClassifiesExplicitRgbPayload()
+    public void Load_RgbPayload_Classifies()
     {
         byte[] payload = [0x10, 0x20, 0x30, 0x40];
         using var stream = new MemoryStream(BuildColorDataSection(payload));
@@ -46,7 +46,7 @@ public sealed class ColorDataTests : PsdTestFixtureBase
     /// Tests that indexed color mode data is parsed into a structured 256-color palette.
     /// </summary>
     [Test]
-    public void Load_IndexedColorModeData_ParsesPalette()
+    public void Load_IndexedData_ParsesPalette()
     {
         byte[] payload = BuildIndexedPalettePayload();
         using var stream = new MemoryStream(BuildColorDataSection(payload));
@@ -67,7 +67,7 @@ public sealed class ColorDataTests : PsdTestFixtureBase
     /// Tests that CMYK color mode data is classified explicitly and preserved.
     /// </summary>
     [Test]
-    public void Load_CmykColorModeData_ClassifiesExplicitCmykPayload()
+    public void Load_CmykPayload_Classifies()
     {
         byte[] payload = [0xCA, 0xFE, 0xBA, 0xBE];
         using var stream = new MemoryStream(BuildColorDataSection(payload));
@@ -85,7 +85,7 @@ public sealed class ColorDataTests : PsdTestFixtureBase
     /// Tests that the basic indexed fixture exposes indexed color mode data and palette metadata.
     /// </summary>
     [Test]
-    public void Load_BasicIndexedFixturePsd_ReturnsExpectedColorDataInfo()
+    public void Load_IndexedFixture_ReadsColorData()
     {
         using var image = PsdImage.Load(GetTestDataPath("basic-indexed.psd"));
 
@@ -105,7 +105,7 @@ public sealed class ColorDataTests : PsdTestFixtureBase
     /// Tests that saving the basic indexed fixture without mutations preserves the file byte-for-byte.
     /// </summary>
     [Test]
-    public void Save_BasicIndexedFixturePsd_RoundTripWithoutMutation_ByteExact()
+    public void Save_IndexedFixture_IsByteExact()
     {
         AssertByteExactRoundTrip("basic-indexed.psd");
     }

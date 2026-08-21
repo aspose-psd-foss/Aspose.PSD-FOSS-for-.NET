@@ -15,7 +15,7 @@ public sealed class PsdImageSaveTests : PsdTestFixtureBase
     /// Verifies that the saved file can be reloaded with equivalent properties.
     /// </summary>
     [Test]
-    public void Save_RoundTripWithoutMutation_ProducesValidFile()
+    public void Save_RoundTrip_LoadsAgain()
     {
         string testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd");
         string outputFile = GetPersistentArtifactPath("roundtrip_test.psd");
@@ -46,7 +46,7 @@ public sealed class PsdImageSaveTests : PsdTestFixtureBase
     /// that is byte-for-byte identical to the original.
     /// </summary>
     [Test]
-    public void Save_RoundTripWithoutMutation_ByteForByteIdentical()
+    public void Save_RoundTrip_IsByteExact()
     {
         string testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd");
         string outputFile = GetPersistentArtifactPath("roundtrip_byteexact_test.psd");
@@ -74,7 +74,7 @@ public sealed class PsdImageSaveTests : PsdTestFixtureBase
     /// Tests that changing a layer name and saving produces a valid file with the new name.
     /// </summary>
     [Test]
-    public void Save_AfterChangingLayerName_SavesCorrectly()
+    public void Save_ChangesLayerName()
     {
         string testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd");
         string outputFile = GetPersistentArtifactPath("layer_name_test.psd");
@@ -99,7 +99,7 @@ public sealed class PsdImageSaveTests : PsdTestFixtureBase
     /// Tests that changing a layer's visibility and saving produces a valid file with the new state.
     /// </summary>
     [Test]
-    public void Save_AfterChangingLayerVisible_SavesCorrectly()
+    public void Save_ChangesLayerVisibility()
     {
         string testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd");
         string outputFile = GetPersistentArtifactPath("layer_visible_test.psd");
@@ -124,7 +124,7 @@ public sealed class PsdImageSaveTests : PsdTestFixtureBase
     /// Tests that changing a layer's opacity and saving produces a valid file with the new opacity.
     /// </summary>
     [Test]
-    public void Save_AfterChangingLayerOpacity_SavesCorrectly()
+    public void Save_ChangesLayerOpacity()
     {
         string testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd");
         string outputFile = GetPersistentArtifactPath("layer_opacity_test.psd");
@@ -150,7 +150,7 @@ public sealed class PsdImageSaveTests : PsdTestFixtureBase
     /// Tests that saving after a supported mutation preserves raw layer flags and the original blend mode key.
     /// </summary>
     [Test]
-    public void Save_AfterSupportedMutation_PreservesRawFlagsAndBlendModeKey()
+    public void Save_Mutation_PreservesFlags()
     {
         string testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd");
         string outputFile = GetPersistentArtifactPath("preserve_flags_and_blend.psd");

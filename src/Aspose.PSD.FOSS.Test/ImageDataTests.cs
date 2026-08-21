@@ -14,7 +14,7 @@ public sealed class ImageDataTests : PsdTestFixtureBase
     /// Tests that the RLE fixture exposes expected compression, row-length table, and compressed payload metadata.
     /// </summary>
     [Test]
-    public void Load_RleFixturePsd_ReturnsExpectedImageDataInfo()
+    public void Load_RleFixture_ReadsImageData()
     {
         using var image = PsdImage.Load(GetTestDataPath("rle.psd"));
 
@@ -30,7 +30,7 @@ public sealed class ImageDataTests : PsdTestFixtureBase
     /// Tests that saving the RLE fixture without mutations preserves the file byte-for-byte.
     /// </summary>
     [Test]
-    public void Save_RleFixturePsd_RoundTripWithoutMutation_ByteExact()
+    public void Save_RleFixture_IsByteExact()
     {
         AssertByteExactRoundTrip("rle.psd");
     }
@@ -40,7 +40,7 @@ public sealed class ImageDataTests : PsdTestFixtureBase
     /// Tests that the ZIP-named fixture exposes the expected preserved RLE image-data structure.
     /// </summary>
     [Test]
-    public void Load_ZipFixturePsd_ReturnsExpectedImageDataInfo()
+    public void Load_ZipFixture_ReadsImageData()
     {
         using var image = PsdImage.Load(GetTestDataPath("zip.psd"));
 
@@ -56,7 +56,7 @@ public sealed class ImageDataTests : PsdTestFixtureBase
     /// Tests that saving the ZIP-named fixture without mutations preserves the file byte-for-byte.
     /// </summary>
     [Test]
-    public void Save_ZipFixturePsd_RoundTripWithoutMutation_ByteExact()
+    public void Save_ZipFixture_IsByteExact()
     {
         AssertByteExactRoundTrip("zip.psd");
     }
@@ -66,7 +66,7 @@ public sealed class ImageDataTests : PsdTestFixtureBase
     /// Tests that a minimal synthetic PSD with RLE image data exposes the expected structural metadata.
     /// </summary>
     [Test]
-    public void Load_PsdWithRleImageData_ReturnsExpectedStructure()
+    public void Load_PsdRle_ReadsStructure()
     {
         using var stream = new MemoryStream(BuildImageDataSection(CompressionMethod.RLE, [0x00, 0x02, 0xAB, 0xCD, 0x00, 0x01, 0xEF]));
         using var reader = new BigEndianReader(stream, leaveOpen: true);
@@ -88,7 +88,7 @@ public sealed class ImageDataTests : PsdTestFixtureBase
     /// Tests that a minimal synthetic PSB with RLE image data exposes the expected structural metadata.
     /// </summary>
     [Test]
-    public void Load_PsbWithRleImageData_ReturnsExpectedStructure()
+    public void Load_PsbRle_ReadsStructure()
     {
         using var stream = new MemoryStream(BuildImageDataSection(
             CompressionMethod.RLE,
@@ -117,7 +117,7 @@ public sealed class ImageDataTests : PsdTestFixtureBase
     /// Tests that a minimal synthetic PSD with ZIP image data exposes the expected structural metadata.
     /// </summary>
     [Test]
-    public void Load_PsdWithZipImageData_ReturnsExpectedStructure()
+    public void Load_PsdZip_ReadsStructure()
     {
         using var stream = new MemoryStream(BuildImageDataSection(CompressionMethod.ZipWithoutPrediction, [0x78, 0x9C, 0x63, 0x60, 0x04, 0x00, 0x00, 0xFF, 0x00]));
         using var reader = new BigEndianReader(stream, leaveOpen: true);
@@ -135,7 +135,7 @@ public sealed class ImageDataTests : PsdTestFixtureBase
     /// Tests that a truncated RLE row-length table is rejected.
     /// </summary>
     [Test]
-    public void Load_RleImageDataWithTruncatedRowLengthTable_ThrowsPsdLoadException()
+    public void Load_TruncatedRleRows_Throws()
     {
         using var stream = new MemoryStream(BuildImageDataSection(CompressionMethod.RLE, [0x00, 0x02, 0xAB, 0xCD, 0x00]));
         using var reader = new BigEndianReader(stream, leaveOpen: true);

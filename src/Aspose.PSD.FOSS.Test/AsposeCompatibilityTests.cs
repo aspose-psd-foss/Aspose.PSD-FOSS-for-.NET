@@ -15,7 +15,7 @@ public sealed class AsposeCompatibilityTests : PsdTestFixtureBase
     /// Tests that official-style code can load a PSD through <see cref="Image.Load(string)"/> and cast it to <see cref="PsdImage"/>.
     /// </summary>
     [Test]
-    public void ImageLoad_WithOfficialNamespaces_ReturnsPsdImage()
+    public void ImageLoad_Official_ReturnsPsd()
     {
         using Image image = Image.Load(GetTestDataPath("test.psd"));
         var psdImage = (PsdImage)image;
@@ -29,7 +29,7 @@ public sealed class AsposeCompatibilityTests : PsdTestFixtureBase
     /// Tests that official-style layer metadata access uses Aspose.PSD Rectangle and BlendMode types.
     /// </summary>
     [Test]
-    public void LayerMetadata_WithOfficialTypes_ExposesCompatibleSubset()
+    public void Metadata_OfficialTypes_Reads()
     {
         using var image = (PsdImage)Image.Load(GetTestDataPath("test.psd"));
         Layer layer = image.Layers[0];
@@ -47,7 +47,7 @@ public sealed class AsposeCompatibilityTests : PsdTestFixtureBase
     /// Tests that official-style layer channel properties expose parsed channel metadata and reject unsupported channel rewrites.
     /// </summary>
     [Test]
-    public void LayerChannels_WithOfficialShape_ExposeParsedMetadataAndRejectRewrites()
+    public void Channels_OfficialShape_ReadsOnly()
     {
         using var image = (PsdImage)Image.Load(GetTestDataPath("test.psd"));
         Layer layer = image.Layers[0];
@@ -64,7 +64,7 @@ public sealed class AsposeCompatibilityTests : PsdTestFixtureBase
     /// Tests that official-style layer mask and blending range properties expose supported metadata and reject unsupported semantic rewrites.
     /// </summary>
     [Test]
-    public void LayerMaskAndBlendingRanges_WithOfficialShape_ExposeSupportedReadSurface()
+    public void LayerMask_OfficialShape_ReadsOnly()
     {
         using var image = (PsdImage)Image.Load(GetTestDataPath("test.psd"));
         Layer layer = image.Layers[0];
@@ -79,7 +79,7 @@ public sealed class AsposeCompatibilityTests : PsdTestFixtureBase
     /// Tests that the Aspose.PSD-compatible rectangle value types expose mutable location and size members.
     /// </summary>
     [Test]
-    public void Rectangle_WithOfficialMutableShape_UpdatesLocationSizeAndEdges()
+    public void Rectangle_MutableShape_UpdatesEdges()
     {
         var rectangle = new Rectangle(new Point(10, 20), new Size(30, 40));
 
@@ -105,7 +105,7 @@ public sealed class AsposeCompatibilityTests : PsdTestFixtureBase
     /// Tests that official-style PSD image setters compile and update the implemented structural metadata subset.
     /// </summary>
     [Test]
-    public void PsdImageSetters_WithOfficialShape_UpdateImplementedMetadata()
+    public void ImageSetters_UpdateMetadata()
     {
         using var image = (PsdImage)Image.Load(GetTestDataPath("test.psd"));
         Layer[] layers = image.Layers;
@@ -126,7 +126,7 @@ public sealed class AsposeCompatibilityTests : PsdTestFixtureBase
     /// Tests that official-style PSD image resource and document state properties expose the supported compatibility subset.
     /// </summary>
     [Test]
-    public void PsdImageResources_WithOfficialShape_ExposeReadSurfaceAndRejectUnsupportedRewrites()
+    public void Resources_OfficialShape_ReadsOnly()
     {
         using var image = (PsdImage)Image.Load(GetTestDataPath("test.psd"));
 
@@ -154,7 +154,7 @@ public sealed class AsposeCompatibilityTests : PsdTestFixtureBase
     /// Tests that official-style layer mutation and save flow works through the implemented compatibility subset.
     /// </summary>
     [Test]
-    public void Save_AfterOfficialStyleLayerMutation_PersistsCompatibleSubset()
+    public void Save_OfficialMutation_Persists()
     {
         string outputFile = GetPersistentArtifactPath("official_style_layer_mutation.psd");
 

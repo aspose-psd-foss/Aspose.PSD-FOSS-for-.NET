@@ -14,7 +14,7 @@ public sealed class PascalStringTests : PsdTestFixtureBase
     /// Tests that 2-byte-aligned PSD Pascal strings consume padding even when the payload is empty.
     /// </summary>
     [Test]
-    public void ReadPascalStringAlignedTo2_EmptyString_ConsumesPadding()
+    public void ReadAligned2_ConsumesPadding()
     {
         using var stream = new MemoryStream([0x00, 0x00, 0x7F]);
         using var reader = new BigEndianReader(stream, leaveOpen: true);
@@ -31,7 +31,7 @@ public sealed class PascalStringTests : PsdTestFixtureBase
     /// Tests that 4-byte-aligned PSD Pascal strings consume padding even when the payload is empty.
     /// </summary>
     [Test]
-    public void ReadPascalStringAlignedTo4_EmptyString_ConsumesPadding()
+    public void ReadAligned4_ConsumesPadding()
     {
         using var stream = new MemoryStream([0x00, 0x00, 0x00, 0x00, 0x7F]);
         using var reader = new BigEndianReader(stream, leaveOpen: true);

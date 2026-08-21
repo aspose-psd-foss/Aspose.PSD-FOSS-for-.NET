@@ -17,7 +17,7 @@ public sealed class LayerSectionTests : PsdTestFixtureBase
     /// Tests that a malformed layer and mask section length is rejected with <see cref="PsdLoadException"/>.
     /// </summary>
     [Test]
-    public void Load_LayerAndMaskLengthExceedsAvailableBytes_ThrowsPsdLoadException()
+    public void Load_TooLongLayerMask_Throws()
     {
         byte[] bytes = File.ReadAllBytes(Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd"));
         int colorModeLength = BigEndianBitConverter.ToInt32(bytes, 26);
@@ -35,7 +35,7 @@ public sealed class LayerSectionTests : PsdTestFixtureBase
     /// Tests that malformed layer extra data is rejected instead of being silently normalized.
     /// </summary>
     [Test]
-    public void Load_LayerExtraDataLengthExceedsBoundary_ThrowsPsdLoadException()
+    public void Load_TooLongLayerExtra_Throws()
     {
         byte[] layerBytes = BuildLayerRecordBytesWithExtraData([
             0x00, 0x00, 0x00, 0x10,
@@ -52,7 +52,7 @@ public sealed class LayerSectionTests : PsdTestFixtureBase
     /// Tests that a negative layer extra data length is rejected.
     /// </summary>
     [Test]
-    public void Load_LayerExtraDataNegativeLength_ThrowsPsdLoadException()
+    public void Load_NegativeLayerExtra_Throws()
     {
         byte[] layerBytes = BuildLayerRecordBytesWithExtraData([]);
         WriteUInt32BigEndian(layerBytes, 30, 0xFFFFFFFF);
@@ -67,7 +67,7 @@ public sealed class LayerSectionTests : PsdTestFixtureBase
     /// Tests that simple layer-level inspection properties expose stored geometry and subsection presence.
     /// </summary>
     [Test]
-    public void Load_LayerSimpleInspectionProperties_ReturnExpectedValues()
+    public void Load_LayerInspection_ReadsValues()
     {
         using var image = PsdImage.Load(Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd"));
         Layer firstLayer = image.Layers[0];
@@ -90,7 +90,7 @@ public sealed class LayerSectionTests : PsdTestFixtureBase
     /// Tests that changing a layer's blend mode persists after save and reload.
     /// </summary>
     [Test]
-    public void Save_AfterChangingLayerBlendMode_SavesCorrectly()
+    public void Save_ChangesBlendMode()
     {
         string testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd");
         string outputFile = GetPersistentArtifactPath("layer_blend_mode_test.psd");
@@ -114,7 +114,7 @@ public sealed class LayerSectionTests : PsdTestFixtureBase
     /// Tests that changing a layer's clipping value persists after save and reload.
     /// </summary>
     [Test]
-    public void Save_AfterChangingLayerClipping_SavesCorrectly()
+    public void Save_ChangesClipping()
     {
         string testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd");
         string outputFile = GetPersistentArtifactPath("layer_clipping_test.psd");
@@ -137,7 +137,7 @@ public sealed class LayerSectionTests : PsdTestFixtureBase
     /// Tests that changing a layer's bounds persists after save and reload.
     /// </summary>
     [Test]
-    public void Save_AfterChangingLayerBounds_SavesCorrectly()
+    public void Save_ChangesBounds()
     {
         string testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd");
         string outputFile = GetPersistentArtifactPath("layer_bounds_test.psd");
@@ -157,7 +157,7 @@ public sealed class LayerSectionTests : PsdTestFixtureBase
     /// Tests that changing coordinate properties updates bounds and persists after save and reload.
     /// </summary>
     [Test]
-    public void Save_AfterChangingLayerCoordinates_SavesCorrectly()
+    public void Save_ChangesCoordinates()
     {
         string testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd");
         string outputFile = GetPersistentArtifactPath("layer_coordinates_test.psd");
@@ -180,7 +180,7 @@ public sealed class LayerSectionTests : PsdTestFixtureBase
     /// Tests that a synthetic PSB fixture with one layer record loads expected layer metadata.
     /// </summary>
     [Test]
-    public void Load_PsbWithLayerRecord_ReturnsExpectedLayerMetadata()
+    public void Load_PsbLayerRecord_ReadsMetadata()
     {
         using var stream = new MemoryStream(BuildPsbLayerRecordBytes());
         using var reader = new BigEndianReader(stream, leaveOpen: true);

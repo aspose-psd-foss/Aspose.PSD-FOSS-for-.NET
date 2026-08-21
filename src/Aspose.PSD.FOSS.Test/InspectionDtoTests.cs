@@ -15,7 +15,7 @@ public sealed class InspectionDtoTests : PsdTestFixtureBase
     /// Tests that document-level DTO inspection API exposes unknown-only resource summaries and other structural metadata.
     /// </summary>
     [Test]
-    public void Load_DocumentInspectionDtos_ReturnExpectedValues()
+    public void Load_DocumentDtos_ReadValues()
     {
         using var image = PsdImage.Load(Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd"));
 
@@ -46,7 +46,7 @@ public sealed class InspectionDtoTests : PsdTestFixtureBase
     /// Tests that layer-level DTO inspection API exposes channel and subsection summaries.
     /// </summary>
     [Test]
-    public void Load_LayerInspectionDtos_ReturnExpectedValues()
+    public void Load_LayerDtos_ReadValues()
     {
         using var image = PsdImage.Load(Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd"));
         Layer layer = image.Layers[0];

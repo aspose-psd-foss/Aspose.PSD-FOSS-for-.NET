@@ -15,7 +15,7 @@ public sealed class FixtureDocumentTests : PsdTestFixtureBase
     /// Tests that the basic RGB fixture exposes expected PSD document metadata, layers, resources, and compression.
     /// </summary>
     [Test]
-    public void Load_BasicRgbFixturePsd_ReturnsExpectedDocumentMetadata()
+    public void Load_BasicRgb_ReadsMetadata()
     {
         using var image = PsdImage.Load(GetTestDataPath("basic-rgb.psd"));
 
@@ -35,7 +35,7 @@ public sealed class FixtureDocumentTests : PsdTestFixtureBase
     /// Tests that saving the basic RGB fixture without mutations preserves the file byte-for-byte.
     /// </summary>
     [Test]
-    public void Save_BasicRgbFixturePsd_RoundTripWithoutMutation_ByteExact()
+    public void Save_BasicRgb_IsByteExact()
     {
         AssertByteExactRoundTrip("basic-rgb.psd");
     }
@@ -45,7 +45,7 @@ public sealed class FixtureDocumentTests : PsdTestFixtureBase
     /// Tests that renaming a layer in the basic RGB fixture persists after save and reload.
     /// </summary>
     [Test]
-    public void Save_BasicRgbFixturePsd_AfterChangingLayerName_SavesCorrectly()
+    public void Save_BasicRgb_RenamesLayer()
     {
         AssertRenameSave("basic-rgb.psd", layerIndex: 1, newName: "Renamed Rectangle");
     }
@@ -55,7 +55,7 @@ public sealed class FixtureDocumentTests : PsdTestFixtureBase
     /// Tests that the basic CMYK fixture exposes expected channels, resources, layers, compression, and row metadata.
     /// </summary>
     [Test]
-    public void Load_BasicCmykFixturePsd_ReturnsExpectedDocumentMetadata()
+    public void Load_BasicCmyk_ReadsMetadata()
     {
         using var image = PsdImage.Load(GetTestDataPath("basic-cmyk.psd"));
 
@@ -74,7 +74,7 @@ public sealed class FixtureDocumentTests : PsdTestFixtureBase
     /// Tests that saving the basic CMYK fixture without mutations preserves the file byte-for-byte.
     /// </summary>
     [Test]
-    public void Save_BasicCmykFixturePsd_RoundTripWithoutMutation_ByteExact()
+    public void Save_BasicCmyk_IsByteExact()
     {
         AssertByteExactRoundTrip("basic-cmyk.psd");
     }
@@ -84,7 +84,7 @@ public sealed class FixtureDocumentTests : PsdTestFixtureBase
     /// Tests that the basic PSB fixture exposes PSB version, large-document state, resources, and RLE row-length sizing.
     /// </summary>
     [Test]
-    public void Load_BasicPsbFixture_ReturnsExpectedDocumentMetadata()
+    public void Load_BasicPsb_ReadsMetadata()
     {
         using var image = PsdImage.Load(GetTestDataPath("basic.psb"));
 
@@ -104,7 +104,7 @@ public sealed class FixtureDocumentTests : PsdTestFixtureBase
     /// Tests that saving the basic PSB fixture without mutations preserves the file byte-for-byte.
     /// </summary>
     [Test]
-    public void Save_BasicPsbFixture_RoundTripWithoutMutation_ByteExact()
+    public void Save_BasicPsb_IsByteExact()
     {
         AssertByteExactRoundTrip("basic.psb");
     }
@@ -114,7 +114,7 @@ public sealed class FixtureDocumentTests : PsdTestFixtureBase
     /// Tests that the layered PSB fixture exposes expected layer names, layer count, and opacity metadata.
     /// </summary>
     [Test]
-    public void Load_LayeredPsbFixture_ReturnsExpectedLayerMetadata()
+    public void Load_LayeredPsb_ReadsLayers()
     {
         using var image = PsdImage.Load(GetTestDataPath("layered.psb"));
 
@@ -131,7 +131,7 @@ public sealed class FixtureDocumentTests : PsdTestFixtureBase
     /// Tests that renaming a layer in the layered PSB fixture persists after save and reload.
     /// </summary>
     [Test]
-    public void Save_LayeredPsbFixture_AfterChangingLayerName_SavesCorrectly()
+    public void Save_LayeredPsb_RenamesLayer()
     {
         AssertRenameSave("layered.psb", layerIndex: 1, newName: "Renamed Rectangle");
     }
@@ -141,7 +141,7 @@ public sealed class FixtureDocumentTests : PsdTestFixtureBase
     /// Tests that changing blend mode in the layered PSB fixture persists with the expected PSD blend key.
     /// </summary>
     [Test]
-    public void Save_LayeredPsbFixture_AfterChangingLayerBlendMode_SavesCorrectly()
+    public void Save_LayeredPsb_ChangesBlendMode()
     {
         string testFile = GetTestDataPath("layered.psb");
         string outputFile = GetPersistentArtifactPath("layered_psb_blend_mode_test.psb");
@@ -161,7 +161,7 @@ public sealed class FixtureDocumentTests : PsdTestFixtureBase
     /// Tests that the layer variants fixture exposes visibility, unknown blend key, clipping, and additional data flags.
     /// </summary>
     [Test]
-    public void Load_LayerVariantsFixturePsd_ReturnsExpectedLayerFlags()
+    public void Load_LayerVariants_ReadsFlags()
     {
         using var image = PsdImage.Load(GetTestDataPath("layer-variants.psd"));
 
@@ -178,7 +178,7 @@ public sealed class FixtureDocumentTests : PsdTestFixtureBase
     /// Tests that changing clipping in the layer variants fixture persists after save and reload.
     /// </summary>
     [Test]
-    public void Save_LayerVariantsFixturePsd_AfterChangingClipping_SavesCorrectly()
+    public void Save_LayerVariants_ChangesClipping()
     {
         string testFile = GetTestDataPath("layer-variants.psd");
         string outputFile = GetPersistentArtifactPath("layer_variants_clipping_test.psd");
@@ -197,7 +197,7 @@ public sealed class FixtureDocumentTests : PsdTestFixtureBase
     /// Tests that mutating a layer in the variants fixture preserves the layer-and-mask tail bytes.
     /// </summary>
     [Test]
-    public void Save_LayerVariantsFixturePsd_PreservesLayerAndMaskTail()
+    public void Save_LayerVariants_PreservesTail()
     {
         string testFile = GetTestDataPath("layer-variants.psd");
         byte[] originalBytes = File.ReadAllBytes(testFile);
