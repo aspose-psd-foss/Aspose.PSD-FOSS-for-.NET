@@ -81,6 +81,9 @@ image.Layers[0].IsVisible = false;
 image.Layers[0].Opacity = 128;
 image.Layers[0].BlendModeKey = BlendMode.Multiply;
 image.Layers[0].Clipping = 1;
+image.Layers[0].Left += 1;
+image.Layers[0].Top += 1;
+image.Layers[0].Bottom += 1;
 image.Save("output.psd");
 ```
 

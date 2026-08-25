@@ -32,7 +32,7 @@ Supported document metadata:
 - `IsFlatten`
 - `ActiveLayer`
 
-Internal diagnostics preserve parsed resource, color data, image data, channel, mask, and blending-range details for tests and implementation verification. These DTOs are intentionally not part of the public API because they do not exist in the commercial Aspose.PSD surface.
+Internal diagnostics preserve parsed resource, color data, image data, channel, mask, and blending-range details for tests and implementation verification. Those diagnostic DTOs are intentionally not part of the public API when they do not exist in the commercial Aspose.PSD surface.
 
 Some official properties are present as explicit compatibility stubs and throw `NotSupportedException` when the current FOSS build cannot safely update the underlying PSD structures.
 
@@ -59,7 +59,7 @@ Supported layer metadata:
 - `LayerMaskData`
 - `LayerBlendingRangesData`
 
-Layer channel, mask, and blending-range DTOs are internal diagnostics, not public API.
+`ChannelInformation`, `LayerMaskData`, and `LayerBlendingRangesData` are public compatibility surfaces. Lower-level raw-preserve diagnostics for channels, masks, and blending ranges remain internal.
 
 ## Modify Layers
 
@@ -76,6 +76,8 @@ The current product scope supports changing:
 - `Right`
 
 These changes are saved back into the PSD/PSB structure without rendering.
+
+`Bounds` is read-only for Aspose.PSD compatibility. Use `Top`, `Left`, `Bottom`, and `Right` when changing layer geometry.
 
 ## Save Behavior
 

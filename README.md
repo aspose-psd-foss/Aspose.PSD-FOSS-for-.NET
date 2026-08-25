@@ -24,7 +24,7 @@ Do not use Aspose.PSD.FOSS when you need to:
 
 - Inspect a PSD/PSB document and read structural metadata.
 - Enumerate layers and read their basic properties.
-- Change supported layer properties such as name, visibility, opacity, clipping, blend mode, and geometry.
+- Change supported layer properties such as name, visibility, opacity, clipping, blend mode key, and geometry.
 - Save the updated file back while preserving unsupported sections as raw bytes where possible.
 
 ## Mental Model
@@ -135,12 +135,12 @@ Each FOSS sample must have a fully analogous NuGet sample, and the matching `Pro
 
 Sample/workflow matrix:
 
-| Sample | Main workflow | What it demonstrates |
-|---|---|---|
-| `Aspose.PSD.FOSS.Samples.Basic` | Document inspection | Aspose.PSD-compatible document metadata and supported resource/layer counts |
-| `Aspose.PSD.FOSS.Samples.Layers` | Layer inspection | Layer metadata, derived geometry, blend mode, channel information, mask data, and blending ranges |
-| `Aspose.PSD.FOSS.Samples.StructuralEditing` | Supported metadata editing | Renaming layers, changing visibility, opacity, clipping, blend mode, and geometry, then saving without rendering |
-| `Aspose.PSD.FOSS.Samples.Streams` | Stream-based round trip | Loading from a stream, saving to a stream, and working with in-memory PSD/PSB data |
+| FOSS sample | NuGet sample | Main workflow | What it demonstrates |
+|---|---|---|---|
+| `Aspose.PSD.FOSS.Samples.Basic` | `Aspose.PSD.NuGet.Samples.Basic` | Document inspection | Aspose.PSD-compatible document metadata and supported resource/layer counts |
+| `Aspose.PSD.FOSS.Samples.Layers` | `Aspose.PSD.NuGet.Samples.Layers` | Layer inspection | Layer metadata, derived geometry, blend mode key, channel information, mask data, and blending ranges |
+| `Aspose.PSD.FOSS.Samples.StructuralEditing` | `Aspose.PSD.NuGet.Samples.StructuralEditing` | Supported metadata editing | Renaming layers, changing visibility, opacity, clipping, blend mode key, and geometry, then saving without rendering |
+| `Aspose.PSD.FOSS.Samples.Streams` | `Aspose.PSD.NuGet.Samples.Streams` | Stream-based round trip | Loading from a stream, saving to a stream, and working with in-memory PSD/PSB data |
 
 Example commands:
 

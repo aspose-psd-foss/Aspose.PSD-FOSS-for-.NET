@@ -35,3 +35,12 @@ These samples map to the main supported workflows:
 - layer inspection;
 - structural layer editing;
 - stream-based round trips.
+
+Sample pairs:
+
+| FOSS sample | NuGet sample |
+|---|---|
+| `Aspose.PSD.FOSS.Samples.Basic` | `Aspose.PSD.NuGet.Samples.Basic` |
+| `Aspose.PSD.FOSS.Samples.Layers` | `Aspose.PSD.NuGet.Samples.Layers` |
+| `Aspose.PSD.FOSS.Samples.StructuralEditing` | `Aspose.PSD.NuGet.Samples.StructuralEditing` |
+| `Aspose.PSD.FOSS.Samples.Streams` | `Aspose.PSD.NuGet.Samples.Streams` |
