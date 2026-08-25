@@ -40,7 +40,7 @@
 
 ## 5. Загрузка файла — информация о слоях
 
-- [x] 5.1 Реализовать класс `Layer` с базовыми свойствами (`Name`, `Bounds`, `IsVisible`, `Opacity`, `BlendMode`)
+- [x] 5.1 Реализовать класс `Layer` с базовыми свойствами (`Name`, read-only `Bounds`, `IsVisible`, `Opacity`, `BlendModeKey`)
 - [x] 5.2 Реализовать отдельный класс `LayerMaskData`
 - [x] 5.3 Реализовать отдельный класс `LayerBlendingRangesData`
 - [x] 5.4 Реализовать парсинг layer record header и фиксированной части layer record
@@ -73,7 +73,7 @@
 
 ## 8. Сохранение файла
 
-- [x] 8.1 Реализовать отдельный класс `PsdWriter`
+- [x] 8.1 Реализовать отдельный writer для PSD/PSB save path (`PsdImageWriter` и специализированные section/record writers)
 - [x] 8.2 Реализовать метод `PsdHeader.Save`
 - [x] 8.3 Реализовать метод `ColorData.Save`
 - [x] 8.4 Реализовать запись layer record с обновлением заголовка при изменении поддерживаемых свойств
@@ -88,7 +88,7 @@
 - [x] 9.2 Реализовать `PsdImage.Load(Stream stream)` — `public static`
 - [x] 9.3 Реализовать `PsdImage.Save(string filePath)` — `instance method`
 - [x] 9.4 Реализовать `PsdImage.Save(Stream stream)` — `instance method`
-- [x] 9.5 Реализовать свойства документа (`Width`, `Height`, `Channels`, `BitsPerChannel`, `ColorMode`, `Version`)
+- [x] 9.5 Реализовать свойства документа (`Width`, `Height`, `ChannelsCount`, `BitsPerChannel`, `ColorMode`, `Version`)
 - [x] 9.6 Реализовать свойство `Layers` (`Layer[]`)
 - [x] 9.7 Реализовать обработку исключений (`PsdLoadException`, `PsdSaveException`)
 - [x] 9.8 Реализовать `IDisposable`
@@ -98,8 +98,8 @@
 - [x] 10.1 Создать test project `Aspose.PSD.FOSS.Test` как реальный NUnit test project
 - [x] 10.2 Тест загрузки из file path
 - [x] 10.3 Тест round-trip (`load → save → load`) с проверкой идентичности байтов для no-mutation сценария
-- [x] 10.4 Тест чтения свойств документа (`Width`, `Height`, `Channels`, `BitsPerChannel`, `ColorMode`, `Version`)
-- [x] 10.5 Тест чтения свойств слоёв (`Name`, `Bounds`, `IsVisible`, `Opacity`, `BlendMode`)
+- [x] 10.4 Тест чтения свойств документа (`Width`, `Height`, `ChannelsCount`, `BitsPerChannel`, `ColorMode`, `Version`)
+- [x] 10.5 Тест чтения свойств слоёв (`Name`, `Bounds`, `IsVisible`, `Opacity`, `BlendModeKey`)
 - [x] 10.6 Тест изменения свойств слоя (`Name`, `Visible`, `Opacity`) и сохранения
 - [x] 10.7 Тест с PSD файлом без слоёв
 - [x] 10.8 Тест доступа к слоям по индексу
@@ -174,29 +174,29 @@
 ## 15. Расширение public API без рендеринга
 
 - [x] 15.1 Подготовить internal state preservation для расширенного public API: сохранять raw layer flags, original blend mode key и stable parsed summaries вместо потери исходного structural state при ранней нормализации
-- [x] 15.2 Добавить document-level simple read-only properties `IsLargeDocument`, `IsPsb`, `Header`, `LayerCount`
-- [x] 15.3 Добавить document-level simple read-only properties `HasImageResources`, `ResourceCount`, `HasColorModeData`, `HasMergedImageData`
-- [x] 15.4 Добавить document-level simple read-only properties `Compression`, `ImageDataKind`, `UsesPrediction`
+- [x] 15.2 Подготовить document-level internal inspection state `IsLargeDocument`, `IsPsb`, `Header`, `LayerCount` и вынести совместимый public surface там, где он есть в Aspose.PSD
+- [x] 15.3 Подготовить document-level internal inspection state `HasImageResources`, `ResourceCount`, `HasColorModeData`, `HasMergedImageData` и вынести совместимый public surface там, где он есть в Aspose.PSD
+- [x] 15.4 Подготовить document-level internal inspection state `Compression`, `ImageDataKind`, `UsesPrediction` и вынести совместимый public `Compression`
 - [x] 15.5 Добавить layer-level simple read-only properties `Width`, `Height`, `Top`, `Left`, `Bottom`, `Right`
-- [x] 15.6 Добавить layer-level simple read-only properties `ChannelCount`, `HasMaskData`, `HasBlendingRangesData`, `HasAdditionalLayerData`, `BlendModeKey`
-- [x] 15.7 Добавить read-only DTO `PsdResourceInfo` и вынести наружу read-only collection document resources
-- [x] 15.8 Добавить document-level inspection properties `GlobalAngle`, `HasIccProfile`, `IsIccProfileUntagged`
-- [x] 15.9 Добавить read-only DTO для color mode data и summary по indexed palette
-- [x] 15.10 Добавить document-level inspection properties `ColorDataInfo` и `IndexedPalette`
-- [x] 15.11 Добавить read-only DTO для summary по структуре image data
-- [x] 15.12 Добавить document-level inspection property `ImageDataInfo`
-- [x] 15.13 Добавить public read-only layer channel DTO и property `Channels`
-- [x] 15.14 Добавить public read-only DTO для summary по layer mask/blending ranges и properties `MaskInfo`, `BlendingRangesInfo`
-- [x] 15.15 Расширить mutable layer metadata editing: добавить setter для `BlendMode`
+- [x] 15.6 Добавить совместимые layer-level properties `ChannelsCount`, `ChannelInformation`, `LayerMaskData`, `LayerBlendingRangesData`, `BlendModeKey`; raw subsection flags оставить internal
+- [x] 15.7 Добавить compatible `ResourceBlock`/`PreservedResourceBlock` API и вынести наружу `ImageResources`
+- [x] 15.8 Добавить совместимое document-level свойство `GlobalAngle` и оставить ICC-specific inspection internal в текущем FOSS scope
+- [x] 15.9 Подготовить DTO для color mode data и indexed palette для internal inspection
+- [x] 15.10 Подготовить document-level inspection state `ColorDataInfo` и `IndexedPalette` для internal verification
+- [x] 15.11 Подготовить DTO для summary по структуре image data
+- [x] 15.12 Подготовить document-level inspection state `ImageDataInfo` для internal verification
+- [x] 15.13 Добавить public layer channel DTO `ChannelInformation` и property `ChannelInformation`
+- [x] 15.14 Добавить public compatibility DTO для layer mask/blending ranges и properties `LayerMaskData`, `LayerBlendingRangesData`
+- [x] 15.15 Расширить mutable layer metadata editing: добавить setter для `BlendModeKey`
 - [x] 15.16 Расширить mutable layer metadata editing: добавить setter для `Clipping`
-- [x] 15.17 Расширить mutable layer metadata editing: добавить setter для `Bounds`
+- [x] 15.17 Сохранить `Bounds` read-only и совместить geometry editing с официальной формой API через coordinate setters
 - [x] 15.18 Расширить mutable layer metadata editing: добавить coordinate setters `Top`, `Left`, `Bottom`, `Right` с согласованным обновлением `Bounds`
 - [x] 15.19 Добавить acceptance tests для internal-state-sensitive round-trip сценариев после расширения metadata API
 - [x] 15.20 Добавить acceptance tests для новых document-level simple properties
 - [x] 15.21 Добавить acceptance tests для новых layer-level simple properties
 - [x] 15.22 Добавить acceptance tests для read-only DTO document inspection API
 - [x] 15.23 Добавить acceptance tests для read-only DTO layer inspection API
-- [x] 15.24 Добавить acceptance tests для новых mutable metadata fields `BlendMode`, `Clipping`, `Bounds` и coordinate properties
+- [x] 15.24 Добавить acceptance tests для новых mutable metadata fields `BlendModeKey`, `Clipping` и coordinate properties
 - [x] 15.25 Обновить README для расширенного inspection/editing subset в public API
 - [x] 15.26 Обновить markdown documentation и samples для новых inspection/editing возможностей
 
@@ -207,3 +207,11 @@
 - [x] 16.3 Убрать ID-specific classification/parsing из FOSS resource loading path, сохранив общий PSD block envelope parse и raw-preserve round-trip
 - [x] 16.4 Обновить acceptance tests под unknown-only contract для resource summaries и document-level convenience properties
 - [x] 16.5 Обновить README, markdown documentation и samples, чтобы они не имплицировали semantic recognition `GlobalAngle`/ICC resources в FOSS
+
+## 17. Совместимость sample code с официальным Aspose.PSD
+
+- [x] 17.1 Добавить NuGet-backed sample projects для тех же сценариев, что и FOSS samples
+- [x] 17.2 Сделать соответствующие `Program.cs` в FOSS и NuGet sample projects идентичными
+- [x] 17.3 Привести FOSS `Layer` API к официальной compatibility shape: убрать public `BlendMode`, убрать public `HasAdditionalLayerData`, оставить `Bounds` read-only и использовать `BlendModeKey` типа `BlendMode`
+- [x] 17.4 Удалить лишний test `LayerPublicSurface_MatchesOfficialCompatibilityShape`
+- [x] 17.5 Обновить проектную документацию так, чтобы она объясняла парные FOSS/NuGet samples и требование держать sample code идентичным

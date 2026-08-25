@@ -13,7 +13,7 @@
 
 #### Scenario: Чтение каналов и bit depth
 - **WHEN** пользователь загружает PSD или PSB файл
-- **THEN** `image.Channels` возвращает сохранённое число каналов
+- **THEN** `image.ChannelsCount` возвращает сохранённое число каналов
 - **AND** `image.BitsPerChannel` возвращает сохранённый bit depth
 
 ### Requirement: Чтение color mode и версии формата из file header
@@ -24,28 +24,23 @@
 - **THEN** `image.ColorMode` возвращает сохранённый color mode
 - **AND** `image.Version` возвращает `1` для PSD или `2` для PSB
 
-### Requirement: Предоставление derived document metadata для metadata-oriented сценариев
-Система SHALL предоставлять дополнительные простые document properties, не требующие rendering или pixel decoding.
+### Requirement: Предоставление совместимой document metadata для metadata-oriented сценариев
+Система SHALL предоставлять дополнительные document properties, не требующие rendering или pixel decoding и совпадающие с поддерживаемым Aspose.PSD compatibility surface.
 
-#### Scenario: Чтение состояния PSD против PSB
-- **WHEN** пользователь загружает PSD файл
-- **THEN** `image.IsLargeDocument` возвращает `false`
-- **AND** `image.IsPsb` возвращает `false`
+#### Scenario: Чтение размера через compatibility properties
+- **WHEN** пользователь загружает PSD или PSB файл
+- **THEN** `image.Size` возвращает ширину и высоту документа
+- **AND** `image.Bounds` возвращает прямоугольник документа от `(0, 0)` до размеров изображения
 
-#### Scenario: Чтение состояния PSB
-- **WHEN** пользователь загружает PSB файл
-- **THEN** `image.IsLargeDocument` возвращает `true`
-- **AND** `image.IsPsb` возвращает `true`
-
-#### Scenario: Чтение количества слоёв
+#### Scenario: Чтение активного слоя и flatten state
 - **WHEN** пользователь загружает файл
-- **THEN** `image.LayerCount` возвращает количество распарсенных слоёв
-- **AND** `image.LayerCount` совпадает с `image.Layers.Length`
+- **THEN** `image.ActiveLayer` возвращает первый распарсенный слой или `null`
+- **AND** `image.IsFlatten` показывает отсутствие распарсенных слоёв
 
-#### Scenario: Чтение объекта header
-- **WHEN** пользователь обращается к `image.Header`
-- **THEN** система возвращает распарсенный `PsdHeader`
-- **AND** его значения совпадают с document-level properties, которые предоставляет `PsdImage`
+#### Scenario: Ограничения setters для сложных document properties
+- **WHEN** пользователь пытается менять `image.ActiveLayer` или `image.HasTransparencyData`
+- **THEN** система выбрасывает `NotSupportedException`
+- **AND** не обещает полноценное semantic editing этих областей в текущем FOSS scope
 
 ## MODIFIED Requirements
 

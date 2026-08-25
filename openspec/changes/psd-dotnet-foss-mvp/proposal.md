@@ -10,25 +10,45 @@
 - `PsdImage.Load(Stream)`
 - `image.Width`
 - `image.Height`
-- `image.Channels`
+- `image.ChannelsCount`
 - `image.BitsPerChannel`
 - `image.ColorMode`
 - `image.Version`
+- `image.Size`
+- `image.Bounds`
 - `image.Layers`
+- `image.ActiveLayer`
+- `image.Compression`
+- `image.ImageResources`
+- `image.GlobalLayerResources`
+- `image.GlobalLayerMaskInfo`
+- `image.IsFlatten`
+- `image.HasTransparencyData`
 - `layer.Name`
 - `layer.Bounds`
+- `layer.Width`
+- `layer.Height`
+- `layer.Top`
+- `layer.Left`
+- `layer.Bottom`
+- `layer.Right`
 - `layer.IsVisible`
 - `layer.Opacity`
-- `layer.BlendMode`
+- `layer.Clipping`
+- `layer.BlendModeKey`
+- `layer.ChannelsCount`
+- `layer.ChannelInformation`
+- `layer.LayerMaskData`
+- `layer.LayerBlendingRangesData`
 - `image.Save(string)`
 - `image.Save(Stream)`
 
 Public API расширяется в пределах non-rendering scope за счёт дополнительных возможностей для metadata-oriented сценариев:
 
 - дополнительные простые document properties (`bool`, `int`, `enum`)
-- дополнительные простые layer properties (`bool`, `int`, `string`, `enum`)
+- дополнительные простые layer properties (`bool`, `int`, `byte`, `enum`)
 - read-only inspection DTO для image resources, image data, color mode data, layer channels, mask/blending metadata
-- безопасное расширение layer metadata editing для `BlendMode`, `Clipping` и layer geometry
+- безопасное расширение layer metadata editing для `BlendModeKey`, `Clipping` и layer geometry через coordinate properties
 - lightweight unknown-only чтение global image resources без semantic recognition конкретных resource kinds
 
 ## Scope продукта
@@ -39,7 +59,7 @@ Public API расширяется в пределах non-rendering scope за �
 - Чтение layer metadata из Layer and Mask Information
 - Чтение дополнительных structural metadata без рендеринга
 - Изменение `Name`, `IsVisible`, `Opacity`
-- Изменение `BlendMode`, `Clipping` и layer geometry в рамках structural save path
+- Изменение `BlendModeKey`, `Clipping` и layer geometry через `Top`, `Left`, `Bottom`, `Right` в рамках structural save path
 - Сохранение без рендеринга
 - Byte-for-byte round-trip без мутаций
 - Raw-preserve для неподдерживаемых/неизвестных данных, где это возможно
@@ -84,4 +104,5 @@ Public API расширяется в пределах non-rendering scope за �
 - Сохранение PSD после изменения `Name`
 - Сохранение PSD после изменения `IsVisible`
 - Сохранение PSD после изменения `Opacity`
+- Сохранение PSD после изменения `BlendModeKey`, `Clipping` и coordinate geometry
 - Сохранение минимального PSB без мутаций byte-for-byte

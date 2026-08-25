@@ -26,7 +26,7 @@
 
 #### Scenario: Чтение blend mode
 - **WHEN** пользователь обращается к распарсенному слою
-- **THEN** `layer.BlendMode` возвращает распарсенный blend mode key, сопоставленный с `BlendMode`
+- **THEN** `layer.BlendModeKey` возвращает распарсенный blend mode key, сопоставленный с `BlendMode`
 
 ### Requirement: Предоставление дополнительных простых layer metadata
 Система SHALL предоставлять дополнительные простые layer properties, derived from layer records, без требования rendering.
@@ -39,17 +39,18 @@
 
 #### Scenario: Чтение количества layer channels
 - **WHEN** пользователь обращается к распарсенному слою
-- **THEN** `layer.ChannelCount` возвращает количество распарсенных layer channel records
+- **THEN** `layer.ChannelsCount` возвращает количество распарсенных layer channel records
 
-#### Scenario: Чтение флагов наличия layer subsections
+#### Scenario: Чтение публичных layer subsection summaries
 - **WHEN** пользователь обращается к распарсенному слою
-- **THEN** `layer.HasMaskData` показывает, присутствует ли непустая layer mask subsection
-- **AND** `layer.HasBlendingRangesData` показывает, присутствует ли непустая blending ranges subsection
-- **AND** `layer.HasAdditionalLayerData` показывает, присутствуют ли opaque trailing данные из layer extra data
+- **THEN** `layer.LayerMaskData` возвращает `null`, если layer mask subsection отсутствует, или совместимый объект mask data, если subsection присутствует
+- **AND** `layer.LayerBlendingRangesData` возвращает совместимый summary object для blending ranges subsection
+- **AND** `layer.ChannelInformation` возвращает public summaries распарсенных layer channel records
 
-#### Scenario: Чтение исходного blend mode key
-- **WHEN** пользователь обращается к распарсенному слою
-- **THEN** `layer.BlendModeKey` возвращает исходный 4-byte PSD blend mode key как строковое значение
+#### Scenario: Raw-preserve opaque layer extra data
+- **WHEN** слой содержит неподдерживаемые opaque trailing данные в layer extra data
+- **THEN** система сохраняет эти данные внутри для round-trip
+- **AND** не добавляет public `HasAdditionalLayerData`, потому что такого свойства нет в официальном Aspose.PSD surface
 
 ## MODIFIED Requirements
 

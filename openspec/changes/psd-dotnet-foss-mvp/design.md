@@ -8,7 +8,7 @@
 - Чтение базовых layer properties
 - Чтение расширенных structural metadata без rendering
 - Изменение `Name`, `IsVisible`, `Opacity`
-- Изменение `BlendMode`, `Clipping` и layer geometry в рамках structural save path
+- Изменение `BlendModeKey`, `Clipping` и layer geometry через coordinate properties в рамках structural save path
 - Сохранение файла без потери неподдерживаемых данных там, где это возможно
 - Byte-for-byte no-mutation round-trip
 
@@ -72,9 +72,9 @@
 - `Name`
 - `IsVisible`
 - `Opacity`
-- `BlendMode`
+- `BlendModeKey`
 - `Clipping`
-- layer geometry (`Bounds` и/или coordinate properties)
+- layer geometry (`Top`, `Left`, `Bottom`, `Right`; `Bounds` остаётся read-only, как в официальном Aspose.PSD API)
 
 ### PSD/PSB version-aware lengths
 Реализация различает PSD (`Version == 1`) и PSB (`Version == 2`) в тех длинах, которые нужны текущему поддерживаемому subset:
@@ -98,14 +98,14 @@ Public API расширяется в пределах structural PSD/PSB editing
 Новые simple properties должны по возможности быть derived from existing parsed state или отражать уже загруженные значения:
 
 - document-level `bool` / `int` / `enum` properties;
-- layer-level `bool` / `int` / `string` / `enum` properties.
+- layer-level `bool` / `int` / `byte` / `enum` properties.
 
 #### Группа B: selective metadata editing
 Новые editable metadata fields допускаются только там, где save path уже может прозрачно сериализовать их без semantic rewrite сложных структур.
 
 Примеры:
 
-- `Layer.BlendMode`
+- `Layer.BlendModeKey`
 - `Layer.Clipping`
 - layer geometry
 
@@ -145,6 +145,14 @@ Public API расширяется в пределах structural PSD/PSB editing
 - read-only DTO предпочтительнее raw public byte buffers;
 - неподдерживаемые секции могут оставаться raw-preserved внутри, даже если наружу отдается только summary;
 - XML documentation должна явно описывать ограничения для частично интерпретируемых metadata.
+
+### Совместимые пары samples
+В репозитории поддерживаются две группы sample projects:
+
+- FOSS samples, которые ссылаются на текущий project reference;
+- NuGet samples, которые ссылаются на официальный пакет `Aspose.PSD`.
+
+Соответствующие `Program.cs` в этих парах должны оставаться идентичными. Различаться должны только project-level dependencies и инфраструктура запуска, чтобы один и тот же sample code проверял совместимость FOSS public API с официальным Aspose.PSD surface.
 
 ## Основные риски
 

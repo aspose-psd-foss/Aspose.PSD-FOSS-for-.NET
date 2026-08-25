@@ -16,20 +16,17 @@
 - **THEN** последующее чтение возвращает новое значение
 
 #### Scenario: Изменение blend mode слоя
-- **WHEN** пользователь задаёт `layer.BlendMode`
+- **WHEN** пользователь задаёт `layer.BlendModeKey`
 - **THEN** последующее чтение возвращает новое значение
 
 #### Scenario: Изменение clipping слоя
 - **WHEN** пользователь задаёт `layer.Clipping`
 - **THEN** последующее чтение возвращает новое значение
 
-#### Scenario: Изменение bounds слоя
-- **WHEN** пользователь задаёт `layer.Bounds`
-- **THEN** последующее чтение возвращает новый прямоугольник
-
 #### Scenario: Изменение coordinate properties слоя
 - **WHEN** пользователь задаёт одно или несколько значений `layer.Top`, `layer.Left`, `layer.Bottom` или `layer.Right`
 - **THEN** `layer.Bounds` отражает обновлённую geometry
+- **AND** прямой setter `layer.Bounds` не предоставляется, чтобы сохранять совместимость с официальным Aspose.PSD API
 
 ### Requirement: Сохранение поддерживаемых мутаций слоя при save
 Система SHALL сохранять поддерживаемые мутации слоя при сохранении файла.
