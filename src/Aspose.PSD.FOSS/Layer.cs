@@ -30,14 +30,9 @@ public class Layer
     private byte _opacity = 255;
 
     /// <summary>
-    /// Stores the original PSD layer flags byte.
+    /// Stores raw PSD layer record data required for byte-preserving saves.
     /// </summary>
-    private byte _flags;
-
-    /// <summary>
-    /// Stores the original 4-byte PSD blend mode key.
-    /// </summary>
-    private string _blendModeKey = LayerBlendModeMapper.NormalBlendModeKey;
+    private LayerRawData _rawData = LayerRawData.Empty;
 
     /// <summary>
     /// Gets or sets the Pascal layer name stored in the layer record.
@@ -207,7 +202,7 @@ public class Layer
             if (_blendMode != value)
             {
                 _blendMode = value;
-                _blendModeKey = LayerBlendModeMapper.GetBlendModeKey(value);
+                _rawData = _rawData.WithBlendModeKey(LayerBlendModeMapper.GetBlendModeKey(value));
                 HasMutated = true;
             }
         }
@@ -230,7 +225,7 @@ public class Layer
     /// <summary>
     /// Gets the original raw 4-byte PSD blend mode key for diagnostics and raw-preserve verification.
     /// </summary>
-    public string RawBlendModeKey => _blendModeKey;
+    public string RawBlendModeKey => _rawData.BlendModeKey;
 
     /// <summary>
     /// Gets the layer's channels count.
@@ -254,47 +249,47 @@ public class Layer
     /// <summary>
     /// Gets a value indicating whether the layer contains a non-empty layer mask subsection.
     /// </summary>
-    internal bool HasMaskData => _layerMaskData.RawData.Length > sizeof(uint);
+    internal bool HasMaskData => _rawData.LayerMaskSection.RawData.Length > sizeof(uint);
 
     /// <summary>
     /// Gets a value indicating whether the layer contains a non-empty blending ranges subsection.
     /// </summary>
-    internal bool HasBlendingRangesData => _blendingRangesData.RawData.Length > sizeof(uint);
+    internal bool HasBlendingRangesData => _rawData.BlendingRangesSection.RawData.Length > sizeof(uint);
 
     /// <summary>
     /// Gets a value indicating whether the layer contains trailing opaque additional layer data.
     /// </summary>
-    public bool HasAdditionalLayerData => _additionalLayerData.Length > 0;
+    public bool HasAdditionalLayerData => _rawData.AdditionalLayerData.Length > 0;
 
     /// <summary>
     /// Gets a read-only summary of the parsed layer mask subsection.
     /// </summary>
-    internal LayerMaskInfo MaskInfo => new(HasMaskData, _layerMaskData.RawData.Length);
+    internal LayerMaskInfo MaskInfo => new(HasMaskData, _rawData.LayerMaskSection.RawData.Length);
 
     /// <summary>
     /// Gets a read-only summary of the parsed blending ranges subsection.
     /// </summary>
-    internal LayerBlendingRangesInfo BlendingRangesInfo => new(HasBlendingRangesData, _blendingRangesData.RawData.Length);
+    internal LayerBlendingRangesInfo BlendingRangesInfo => new(HasBlendingRangesData, _rawData.BlendingRangesSection.RawData.Length);
 
     /// <summary>
     /// Stores the parsed per-channel metadata from the layer record.
     /// </summary>
-    internal LayerChannelInfo[] ChannelInfo { get; private set; } = [];
+    internal LayerChannelInfo[] ChannelInfo => _rawData.ChannelInfo;
 
     /// <summary>
     /// Gets the original PSD layer flags byte used when rewriting the layer record.
     /// </summary>
-    internal byte RawFlags => _flags;
+    internal byte RawFlags => _rawData.Flags;
 
     /// <summary>
     /// Gets the raw layer mask subsection used by the layer record writer.
     /// </summary>
-    internal RawLayerMaskSection RawLayerMaskSection => _layerMaskData;
+    internal RawLayerMaskSection RawLayerMaskSection => _rawData.LayerMaskSection;
 
     /// <summary>
     /// Gets the raw blending ranges subsection used by the layer record writer.
     /// </summary>
-    internal RawLayerBlendingRangesSection RawLayerBlendingRangesSection => _blendingRangesData;
+    internal RawLayerBlendingRangesSection RawLayerBlendingRangesSection => _rawData.BlendingRangesSection;
 
     /// <summary>
     /// Gets or sets the layer mask data.
@@ -319,29 +314,14 @@ public class Layer
     /// </summary>
     public LayerBlendingRangesData LayerBlendingRangesData
     {
-        get => LayerBlendingRangesData.FromRawLength(_blendingRangesData.RawData.Length);
+        get => LayerBlendingRangesData.FromRawLength(_rawData.BlendingRangesSection.RawData.Length);
         set => throw new NotSupportedException("Changing layer blending ranges data is not supported by this FOSS build.");
     }
 
     /// <summary>
     /// Gets the additional layer data bytes that follow the Pascal layer name.
     /// </summary>
-    internal byte[] AdditionalLayerData => _additionalLayerData;
-
-    /// <summary>
-    /// Stores the raw layer mask subsection including its length field.
-    /// </summary>
-    private RawLayerMaskSection _layerMaskData = RawLayerMaskSection.Empty;
-
-    /// <summary>
-    /// Stores the raw blending ranges subsection including its length field.
-    /// </summary>
-    private RawLayerBlendingRangesSection _blendingRangesData = RawLayerBlendingRangesSection.Empty;
-
-    /// <summary>
-    /// Stores all remaining additional layer data after the Pascal layer name.
-    /// </summary>
-    private byte[] _additionalLayerData = [];
+    internal byte[] AdditionalLayerData => _rawData.AdditionalLayerData;
 
     /// <summary>
     /// Gets a value indicating whether the layer has a pending in-memory mutation.
@@ -384,28 +364,18 @@ public class Layer
     /// <param name="bounds">The parsed layer bounds in PSD document coordinates.</param>
     /// <param name="isVisible">true when the layer is visible; otherwise, false.</param>
     /// <param name="opacity">The parsed opacity byte.</param>
-    /// <param name="flags">The original PSD layer flags byte.</param>
-    /// <param name="blendModeKey">The original 4-byte PSD blend mode key.</param>
     /// <param name="clipping">The parsed clipping value.</param>
-    /// <param name="blendMode">The public blend mode mapped from <paramref name="blendModeKey"/>.</param>
-    /// <param name="channelInfo">The parsed layer channel metadata.</param>
-    /// <param name="layerMaskData">The raw layer mask subsection.</param>
-    /// <param name="blendingRangesData">The raw blending ranges subsection.</param>
-    /// <param name="additionalLayerData">The additional layer data bytes after the Pascal layer name.</param>
+    /// <param name="blendMode">The public blend mode mapped from the raw PSD blend mode key.</param>
+    /// <param name="rawData">The raw PSD layer record data.</param>
     /// <returns>The parsed layer domain object.</returns>
     internal static Layer CreateParsed(
         string name,
         Rectangle bounds,
         bool isVisible,
         byte opacity,
-        byte flags,
-        string blendModeKey,
         byte clipping,
         BlendMode blendMode,
-        LayerChannelInfo[] channelInfo,
-        RawLayerMaskSection layerMaskData,
-        RawLayerBlendingRangesSection blendingRangesData,
-        byte[] additionalLayerData)
+        LayerRawData rawData)
     {
         return new Layer
         {
@@ -413,14 +383,9 @@ public class Layer
             _bounds = bounds,
             _isVisible = isVisible,
             _opacity = opacity,
-            _flags = flags,
-            _blendModeKey = blendModeKey,
             _clipping = clipping,
             _blendMode = blendMode,
-            ChannelInfo = channelInfo,
-            _layerMaskData = layerMaskData,
-            _blendingRangesData = blendingRangesData,
-            _additionalLayerData = additionalLayerData
+            _rawData = rawData
         };
     }
 }

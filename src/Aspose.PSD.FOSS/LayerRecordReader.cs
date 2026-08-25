@@ -106,18 +106,21 @@ internal static class LayerRecordReader
         Rectangle bounds = Rectangle.FromLTRB(left, top, right, bottom);
         bool visible = (flags & LayerInvisibleFlag) == 0;
 
+        var rawData = new LayerRawData(
+            flags,
+            originalBlendModeKey,
+            channelInfoArray,
+            layerMaskData,
+            blendingRangesData,
+            additionalLayerData);
+
         return Layer.CreateParsed(
             layerName,
             bounds,
             visible,
             opacity,
-            flags,
-            originalBlendModeKey,
             clipping,
             blendMode,
-            channelInfoArray,
-            layerMaskData,
-            blendingRangesData,
-            additionalLayerData);
+            rawData);
     }
 }

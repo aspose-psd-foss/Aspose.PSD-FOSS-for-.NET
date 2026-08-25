@@ -27,29 +27,29 @@ public sealed class PsdImage : Image
     /// <summary>
     /// Gets the document width in pixels.
     /// </summary>
-    public override int Width => _header?.Width ?? 0;
+    public override int Width => _document.Header?.Width ?? 0;
 
     /// <summary>
     /// Gets the document height in pixels.
     /// </summary>
-    public override int Height => _header?.Height ?? 0;
+    public override int Height => _document.Header?.Height ?? 0;
 
     /// <summary>
     /// Gets the document channel count from the PSD header.
     /// </summary>
-    internal int Channels => _header?.Channels ?? 0;
+    internal int Channels => _document.Header?.Channels ?? 0;
 
     /// <summary>
     /// Gets the number of bits stored per channel.
     /// </summary>
-    public int BitsPerChannel => _header?.BitDepth ?? 0;
+    public int BitsPerChannel => _document.Header?.BitDepth ?? 0;
 
     /// <summary>
     /// Gets the PSD color mode reported by the header.
     /// </summary>
     public ColorModes ColorMode
     {
-        get => _header?.ColorMode ?? ColorModes.Rgb;
+        get => _document.Header?.ColorMode ?? ColorModes.Rgb;
         set => Header.SetColorMode(value);
     }
 
@@ -58,19 +58,19 @@ public sealed class PsdImage : Image
     /// </summary>
     public int Version
     {
-        get => _header?.Version ?? (int)PsdVersion.Psd;
+        get => _document.Header?.Version ?? (int)PsdVersion.Psd;
         set => Header.SetVersion(value);
     }
 
     /// <summary>
     /// Gets the parsed PSD/PSB header object.
     /// </summary>
-    internal PsdHeader Header => _header ?? throw new InvalidOperationException("PSD/PSB header is not loaded.");
+    internal PsdHeader Header => _document.Header ?? throw new InvalidOperationException("PSD/PSB header is not loaded.");
 
     /// <summary>
     /// Gets a value indicating whether the loaded document uses the PSB large-document container.
     /// </summary>
-    internal bool IsLargeDocument => _header?.IsLargeDocument == true;
+    internal bool IsLargeDocument => _document.Header?.IsLargeDocument == true;
 
     /// <summary>
     /// Gets a value indicating whether the loaded document is a PSB file; this is equivalent to <see cref="IsLargeDocument"/>.
@@ -82,8 +82,8 @@ public sealed class PsdImage : Image
     /// </summary>
     public Layer[] Layers
     {
-        get => _layerAndMaskSection.Layers.ToArray();
-        set => _layerAndMaskSection = _layerAndMaskSection.WithLayers(value ?? []);
+        get => _document.LayerAndMaskSection.Layers.ToArray();
+        set => _document = _document.WithLayerAndMaskSection(_document.LayerAndMaskSection.WithLayers(value ?? []));
     }
 
     /// <summary>
@@ -113,24 +113,24 @@ public sealed class PsdImage : Image
     /// <summary>
     /// Gets a value indicating whether the document contains at least one parsed layer.
     /// </summary>
-    internal bool HasLayers => _layerAndMaskSection.Layers.Length > 0;
+    internal bool HasLayers => _document.LayerAndMaskSection.Layers.Length > 0;
 
     /// <summary>
     /// Gets a value indicating whether the document contains any parsed image resources.
     /// </summary>
-    internal bool HasImageResources => _imageResourcesSection.HasResources;
+    internal bool HasImageResources => _document.ImageResourcesSection.HasResources;
 
     /// <summary>
     /// Gets the number of parsed image resource blocks.
     /// </summary>
-    internal int ResourceCount => _imageResourcesSection.Resources.Length;
+    internal int ResourceCount => _document.ImageResourcesSection.Resources.Length;
 
     /// <summary>
     /// Gets or sets the PSD image resources.
     /// </summary>
     public ResourceBlock[] ImageResources
     {
-        get => _imageResourcesSection.Resources.Select(resource => new PreservedResourceBlock(resource)).Cast<ResourceBlock>().ToArray();
+        get => _document.ImageResourcesSection.Resources.Select(resource => new PreservedResourceBlock(resource)).Cast<ResourceBlock>().ToArray();
         set => throw new NotSupportedException("Changing image resources is not supported by this FOSS build.");
     }
 
@@ -151,7 +151,7 @@ public sealed class PsdImage : Image
     /// <summary>
     /// Gets a value indicating whether the PSD image is flattened.
     /// </summary>
-    public bool IsFlatten => _layerAndMaskSection.Layers.Length == 0;
+    public bool IsFlatten => _document.LayerAndMaskSection.Layers.Length == 0;
 
     /// <summary>
     /// Gets or sets a value indicating whether first alpha channel contains the transparency data for the merged result when specifying layers data.
@@ -165,17 +165,17 @@ public sealed class PsdImage : Image
     /// <summary>
     /// Gets a read-only summary of the parsed image resource blocks.
     /// </summary>
-    internal IReadOnlyList<PsdResourceInfo> Resources => _imageResourcesSection.Resources.Select(resource => resource.ToPublicInfo()).ToArray();
+    internal IReadOnlyList<PsdResourceInfo> Resources => _document.ImageResourcesSection.Resources.Select(resource => resource.ToPublicInfo()).ToArray();
 
     /// <summary>
     /// Gets a value indicating whether the document contains Color Mode Data bytes.
     /// </summary>
-    internal bool HasColorModeData => _colorData.RawData.Length > 0;
+    internal bool HasColorModeData => _document.ColorData.RawData.Length > 0;
 
     /// <summary>
     /// Gets a read-only summary of the parsed Color Mode Data section.
     /// </summary>
-    internal PsdColorDataInfo ColorDataInfo => _colorData.ToPublicInfo();
+    internal PsdColorDataInfo ColorDataInfo => _document.ColorData.ToPublicInfo();
 
     /// <summary>
     /// Gets the parsed indexed palette summary, when the Color Mode Data section contains one.
@@ -185,27 +185,27 @@ public sealed class PsdImage : Image
     /// <summary>
     /// Gets a value indicating whether the document contains merged image data payload bytes.
     /// </summary>
-    internal bool HasMergedImageData => _imageData.RawData.Length > 0;
+    internal bool HasMergedImageData => _document.ImageData.RawData.Length > 0;
 
     /// <summary>
     /// Gets the compression method used by the merged image data section.
     /// </summary>
-    public CompressionMethod Compression => _imageData.Compression;
+    public CompressionMethod Compression => _document.ImageData.Compression;
 
     /// <summary>
     /// Gets a read-only summary of the parsed merged image data structure.
     /// </summary>
-    internal PsdImageDataInfo ImageDataInfo => _imageData.ToPublicInfo();
+    internal PsdImageDataInfo ImageDataInfo => _document.ImageData.ToPublicInfo();
 
     /// <summary>
     /// Gets the structural kind of the merged image data payload.
     /// </summary>
-    internal ImageDataKind ImageDataKind => _imageData.Structure.Kind;
+    internal ImageDataKind ImageDataKind => _document.ImageData.Structure.Kind;
 
     /// <summary>
     /// Gets a value indicating whether ZIP prediction is used by the merged image data payload.
     /// </summary>
-    internal bool UsesPrediction => _imageData.Structure.UsesPrediction;
+    internal bool UsesPrediction => _document.ImageData.Structure.UsesPrediction;
 
     /// <summary>
     /// Gets the parsed global angle from the image resources, when present.
@@ -228,37 +228,17 @@ public sealed class PsdImage : Image
     /// <summary>
     /// Gets the parsed color mode data details for internal verification and tests.
     /// </summary>
-    internal ColorData ParsedColorData => _colorData;
+    internal ColorData ParsedColorData => _document.ColorData;
 
     /// <summary>
     /// Gets the parsed image resources for internal verification and tests.
     /// </summary>
-    internal UnknownResource[] ParsedResources => _imageResourcesSection.Resources;
+    internal UnknownResource[] ParsedResources => _document.ImageResourcesSection.Resources;
 
     /// <summary>
-    /// Stores the parsed PSD header.
+    /// Stores the parsed PSD/PSB document sections.
     /// </summary>
-    private PsdHeader? _header;
-
-    /// <summary>
-    /// Stores the parsed Color Mode Data section.
-    /// </summary>
-    private ColorData _colorData = ColorData.Empty;
-
-    /// <summary>
-    /// Stores the parsed and raw-preserved Image Resources section.
-    /// </summary>
-    private ImageResourcesSection _imageResourcesSection = ImageResourcesSection.Empty;
-
-    /// <summary>
-    /// Stores the parsed and raw-preserved Layer and Mask Information section.
-    /// </summary>
-    private LayerAndMaskSection _layerAndMaskSection = LayerAndMaskSection.Empty;
-
-    /// <summary>
-    /// Stores the parsed Image Data section.
-    /// </summary>
-    private ImageData _imageData = new(CompressionMethod.Raw, []);
+    private PsdImageDocumentState _document = PsdImageDocumentState.Empty;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PsdImage"/> class over an internal working stream.
@@ -326,83 +306,8 @@ public sealed class PsdImage : Image
     private static PsdImage Load(Stream stream, bool leaveOpen)
     {
         var image = new PsdImage(stream, leaveOpen);
-        image.LoadInternal();
+        image._document = PsdImageLoader.Load(stream, leaveOpen);
         return image;
-    }
-
-    /// <summary>
-    /// Loads all supported PSD/PSB sections into memory.
-    /// </summary>
-    private void LoadInternal()
-    {
-        if (_header != null) return;
-
-        var reader = new BigEndianReader(_stream, _leaveOpen);
-        try
-        {
-            _header = PsdHeader.Load(reader);
-
-            LoadColorData(reader);
-            LoadResources(reader);
-            LoadLayerAndMaskInfo(reader);
-            LoadImageData(reader);
-        }
-        catch (PsdLoadException)
-        {
-            throw;
-        }
-        catch (EndOfStreamException exception)
-        {
-            throw new PsdLoadException("Unexpected end of PSD/PSB data while reading the file structure.", exception);
-        }
-        catch (IOException exception)
-        {
-            throw new PsdLoadException("Failed to read PSD/PSB data from the source stream.", exception);
-        }
-        finally
-        {
-            reader.Dispose();
-        }
-    }
-
-    /// <summary>
-    /// Loads the raw Color Mode Data section.
-    /// </summary>
-    /// <param name="reader">The reader positioned at the section length field.</param>
-    private void LoadColorData(BigEndianReader reader)
-    {
-        _colorData = ColorData.Load(reader, ColorMode);
-    }
-
-    /// <summary>
-    /// Loads the Image Resources section and preserves its raw payload for round-trip saves.
-    /// </summary>
-    /// <param name="reader">The reader positioned at the section length field.</param>
-    private void LoadResources(BigEndianReader reader)
-    {
-        _imageResourcesSection = ImageResourcesSection.Load(reader);
-    }
-
-    /// <summary>
-    /// Loads the Layer and Mask Information section and splits it into parsed and raw-preserved parts.
-    /// </summary>
-    /// <param name="reader">The reader positioned at the section length field.</param>
-    private void LoadLayerAndMaskInfo(BigEndianReader reader)
-    {
-        _layerAndMaskSection = LayerAndMaskSection.Load(reader, _header?.IsLargeDocument == true);
-    }
-
-    /// <summary>
-    /// Loads the final Image Data section as raw bytes after reading the compression field.
-    /// </summary>
-    /// <param name="reader">The reader positioned at the image data compression field.</param>
-    private void LoadImageData(BigEndianReader reader)
-    {
-        _imageData = ImageData.Load(
-            reader,
-            _header?.IsLargeDocument == true,
-            Height,
-            Channels);
     }
 
     /// <summary>
@@ -436,65 +341,7 @@ public sealed class PsdImage : Image
     {
         if (_disposed) throw new ObjectDisposedException(nameof(PsdImage));
 
-        var writer = new BigEndianWriter(stream, leaveOpen);
-        try
-        {
-            writer.Write((uint)PsdHeader.PsdSignature);
-            WriteHeader(writer);
-            WriteColorData(writer);
-            WriteResources(writer);
-            WriteLayerAndMaskInfo(writer);
-            WriteImageData(writer);
-        }
-        finally
-        {
-            writer.Dispose();
-        }
-    }
-
-    /// <summary>
-    /// Writes the fixed PSD/PSB header block.
-    /// </summary>
-    /// <param name="writer">The destination writer.</param>
-    private void WriteHeader(BigEndianWriter writer)
-    {
-        _header?.Save(writer);
-    }
-
-    /// <summary>
-    /// Writes the Color Mode Data section.
-    /// </summary>
-    /// <param name="writer">The destination writer.</param>
-    private void WriteColorData(BigEndianWriter writer)
-    {
-        _colorData.Save(writer);
-    }
-
-    /// <summary>
-    /// Writes the Image Resources section using either raw-preserved data or parsed resource blocks.
-    /// </summary>
-    /// <param name="writer">The destination writer.</param>
-    private void WriteResources(BigEndianWriter writer)
-    {
-        _imageResourcesSection.Save(writer);
-    }
-
-    /// <summary>
-    /// Writes the Layer and Mask Information section.
-    /// </summary>
-    /// <param name="writer">The destination writer.</param>
-    private void WriteLayerAndMaskInfo(BigEndianWriter writer)
-    {
-        _layerAndMaskSection.Save(writer, _header?.IsLargeDocument == true);
-    }
-
-    /// <summary>
-    /// Writes the final Image Data section.
-    /// </summary>
-    /// <param name="writer">The destination writer.</param>
-    private void WriteImageData(BigEndianWriter writer)
-    {
-        _imageData.Save(writer);
+        PsdImageWriter.Save(_document, stream, leaveOpen);
     }
 
     /// <summary>
