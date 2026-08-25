@@ -52,18 +52,7 @@ public class Layer
     /// <summary>
     /// Gets the layer rectangle in PSD document coordinates.
     /// </summary>
-    public Rectangle Bounds
-    {
-        get => _bounds;
-        set
-        {
-            if (_bounds != value)
-            {
-                _bounds = value;
-                HasMutated = true;
-            }
-        }
-    }
+    public Rectangle Bounds => _bounds;
 
     /// <summary>
     /// Stores the current layer bounds in document coordinates.
@@ -90,7 +79,7 @@ public class Layer
         {
             if (Bounds.Top != value)
             {
-                Bounds = Rectangle.FromLTRB(Bounds.Left, value, Bounds.Right, Bounds.Bottom);
+                SetBounds(Rectangle.FromLTRB(Bounds.Left, value, Bounds.Right, Bounds.Bottom));
             }
         }
     }
@@ -105,7 +94,7 @@ public class Layer
         {
             if (Bounds.Left != value)
             {
-                Bounds = Rectangle.FromLTRB(value, Bounds.Top, Bounds.Right, Bounds.Bottom);
+                SetBounds(Rectangle.FromLTRB(value, Bounds.Top, Bounds.Right, Bounds.Bottom));
             }
         }
     }
@@ -120,7 +109,7 @@ public class Layer
         {
             if (Bounds.Bottom != value)
             {
-                Bounds = Rectangle.FromLTRB(Bounds.Left, Bounds.Top, Bounds.Right, value);
+                SetBounds(Rectangle.FromLTRB(Bounds.Left, Bounds.Top, Bounds.Right, value));
             }
         }
     }
@@ -135,7 +124,7 @@ public class Layer
         {
             if (Bounds.Right != value)
             {
-                Bounds = Rectangle.FromLTRB(Bounds.Left, Bounds.Top, value, Bounds.Bottom);
+                SetBounds(Rectangle.FromLTRB(Bounds.Left, Bounds.Top, value, Bounds.Bottom));
             }
         }
     }
@@ -192,23 +181,6 @@ public class Layer
     private byte _clipping;
 
     /// <summary>
-    /// Gets the PSD blend mode exposed by the layer record.
-    /// </summary>
-    public BlendMode BlendMode
-    {
-        get => _blendMode;
-        set
-        {
-            if (_blendMode != value)
-            {
-                _blendMode = value;
-                _rawData = _rawData.WithBlendModeKey(LayerBlendModeMapper.GetBlendModeKey(value));
-                HasMutated = true;
-            }
-        }
-    }
-
-    /// <summary>
     /// Stores the PSD blend mode exposed by the layer record.
     /// </summary>
     private BlendMode _blendMode;
@@ -219,13 +191,8 @@ public class Layer
     public BlendMode BlendModeKey
     {
         get => _blendMode;
-        set => BlendMode = value;
+        set => SetBlendModeKey(value);
     }
-
-    /// <summary>
-    /// Gets the original raw 4-byte PSD blend mode key for diagnostics and raw-preserve verification.
-    /// </summary>
-    public string RawBlendModeKey => _rawData.BlendModeKey;
 
     /// <summary>
     /// Gets the layer's channels count.
@@ -255,11 +222,6 @@ public class Layer
     /// Gets a value indicating whether the layer contains a non-empty blending ranges subsection.
     /// </summary>
     internal bool HasBlendingRangesData => _rawData.BlendingRangesSection.RawData.Length > sizeof(uint);
-
-    /// <summary>
-    /// Gets a value indicating whether the layer contains trailing opaque additional layer data.
-    /// </summary>
-    public bool HasAdditionalLayerData => _rawData.AdditionalLayerData.Length > 0;
 
     /// <summary>
     /// Gets a read-only summary of the parsed layer mask subsection.
@@ -303,7 +265,7 @@ public class Layer
                 return null;
             }
 
-            throw new NotSupportedException("Semantic layer mask data is not supported by this FOSS build.");
+            return new LayerMaskDataShort();
         }
 
         set => throw new NotSupportedException("Changing layer mask data is not supported by this FOSS build.");
@@ -324,6 +286,11 @@ public class Layer
     internal byte[] AdditionalLayerData => _rawData.AdditionalLayerData;
 
     /// <summary>
+    /// Gets the original raw 4-byte PSD blend mode key for diagnostics and raw-preserve verification.
+    /// </summary>
+    internal string RawBlendModeKey => _rawData.BlendModeKey;
+
+    /// <summary>
     /// Gets a value indicating whether the layer has a pending in-memory mutation.
     /// </summary>
     internal bool HasMutated { get; private set; }
@@ -334,6 +301,33 @@ public class Layer
     internal void MarkMutated()
     {
         HasMutated = true;
+    }
+
+    /// <summary>
+    /// Updates the layer bounds from coordinate property setters.
+    /// </summary>
+    /// <param name="bounds">The replacement bounds.</param>
+    private void SetBounds(Rectangle bounds)
+    {
+        if (_bounds != bounds)
+        {
+            _bounds = bounds;
+            HasMutated = true;
+        }
+    }
+
+    /// <summary>
+    /// Updates the PSD blend mode key.
+    /// </summary>
+    /// <param name="blendMode">The replacement blend mode key.</param>
+    private void SetBlendModeKey(BlendMode blendMode)
+    {
+        if (_blendMode != blendMode)
+        {
+            _blendMode = blendMode;
+            _rawData = _rawData.WithBlendModeKey(LayerBlendModeMapper.GetBlendModeKey(blendMode));
+            HasMutated = true;
+        }
     }
 
     /// <summary>

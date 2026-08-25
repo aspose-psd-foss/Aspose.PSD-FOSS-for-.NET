@@ -82,7 +82,7 @@ public sealed class LayerSectionTests : PsdTestFixtureBase
         Assert.That(firstLayer.RawBlendModeKey, Has.Length.EqualTo(4));
         Assert.That(firstLayer.LayerMaskData, Is.Null);
         Assert.That(firstLayer.LayerBlendingRangesData.Length, Is.EqualTo(firstLayer.BlendingRangesInfo.RawDataLength));
-        Assert.That(firstLayer.HasAdditionalLayerData, Is.True);
+        Assert.That(firstLayer.AdditionalLayerData, Is.Not.Empty);
     }
 
 
@@ -96,12 +96,11 @@ public sealed class LayerSectionTests : PsdTestFixtureBase
         string outputFile = GetPersistentArtifactPath("layer_blend_mode_test.psd");
 
         using var image = PsdImage.Load(testFile);
-        image.Layers[0].BlendMode = BlendMode.Multiply;
+        image.Layers[0].BlendModeKey = BlendMode.Multiply;
         image.Save(outputFile);
         LogArtifactDirectory(outputFile);
 
         using var reloaded = PsdImage.Load(outputFile);
-        Assert.That(reloaded.Layers[0].BlendMode, Is.EqualTo(BlendMode.Multiply));
         Assert.That(reloaded.Layers[0].BlendModeKey, Is.EqualTo(BlendMode.Multiply));
 
         byte[] originalBytes = File.ReadAllBytes(testFile);
@@ -144,7 +143,10 @@ public sealed class LayerSectionTests : PsdTestFixtureBase
 
         using var image = PsdImage.Load(testFile);
         Rectangle newBounds = Rectangle.FromLeftTopRightBottom(10, 20, 40, 60);
-        image.Layers[0].Bounds = newBounds;
+        image.Layers[0].Left = newBounds.Left;
+        image.Layers[0].Top = newBounds.Top;
+        image.Layers[0].Right = newBounds.Right;
+        image.Layers[0].Bottom = newBounds.Bottom;
         image.Save(outputFile);
         LogArtifactDirectory(outputFile);
 
@@ -180,7 +182,7 @@ public sealed class LayerSectionTests : PsdTestFixtureBase
     /// Tests that a synthetic PSB fixture with one layer record loads expected layer metadata.
     /// </summary>
     [Test]
-    public void Load_PsbLayerRecord_ReadsMetadata()
+    public void Load_PsbLayerRecord_Reads()
     {
         using var stream = new MemoryStream(BuildPsbLayerRecordBytes());
         using var reader = new BigEndianReader(stream, leaveOpen: true);

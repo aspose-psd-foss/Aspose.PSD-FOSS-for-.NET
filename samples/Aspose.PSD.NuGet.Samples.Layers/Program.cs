@@ -1,13 +1,13 @@
 // Description:
 // This sample loads a PSD/PSB document and prints supported layer metadata
-// using the latest Aspose.PSD NuGet package.
+// using the supported Aspose.PSD-compatible public API subset.
 
 using Aspose.PSD;
 using Aspose.PSD.FileFormats.Psd;
 using Aspose.PSD.FileFormats.Psd.Layers;
 using Aspose.PSD.FOSS.Samples.Common;
 
-namespace Aspose.PSD.NuGet.Samples.Layers;
+namespace Aspose.PSD.Samples.Layers;
 
 /// <summary>
 /// Hosts the layer inspection sample entry point.
@@ -53,7 +53,7 @@ internal static class Program
     /// <param name="layerCount">The parsed layer count.</param>
     private static void PrintSampleDescription(string inputPath, int layerCount)
     {
-        Console.WriteLine("Aspose.PSD NuGet Layer Sample");
+        Console.WriteLine("Aspose.PSD Layer Sample");
         Console.WriteLine("Description: Loads a PSD/PSB file and prints supported layer metadata.");
         Console.WriteLine($"Input: {inputPath}");
         Console.WriteLine($"LayerCount: {layerCount}");
@@ -92,7 +92,7 @@ internal static class Program
     /// </summary>
     private static void PrintUsage()
     {
-        Console.WriteLine("Usage: dotnet run --project samples/Aspose.PSD.NuGet.Samples.Layers -- [input.psd]");
+        Console.WriteLine("Usage: dotnet run --project <sample-project> -- [input.psd]");
         Console.WriteLine("Description: Prints supported layer metadata.");
         Console.WriteLine("If no input path is provided, the sample tries to use the repository test fixture.");
     }

@@ -64,7 +64,6 @@ foreach (Layer layer in image.Layers)
     Console.WriteLine(layer.BlendModeKey);
     Console.WriteLine(layer.IsVisible);
     Console.WriteLine(layer.Opacity);
-    Console.WriteLine(layer.BlendMode);
 }
 ```
 
@@ -80,7 +79,7 @@ using var image = (PsdImage)Image.Load("input.psd");
 image.Layers[0].Name = "Updated layer";
 image.Layers[0].IsVisible = false;
 image.Layers[0].Opacity = 128;
-image.Layers[0].BlendMode = BlendMode.Multiply;
+image.Layers[0].BlendModeKey = BlendMode.Multiply;
 image.Layers[0].Clipping = 1;
 image.Save("output.psd");
 ```
@@ -90,6 +89,7 @@ image.Save("output.psd");
 - Read the developer guide to see the full supported workflow surface.
 - Read the limitations page before assuming support for broader Photoshop features.
 - Run the sample projects for end-to-end examples of inspection, editing, and stream-based usage.
+- Use the paired FOSS and NuGet sample projects when checking whether the same application source compiles against both libraries; each matching `Program.cs` must stay identical.
 
 ## Next Steps
 

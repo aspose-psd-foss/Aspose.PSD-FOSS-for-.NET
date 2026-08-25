@@ -8,8 +8,8 @@ This page is the contract for what a new developer should assume about the proje
 - Load the currently supported PSB subset
 - Read document properties from the PSD/PSB header
 - Read additional structural metadata from image resources, color mode data, merged image data, and layer subsections
-- Read layer name, bounds, derived geometry, visibility, opacity, clipping, blend mode, blend mode key, and channel summaries
-- Change layer name, visibility, opacity, clipping, blend mode, and layer geometry
+- Read layer name, bounds, derived geometry, visibility, opacity, clipping, blend mode key, and channel summaries
+- Change layer name, visibility, opacity, clipping, blend mode key, and layer geometry through coordinate properties
 - Save without rendering
 - Preserve unsupported sections as raw bytes where possible
 

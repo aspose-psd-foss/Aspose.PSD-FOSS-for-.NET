@@ -1,12 +1,12 @@
 // Description:
 // This sample demonstrates Load(Stream) and Save(Stream) by round-tripping
-// a PSD/PSB document through in-memory streams using the latest Aspose.PSD NuGet package.
+// a PSD/PSB document through in-memory streams without rendering.
 
 using Aspose.PSD;
 using Aspose.PSD.FileFormats.Psd;
 using Aspose.PSD.FOSS.Samples.Common;
 
-namespace Aspose.PSD.NuGet.Samples.Streams;
+namespace Aspose.PSD.Samples.Streams;
 
 /// <summary>
 /// Hosts the stream round-trip sample entry point.
@@ -26,7 +26,7 @@ internal static class Program
             return;
         }
 
-        string outputPath = SamplePathHelper.ResolveOutputPath(args, 1, "streams-nuget-sample-output.psd");
+        string outputPath = SamplePathHelper.ResolveOutputPath(args, 1, "streams-sample-output.psd");
         RunStreamRoundTrip(inputPath, outputPath);
     }
 
@@ -69,7 +69,7 @@ internal static class Program
         long originalPosition,
         long currentPosition)
     {
-        Console.WriteLine("Aspose.PSD NuGet Stream Sample");
+        Console.WriteLine("Aspose.PSD Stream Sample");
         Console.WriteLine("Description: Demonstrates Load(Stream) and Save(Stream) using an in-memory round-trip without rendering.");
         Console.WriteLine($"Input: {inputPath}");
         Console.WriteLine($"Output: {outputPath}");
@@ -84,7 +84,7 @@ internal static class Program
     /// </summary>
     private static void PrintUsage()
     {
-        Console.WriteLine("Usage: dotnet run --project samples/Aspose.PSD.NuGet.Samples.Streams -- [input.psd] [output.psd]");
+        Console.WriteLine("Usage: dotnet run --project <sample-project> -- [input.psd] [output.psd]");
         Console.WriteLine("Description: Loads a PSD/PSB from a stream and saves it to another stream using an in-memory round-trip.");
         Console.WriteLine("If no input path is provided, the sample tries to use the repository test fixture.");
     }

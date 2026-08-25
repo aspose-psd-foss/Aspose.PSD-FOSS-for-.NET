@@ -1,6 +1,6 @@
 // Description:
 // This sample applies supported non-rendering edits to layer metadata
-// and saves the updated PSD/PSB document while preserving unsupported raw sections.
+// and saves the updated PSD/PSB document.
 
 using Aspose.PSD;
 using Aspose.PSD.FileFormats.Core.Blending;
@@ -8,7 +8,7 @@ using Aspose.PSD.FileFormats.Psd;
 using Aspose.PSD.FileFormats.Psd.Layers;
 using Aspose.PSD.FOSS.Samples.Common;
 
-namespace Aspose.PSD.FOSS.Samples.StructuralEditing;
+namespace Aspose.PSD.Samples.StructuralEditing;
 
 /// <summary>
 /// Hosts the structural editing sample entry point.
@@ -71,8 +71,8 @@ internal static class Program
     /// <param name="layerCount">The parsed layer count.</param>
     private static void PrintSampleDescription(string inputPath, string outputPath, int layerCount)
     {
-        Console.WriteLine("Aspose.PSD.FOSS Structural Editing Sample");
-        Console.WriteLine("Description: Applies supported non-rendering edits to layer metadata and saves the document while preserving unsupported raw sections.");
+        Console.WriteLine("Aspose.PSD Structural Editing Sample");
+        Console.WriteLine("Description: Applies supported non-rendering edits to layer metadata and saves the document.");
         Console.WriteLine($"Input: {inputPath}");
         Console.WriteLine($"Output: {outputPath}");
         Console.WriteLine($"LayerCount: {layerCount}");
@@ -89,10 +89,8 @@ internal static class Program
         layer.IsVisible = !layer.IsVisible;
         layer.Opacity = layer.Opacity == byte.MaxValue ? (byte)128 : byte.MaxValue;
         layer.Clipping = layer.Clipping == 0 ? (byte)1 : (byte)0;
-        layer.BlendMode = layer.BlendMode == BlendMode.Normal ? BlendMode.Multiply : BlendMode.Normal;
+        layer.BlendModeKey = layer.BlendModeKey == BlendMode.Normal ? BlendMode.Multiply : BlendMode.Normal;
 
-        Rectangle expandedBounds = Rectangle.FromLeftTopRightBottom(layer.Left, layer.Top, layer.Right + 1, layer.Bottom);
-        layer.Bounds = expandedBounds;
         layer.Left += 1;
         layer.Top += 1;
         layer.Bottom += 1;
@@ -108,7 +106,6 @@ internal static class Program
         Console.WriteLine($"  IsVisible: {layer.IsVisible}");
         Console.WriteLine($"  Opacity: {layer.Opacity}");
         Console.WriteLine($"  Clipping: {layer.Clipping}");
-        Console.WriteLine($"  BlendMode: {layer.BlendMode}");
         Console.WriteLine($"  BlendModeKey: {layer.BlendModeKey}");
         Console.WriteLine($"  Bounds: {layer.Bounds}");
         Console.WriteLine($"  Top: {layer.Top}");
@@ -123,7 +120,7 @@ internal static class Program
     /// </summary>
     private static void PrintUsage()
     {
-        Console.WriteLine("Usage: dotnet run --project samples/Aspose.PSD.FOSS.Samples.StructuralEditing -- [input.psd] [output.psd]");
+        Console.WriteLine("Usage: dotnet run --project <sample-project> -- [input.psd] [output.psd]");
         Console.WriteLine("Description: Applies supported layer metadata edits and saves the result without any rendering pipeline.");
         Console.WriteLine("If no input path is provided, the sample tries to use the repository test fixture.");
     }

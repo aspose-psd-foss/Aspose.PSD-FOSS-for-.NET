@@ -14,7 +14,7 @@ public sealed class ImageResourcesSectionTests : PsdTestFixtureBase
     /// Tests that image resources are loaded as unknown blocks without ID-specific semantics.
     /// </summary>
     [Test]
-    public void Load_Resources_ParseUnknownBlocks()
+    public void Load_Resources_ReadsBlocks()
     {
         byte[] resourcesPayload = BuildResourcesPayload(
             (ImageResourceIds.GlobalAngle, "glba", [0x00, 0x00, 0x00, 0x2D]),
@@ -45,7 +45,7 @@ public sealed class ImageResourcesSectionTests : PsdTestFixtureBase
     /// Tests that saving a document with image resources preserves the raw Image Resources section bytes.
     /// </summary>
     [Test]
-    public void Save_Resources_PreserveRawSection()
+    public void Save_Resources_PreservesRaw()
     {
         string testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd");
         byte[] originalBytes = File.ReadAllBytes(testFile);
@@ -71,7 +71,7 @@ public sealed class ImageResourcesSectionTests : PsdTestFixtureBase
     /// Tests that the resources fixture exposes unknown resource summaries and expected layer presence.
     /// </summary>
     [Test]
-    public void Load_ResourcesFixture_ReadsSummaries()
+    public void Load_ResourcesFixture_Reads()
     {
         using var image = PsdImage.Load(GetTestDataPath("resources.psd"));
 
@@ -86,7 +86,7 @@ public sealed class ImageResourcesSectionTests : PsdTestFixtureBase
     /// Tests that saving the resources fixture preserves the raw Image Resources section bytes.
     /// </summary>
     [Test]
-    public void Save_ResourcesFixture_PreservesRaw()
+    public void Save_ResourcesFixture_Raw()
     {
         string testFile = GetTestDataPath("resources.psd");
         byte[] originalBytes = File.ReadAllBytes(testFile);

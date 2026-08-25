@@ -85,7 +85,7 @@ public sealed class ColorDataTests : PsdTestFixtureBase
     /// Tests that the basic indexed fixture exposes indexed color mode data and palette metadata.
     /// </summary>
     [Test]
-    public void Load_IndexedFixture_ReadsColorData()
+    public void Load_IndexedFixture_ReadsData()
     {
         using var image = PsdImage.Load(GetTestDataPath("basic-indexed.psd"));
 

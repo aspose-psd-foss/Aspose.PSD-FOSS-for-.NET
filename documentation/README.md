@@ -22,6 +22,12 @@ Runnable sample projects are available in the repository `samples/` folder:
 - `Aspose.PSD.FOSS.Samples.Layers`
 - `Aspose.PSD.FOSS.Samples.StructuralEditing`
 - `Aspose.PSD.FOSS.Samples.Streams`
+- `Aspose.PSD.NuGet.Samples.Basic`
+- `Aspose.PSD.NuGet.Samples.Layers`
+- `Aspose.PSD.NuGet.Samples.StructuralEditing`
+- `Aspose.PSD.NuGet.Samples.Streams`
+
+The FOSS samples reference this project, while the NuGet samples reference the official `Aspose.PSD` package. Matching FOSS and NuGet `Program.cs` files must always remain identical; only the project files should differ.
 
 These samples map to the main supported workflows:
 

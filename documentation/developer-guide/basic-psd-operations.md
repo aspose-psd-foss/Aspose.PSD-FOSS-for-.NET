@@ -53,13 +53,11 @@ Supported layer metadata:
 - `IsVisible`
 - `Opacity`
 - `Clipping`
-- `BlendMode`
 - `BlendModeKey`
 - `ChannelsCount`
 - `ChannelInformation`
 - `LayerMaskData`
 - `LayerBlendingRangesData`
-- `HasAdditionalLayerData`
 
 Layer channel, mask, and blending-range DTOs are internal diagnostics, not public API.
 
@@ -70,9 +68,8 @@ The current product scope supports changing:
 - `Name`
 - `IsVisible`
 - `Opacity`
-- `BlendMode`
+- `BlendModeKey`
 - `Clipping`
-- `Bounds` (`Rectangle`)
 - `Top`
 - `Left`
 - `Bottom`

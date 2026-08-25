@@ -41,9 +41,9 @@ Do not use Aspose.PSD.FOSS when you need to:
 - Load PSD/PSB from file paths and streams
 - Read document properties: `Width`, `Height`, `ChannelsCount`, `BitsPerChannel`, `ColorMode`, `Version`
 - Read additional document metadata: `Size`, `Bounds`, `Compression`, `ImageResources`, `IsFlatten`
-- Read layer metadata: `Name`, `Bounds` `Rectangle`, `Width`, `Height`, `Top`, `Left`, `Bottom`, `Right`, `IsVisible`, `Opacity`, `Clipping`, `BlendMode`, `BlendModeKey`
+- Read layer metadata: `Name`, `Bounds` `Rectangle`, `Width`, `Height`, `Top`, `Left`, `Bottom`, `Right`, `IsVisible`, `Opacity`, `Clipping`, `BlendModeKey`
 - Inspect supported official-style resource, channel, mask, and blending-range surfaces
-- Change `Name`, `IsVisible`, `Opacity`, `BlendMode`, `Clipping`, and layer geometry
+- Change `Name`, `IsVisible`, `Opacity`, `BlendModeKey`, `Clipping`, and layer geometry through coordinate properties
 - Save without rendering
 - Preserve unsupported sections as raw bytes where possible
 
@@ -97,14 +97,16 @@ foreach (Layer layer in image.Layers)
     Console.WriteLine(layer.BlendModeKey);
     Console.WriteLine(layer.IsVisible);
     Console.WriteLine(layer.Opacity);
-    Console.WriteLine(layer.BlendMode);
 }
 
 image.Layers[0].Name = "Updated layer";
 image.Layers[0].IsVisible = false;
-image.Layers[0].Bounds = Rectangle.FromLeftTopRightBottom(10, 20, 110, 120);
+image.Layers[0].Left = 10;
+image.Layers[0].Top = 20;
+image.Layers[0].Right = 110;
+image.Layers[0].Bottom = 120;
 image.Layers[0].Opacity = 128;
-image.Layers[0].BlendMode = BlendMode.Multiply;
+image.Layers[0].BlendModeKey = BlendMode.Multiply;
 image.Save("output.psd");
 ```
 
@@ -122,6 +124,14 @@ Runnable sample projects are available in the repository `samples/` folder:
 - `Aspose.PSD.FOSS.Samples.Layers`
 - `Aspose.PSD.FOSS.Samples.StructuralEditing`
 - `Aspose.PSD.FOSS.Samples.Streams`
+- `Aspose.PSD.NuGet.Samples.Basic`
+- `Aspose.PSD.NuGet.Samples.Layers`
+- `Aspose.PSD.NuGet.Samples.StructuralEditing`
+- `Aspose.PSD.NuGet.Samples.Streams`
+
+The `Aspose.PSD.FOSS.Samples.*` projects reference this FOSS library. The `Aspose.PSD.NuGet.Samples.*` projects run the same workflows against the official `Aspose.PSD` NuGet package.
+
+Each FOSS sample must have a fully analogous NuGet sample, and the matching `Program.cs` files must always remain identical. Keep only the project files different so the same application source can be validated against both libraries.
 
 Sample/workflow matrix:
 
@@ -139,6 +149,10 @@ dotnet run --project samples/Aspose.PSD.FOSS.Samples.Basic
 dotnet run --project samples/Aspose.PSD.FOSS.Samples.Layers
 dotnet run --project samples/Aspose.PSD.FOSS.Samples.StructuralEditing
 dotnet run --project samples/Aspose.PSD.FOSS.Samples.Streams
+dotnet run --project samples/Aspose.PSD.NuGet.Samples.Basic
+dotnet run --project samples/Aspose.PSD.NuGet.Samples.Layers
+dotnet run --project samples/Aspose.PSD.NuGet.Samples.StructuralEditing
+dotnet run --project samples/Aspose.PSD.NuGet.Samples.Streams
 ```
 
 If you do not pass an input file, the samples try to use the repository PSD test fixture.
@@ -158,7 +172,7 @@ Markdown documentation is available in the repository:
 - Load the currently supported PSB subset
 - Read document properties from the file header
 - Read supported high-level metadata from Color Mode Data, Image Resources, Layer and Mask Information, and merged image data
-- Change `Name`, `IsVisible`, `Opacity`, `BlendMode`, `Clipping`, and layer geometry
+- Change `Name`, `IsVisible`, `Opacity`, `BlendModeKey`, `Clipping`, and layer geometry through coordinate properties
 - Save PSD/PSB without rendering
 
 ## Out of Scope

@@ -6,7 +6,7 @@ using Aspose.PSD;
 using Aspose.PSD.FileFormats.Psd;
 using Aspose.PSD.FOSS.Samples.Common;
 
-namespace Aspose.PSD.FOSS.Samples.Basic;
+namespace Aspose.PSD.Samples.Basic;
 
 /// <summary>
 /// Hosts the document inspection sample entry point.
@@ -48,7 +48,7 @@ internal static class Program
     /// <param name="inputPath">The input PSD or PSB file path.</param>
     private static void PrintSampleDescription(string inputPath)
     {
-        Console.WriteLine("Aspose.PSD.FOSS Basic Sample");
+        Console.WriteLine("Aspose.PSD Basic Sample");
         Console.WriteLine("Description: Loads a PSD/PSB file and prints document-level metadata without rendering pixel data.");
         Console.WriteLine($"Input: {inputPath}");
         Console.WriteLine();
@@ -90,7 +90,7 @@ internal static class Program
     /// </summary>
     private static void PrintUsage()
     {
-        Console.WriteLine("Usage: dotnet run --project samples/Aspose.PSD.FOSS.Samples.Basic -- [input.psd]");
+        Console.WriteLine("Usage: dotnet run --project <sample-project> -- [input.psd]");
         Console.WriteLine("Description: Prints document-level metadata exposed by the compatible public API subset.");
         Console.WriteLine("If no input path is provided, the sample tries to use the repository test fixture.");
     }

@@ -1,6 +1,6 @@
 // Description:
 // This sample applies supported non-rendering edits to layer metadata
-// and saves the updated PSD/PSB document using the latest Aspose.PSD NuGet package.
+// and saves the updated PSD/PSB document.
 
 using Aspose.PSD;
 using Aspose.PSD.FileFormats.Core.Blending;
@@ -8,7 +8,7 @@ using Aspose.PSD.FileFormats.Psd;
 using Aspose.PSD.FileFormats.Psd.Layers;
 using Aspose.PSD.FOSS.Samples.Common;
 
-namespace Aspose.PSD.NuGet.Samples.StructuralEditing;
+namespace Aspose.PSD.Samples.StructuralEditing;
 
 /// <summary>
 /// Hosts the structural editing sample entry point.
@@ -28,7 +28,7 @@ internal static class Program
             return;
         }
 
-        string outputPath = SamplePathHelper.ResolveOutputPath(args, 1, "structural-editing-nuget-sample-output.psd");
+        string outputPath = SamplePathHelper.ResolveOutputPath(args, 1, "structural-editing-sample-output.psd");
         RunStructuralEditing(inputPath, outputPath);
     }
 
@@ -71,7 +71,7 @@ internal static class Program
     /// <param name="layerCount">The parsed layer count.</param>
     private static void PrintSampleDescription(string inputPath, string outputPath, int layerCount)
     {
-        Console.WriteLine("Aspose.PSD NuGet Structural Editing Sample");
+        Console.WriteLine("Aspose.PSD Structural Editing Sample");
         Console.WriteLine("Description: Applies supported non-rendering edits to layer metadata and saves the document.");
         Console.WriteLine($"Input: {inputPath}");
         Console.WriteLine($"Output: {outputPath}");
@@ -120,7 +120,7 @@ internal static class Program
     /// </summary>
     private static void PrintUsage()
     {
-        Console.WriteLine("Usage: dotnet run --project samples/Aspose.PSD.NuGet.Samples.StructuralEditing -- [input.psd] [output.psd]");
+        Console.WriteLine("Usage: dotnet run --project <sample-project> -- [input.psd] [output.psd]");
         Console.WriteLine("Description: Applies supported layer metadata edits and saves the result without any rendering pipeline.");
         Console.WriteLine("If no input path is provided, the sample tries to use the repository test fixture.");
     }

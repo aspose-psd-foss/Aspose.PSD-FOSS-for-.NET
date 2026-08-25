@@ -64,7 +64,7 @@ public sealed class AsposeCompatibilityTests : PsdTestFixtureBase
     /// Tests that official-style layer mask and blending range properties expose supported metadata and reject unsupported semantic rewrites.
     /// </summary>
     [Test]
-    public void LayerMask_OfficialShape_ReadsOnly()
+    public void LayerMask_OfficialShape_Reads()
     {
         using var image = (PsdImage)Image.Load(GetTestDataPath("test.psd"));
         Layer layer = image.Layers[0];
@@ -79,7 +79,7 @@ public sealed class AsposeCompatibilityTests : PsdTestFixtureBase
     /// Tests that the Aspose.PSD-compatible rectangle value types expose mutable location and size members.
     /// </summary>
     [Test]
-    public void Rectangle_MutableShape_UpdatesEdges()
+    public void Rectangle_MutableShape_Updates()
     {
         var rectangle = new Rectangle(new Point(10, 20), new Size(30, 40));
 
@@ -126,7 +126,7 @@ public sealed class AsposeCompatibilityTests : PsdTestFixtureBase
     /// Tests that official-style PSD image resource and document state properties expose the supported compatibility subset.
     /// </summary>
     [Test]
-    public void Resources_OfficialShape_ReadsOnly()
+    public void Resources_OfficialShape_Reads()
     {
         using var image = (PsdImage)Image.Load(GetTestDataPath("test.psd"));
 
@@ -161,7 +161,10 @@ public sealed class AsposeCompatibilityTests : PsdTestFixtureBase
         using (var image = (PsdImage)Image.Load(GetTestDataPath("test.psd")))
         {
             image.Layers[0].Name = "Official style";
-            image.Layers[0].Bounds = Rectangle.FromLeftTopRightBottom(10, 20, 40, 60);
+            image.Layers[0].Left = 10;
+            image.Layers[0].Top = 20;
+            image.Layers[0].Right = 40;
+            image.Layers[0].Bottom = 60;
             image.Layers[0].BlendModeKey = BlendMode.Multiply;
             image.Save(outputFile);
         }

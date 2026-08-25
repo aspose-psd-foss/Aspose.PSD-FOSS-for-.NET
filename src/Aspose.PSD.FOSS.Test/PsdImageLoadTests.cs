@@ -54,7 +54,7 @@ public sealed class PsdImageLoadTests : PsdTestFixtureBase
         Assert.That(firstLayer.Bounds, Is.Not.EqualTo(default(Rectangle)));
         Assert.That(firstLayer.IsVisible, Is.True);
         Assert.That(firstLayer.Opacity, Is.GreaterThanOrEqualTo(0).And.LessThanOrEqualTo(255));
-        Assert.That(firstLayer.BlendMode, Is.EqualTo(BlendMode.Normal));
+        Assert.That(firstLayer.BlendModeKey, Is.EqualTo(BlendMode.Normal));
 
         Assert.That(image.Layers[1].Name, Is.EqualTo("Pattern Fill 1"));
     }
@@ -151,7 +151,7 @@ public sealed class PsdImageLoadTests : PsdTestFixtureBase
     /// Tests that simple document-level inspection properties expose the parsed structural state.
     /// </summary>
     [Test]
-    public void Load_DocumentInspection_ReadsValues()
+    public void Load_DocInspection_Reads()
     {
         using var image = PsdImage.Load(Path.Combine(TestContext.CurrentContext.TestDirectory, "testdata", "test.psd"));
 

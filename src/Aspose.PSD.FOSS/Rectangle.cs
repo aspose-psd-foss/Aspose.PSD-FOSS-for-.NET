@@ -404,12 +404,12 @@ public struct Rectangle : IEquatable<Rectangle>
     }
 
     /// <summary>
-    /// Returns a compact coordinate representation.
+    /// Returns a string representation of this rectangle.
     /// </summary>
-    /// <returns>The coordinate representation.</returns>
+    /// <returns>The string representation.</returns>
     public override readonly string ToString()
     {
-        return $"Left={Left}, Top={Top}, Right={Right}, Bottom={Bottom}, Width={Width}, Height={Height}";
+        return $"{{X={X}, Y={Y}, Width={Width}, Height={Height}}}";
     }
 
     /// <summary>

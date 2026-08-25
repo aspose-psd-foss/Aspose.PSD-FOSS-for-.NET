@@ -147,12 +147,11 @@ public sealed class FixtureDocumentTests : PsdTestFixtureBase
         string outputFile = GetPersistentArtifactPath("layered_psb_blend_mode_test.psb");
 
         using var image = PsdImage.Load(testFile);
-        image.Layers[1].BlendMode = BlendMode.Multiply;
+        image.Layers[1].BlendModeKey = BlendMode.Multiply;
         image.Save(outputFile);
         LogArtifactDirectory(outputFile);
 
         using var reloaded = PsdImage.Load(outputFile);
-        Assert.That(reloaded.Layers[1].BlendMode, Is.EqualTo(BlendMode.Multiply));
         Assert.That(reloaded.Layers[1].BlendModeKey, Is.EqualTo(BlendMode.Multiply));
     }
 
@@ -170,7 +169,7 @@ public sealed class FixtureDocumentTests : PsdTestFixtureBase
         Assert.That(image.Layers[2].BlendModeKey, Is.EqualTo(BlendMode.LinearBurn));
         Assert.That(image.Layers[2].RawBlendModeKey, Is.EqualTo("lbrn"));
         Assert.That(image.Layers[3].Clipping, Is.EqualTo(1));
-        Assert.That(image.Layers[3].HasAdditionalLayerData, Is.True);
+        Assert.That(image.Layers[3].AdditionalLayerData, Is.Not.Empty);
     }
 
 
@@ -178,7 +177,7 @@ public sealed class FixtureDocumentTests : PsdTestFixtureBase
     /// Tests that changing clipping in the layer variants fixture persists after save and reload.
     /// </summary>
     [Test]
-    public void Save_LayerVariants_ChangesClipping()
+    public void Save_LayerVariants_Clipping()
     {
         string testFile = GetTestDataPath("layer-variants.psd");
         string outputFile = GetPersistentArtifactPath("layer_variants_clipping_test.psd");
