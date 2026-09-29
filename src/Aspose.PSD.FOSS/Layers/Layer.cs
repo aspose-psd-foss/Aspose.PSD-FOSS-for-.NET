@@ -1,0 +1,385 @@
+using Aspose.PSD.FileFormats.Core.Blending;
+using Aspose.PSD.FileFormats.Psd;
+using System.Linq;
+
+namespace Aspose.PSD.FileFormats.Psd.Layers;
+
+/// <summary>
+/// Represents a single PSD layer with basic metadata used by the FOSS library.
+/// </summary>
+public class Layer
+{
+    /// <summary>
+    /// Gets the fixed-size byte count of the layer record trailer fields.
+    /// </summary>
+    public const int LayerTrailerSize = 16;
+
+    /// <summary>
+    /// Stores the current layer name.
+    /// </summary>
+    private string _name = string.Empty;
+
+    /// <summary>
+    /// Stores the current layer visibility flag.
+    /// </summary>
+    private bool _isVisible = true;
+
+    /// <summary>
+    /// Stores the current layer opacity value.
+    /// </summary>
+    private byte _opacity = 255;
+
+    /// <summary>
+    /// Stores raw PSD layer record data required for byte-preserving saves.
+    /// </summary>
+    private LayerRawData _rawData = LayerRawData.Empty;
+
+    /// <summary>
+    /// Gets or sets the Pascal layer name stored in the layer record.
+    /// </summary>
+    public string Name
+    {
+        get => _name;
+        set
+        {
+            if (_name != value)
+            {
+                _name = value;
+                HasMutated = true;
+            }
+        }
+    }
+    /// <summary>
+    /// Gets the Aspose.PSD-compatible local layer rectangle.
+    /// </summary>
+    public Rectangle Bounds => new(0, 0, _bounds.Width, _bounds.Height);
+
+    /// <summary>
+    /// Stores the current layer bounds in document coordinates.
+    /// </summary>
+    private Rectangle _bounds;
+
+    /// <summary>
+    /// Gets the layer width in pixels.
+    /// </summary>
+    public int Width => _bounds.Width;
+
+    /// <summary>
+    /// Gets the layer height in pixels.
+    /// </summary>
+    public int Height => _bounds.Height;
+
+    /// <summary>
+    /// Gets the top edge of the layer bounds.
+    /// </summary>
+    public int Top
+    {
+        get => _bounds.Top;
+        set
+        {
+            if (_bounds.Top != value)
+            {
+                SetBounds(Rectangle.FromLTRB(_bounds.Left, value, _bounds.Right, _bounds.Bottom));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the left edge of the layer bounds.
+    /// </summary>
+    public int Left
+    {
+        get => _bounds.Left;
+        set
+        {
+            if (_bounds.Left != value)
+            {
+                SetBounds(Rectangle.FromLTRB(value, _bounds.Top, _bounds.Right, _bounds.Bottom));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the bottom edge of the layer bounds.
+    /// </summary>
+    public int Bottom
+    {
+        get => _bounds.Bottom;
+        set
+        {
+            if (_bounds.Bottom != value)
+            {
+                SetBounds(Rectangle.FromLTRB(_bounds.Left, _bounds.Top, _bounds.Right, value));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the right edge of the layer bounds.
+    /// </summary>
+    public int Right
+    {
+        get => _bounds.Right;
+        set
+        {
+            if (_bounds.Right != value)
+            {
+                SetBounds(Rectangle.FromLTRB(_bounds.Left, _bounds.Top, value, _bounds.Bottom));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the layer is visible.
+    /// </summary>
+    public bool IsVisible
+    {
+        get => _isVisible;
+        set
+        {
+            if (_isVisible != value)
+            {
+                _isVisible = value;
+                HasMutated = true;
+            }
+        }
+    }
+    /// <summary>
+    /// Gets or sets the layer opacity in the 0-255 range.
+    /// </summary>
+    public byte Opacity
+    {
+        get => _opacity;
+        set
+        {
+            if (_opacity != value)
+            {
+                _opacity = value;
+                HasMutated = true;
+            }
+        }
+    }
+    /// <summary>
+    /// Gets the PSD clipping value for the layer.
+    /// </summary>
+    public byte Clipping
+    {
+        get => _clipping;
+        set
+        {
+            if (_clipping != value)
+            {
+                _clipping = value;
+                HasMutated = true;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Stores the PSD clipping value for the layer.
+    /// </summary>
+    private byte _clipping;
+
+    /// <summary>
+    /// Stores the PSD blend mode exposed by the layer record.
+    /// </summary>
+    private BlendMode _blendMode;
+
+    /// <summary>
+    /// Gets or sets the layer blend mode key.
+    /// </summary>
+    public BlendMode BlendModeKey
+    {
+        get => _blendMode;
+        set => SetBlendModeKey(value);
+    }
+
+    /// <summary>
+    /// Gets the layer's channels count.
+    /// </summary>
+    public int ChannelsCount => ChannelInfo.Length;
+
+    /// <summary>
+    /// Gets or sets the channel information.
+    /// </summary>
+    public ChannelInformation[] ChannelInformation
+    {
+        get => ChannelInfo.Select(Aspose.PSD.FileFormats.Psd.Layers.ChannelInformation.FromLayerChannelInfo).ToArray();
+        set => throw new NotSupportedException("Changing layer channel information is not supported by this FOSS build.");
+    }
+
+    /// <summary>
+    /// Gets a read-only summary of the parsed layer channel records.
+    /// </summary>
+    internal IReadOnlyList<PsdLayerChannelInfo> Channels => ChannelInfo.Select(channel => new PsdLayerChannelInfo(channel.ChannelId, channel.DataLength)).ToArray();
+
+    /// <summary>
+    /// Gets a value indicating whether the layer contains a non-empty layer mask subsection.
+    /// </summary>
+    internal bool HasMaskData => _rawData.LayerMaskSection.RawData.Length > sizeof(uint);
+
+    /// <summary>
+    /// Gets a value indicating whether the layer contains a non-empty blending ranges subsection.
+    /// </summary>
+    internal bool HasBlendingRangesData => _rawData.BlendingRangesSection.RawData.Length > sizeof(uint);
+
+    /// <summary>
+    /// Gets a read-only summary of the parsed layer mask subsection.
+    /// </summary>
+    internal LayerMaskInfo MaskInfo => new(HasMaskData, _rawData.LayerMaskSection.RawData.Length);
+
+    /// <summary>
+    /// Gets a read-only summary of the parsed blending ranges subsection.
+    /// </summary>
+    internal LayerBlendingRangesInfo BlendingRangesInfo => new(HasBlendingRangesData, _rawData.BlendingRangesSection.RawData.Length);
+
+    /// <summary>
+    /// Stores the parsed per-channel metadata from the layer record.
+    /// </summary>
+    internal LayerChannelInfo[] ChannelInfo => _rawData.ChannelInfo;
+
+    /// <summary>
+    /// Gets the original PSD layer flags byte used when rewriting the layer record.
+    /// </summary>
+    internal byte RawFlags => _rawData.Flags;
+
+    /// <summary>
+    /// Gets the raw layer mask subsection used by the layer record writer.
+    /// </summary>
+    internal RawLayerMaskSection RawLayerMaskSection => _rawData.LayerMaskSection;
+
+    /// <summary>
+    /// Gets the raw blending ranges subsection used by the layer record writer.
+    /// </summary>
+    internal RawLayerBlendingRangesSection RawLayerBlendingRangesSection => _rawData.BlendingRangesSection;
+
+    /// <summary>
+    /// Gets or sets the layer mask data.
+    /// </summary>
+    public LayerMaskData? LayerMaskData
+    {
+        get
+        {
+            if (!HasMaskData)
+            {
+                return null;
+            }
+
+            return new LayerMaskDataShort();
+        }
+
+        set => throw new NotSupportedException("Changing layer mask data is not supported by this FOSS build.");
+    }
+
+    /// <summary>
+    /// Gets or sets the layer blending ranges data.
+    /// </summary>
+    public LayerBlendingRangesData LayerBlendingRangesData
+    {
+        get => LayerBlendingRangesData.FromRawLength(_rawData.BlendingRangesSection.RawData.Length);
+        set => throw new NotSupportedException("Changing layer blending ranges data is not supported by this FOSS build.");
+    }
+
+    /// <summary>
+    /// Gets the additional layer data bytes that follow the Pascal layer name.
+    /// </summary>
+    internal byte[] AdditionalLayerData => _rawData.AdditionalLayerData;
+
+    /// <summary>
+    /// Gets the original raw 4-byte PSD blend mode key for diagnostics and raw-preserve verification.
+    /// </summary>
+    internal string RawBlendModeKey => _rawData.BlendModeKey;
+
+    /// <summary>
+    /// Gets a value indicating whether the layer has a pending in-memory mutation.
+    /// </summary>
+    internal bool HasMutated { get; private set; }
+
+    /// <summary>
+    /// Marks the layer as mutated so the save path rewrites the minimal required structures.
+    /// </summary>
+    internal void MarkMutated()
+    {
+        HasMutated = true;
+    }
+
+    /// <summary>
+    /// Updates the layer bounds from coordinate property setters.
+    /// </summary>
+    /// <param name="bounds">The replacement bounds.</param>
+    private void SetBounds(Rectangle bounds)
+    {
+        if (_bounds != bounds)
+        {
+            _bounds = bounds;
+            HasMutated = true;
+        }
+    }
+
+    /// <summary>
+    /// Updates the PSD blend mode key.
+    /// </summary>
+    /// <param name="blendMode">The replacement blend mode key.</param>
+    private void SetBlendModeKey(BlendMode blendMode)
+    {
+        if (_blendMode != blendMode)
+        {
+            _blendMode = blendMode;
+            _rawData = _rawData.WithBlendModeKey(LayerBlendModeMapper.GetBlendModeKey(blendMode));
+            HasMutated = true;
+        }
+    }
+
+    /// <summary>
+    /// Loads a layer record from the current reader position.
+    /// </summary>
+    /// <param name="reader">The reader positioned at the start of a layer record.</param>
+    /// <param name="isLargeDocument">true for PSB-sized layer channel lengths; otherwise, false.</param>
+    /// <returns>The parsed <see cref="Layer"/> instance.</returns>
+    internal static Layer Load(BigEndianReader reader, bool isLargeDocument)
+    {
+        return LayerRecordReader.Load(reader, isLargeDocument);
+    }
+
+    /// <summary>
+    /// Writes the current layer record using PSD- or PSB-sized channel lengths.
+    /// </summary>
+    /// <param name="writer">The destination writer.</param>
+    /// <param name="isLargeDocument">true for PSB-sized layer channel lengths; otherwise, false.</param>
+    internal void Write(BigEndianWriter writer, bool isLargeDocument)
+    {
+        LayerRecordWriter.Write(this, writer, isLargeDocument);
+    }
+
+    /// <summary>
+    /// Creates a layer instance from already-parsed PSD layer record fields without marking it as mutated.
+    /// </summary>
+    /// <param name="name">The parsed layer name.</param>
+    /// <param name="bounds">The parsed layer bounds in PSD document coordinates.</param>
+    /// <param name="isVisible">true when the layer is visible; otherwise, false.</param>
+    /// <param name="opacity">The parsed opacity byte.</param>
+    /// <param name="clipping">The parsed clipping value.</param>
+    /// <param name="blendMode">The public blend mode mapped from the raw PSD blend mode key.</param>
+    /// <param name="rawData">The raw PSD layer record data.</param>
+    /// <returns>The parsed layer domain object.</returns>
+    internal static Layer CreateParsed(
+        string name,
+        Rectangle bounds,
+        bool isVisible,
+        byte opacity,
+        byte clipping,
+        BlendMode blendMode,
+        LayerRawData rawData)
+    {
+        return new Layer
+        {
+            _name = name,
+            _bounds = bounds,
+            _isVisible = isVisible,
+            _opacity = opacity,
+            _clipping = clipping,
+            _blendMode = blendMode,
+            _rawData = rawData
+        };
+    }
+}

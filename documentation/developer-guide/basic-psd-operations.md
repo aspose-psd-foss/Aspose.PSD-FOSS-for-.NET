@@ -1,0 +1,94 @@
+# Basic PSD Operations
+
+This guide covers the currently supported operations of Aspose.PSD.FOSS.
+
+## Supported Workflows
+
+The library currently supports four main workflows:
+
+1. Load a PSD/PSB file and inspect document metadata.
+2. Enumerate layers and inspect supported layer metadata.
+3. Change a limited set of layer properties.
+4. Save the file back without rendering.
+
+## Load a PSD or PSB Document
+
+Use `Image.Load(string)` or `Image.Load(Stream)` and cast the result to `PsdImage` to open a PSD/PSB document in the Aspose.PSD-compatible style.
+
+Supported document metadata:
+
+- `Width`
+- `Height`
+- `ChannelsCount`
+- `BitsPerChannel`
+- `ColorMode`
+- `Version` (Aspose.PSD-compatible API value)
+- `Size`
+- `Bounds`
+- `Compression`
+- `ImageResources`
+- `GlobalLayerResources`
+- `GlobalLayerMaskInfo`
+- `IsFlatten`
+- `ActiveLayer`
+
+Internal diagnostics preserve parsed resource, color data, image data, channel, mask, and blending-range details for tests and implementation verification. Those diagnostic DTOs are intentionally not part of the public API when they do not exist in the commercial Aspose.PSD surface.
+
+Some official properties are present as explicit compatibility stubs and throw `NotSupportedException` when the current FOSS build cannot safely update the underlying PSD structures.
+
+## Inspect Layers
+
+Use `image.Layers` to enumerate parsed layer records.
+
+Supported layer metadata:
+
+- `Name`
+- `Bounds` (`Rectangle` local to the layer, starting at `(0, 0)`)
+- `Width`
+- `Height`
+- `Top`
+- `Left`
+- `Bottom`
+- `Right`
+- `IsVisible`
+- `Opacity`
+- `Clipping`
+- `BlendModeKey`
+- `ChannelsCount`
+- `ChannelInformation`
+- `LayerMaskData`
+- `LayerBlendingRangesData`
+
+`ChannelInformation`, `LayerMaskData`, and `LayerBlendingRangesData` are public compatibility surfaces. Lower-level raw-preserve diagnostics for channels, masks, and blending ranges remain internal.
+
+## Modify Layers
+
+The current product scope supports changing:
+
+- `Name`
+- `IsVisible`
+- `Opacity`
+- `BlendModeKey`
+- `Clipping`
+- `Top`
+- `Left`
+- `Bottom`
+- `Right`
+
+These changes are saved back into the PSD/PSB structure without rendering.
+
+`Bounds` is read-only for Aspose.PSD compatibility and reflects the local layer rectangle. Use `Top`, `Left`, `Bottom`, and `Right` when changing layer geometry in document coordinates.
+
+## Save Behavior
+
+The library follows a minimal parse and raw-preserve approach:
+
+- supported structures are parsed and rewritten when needed;
+- unsupported sections are preserved as raw bytes where possible;
+- a no-mutation save keeps the original bytes unchanged for the currently supported scenarios.
+
+This means the library is optimized for safe structural edits, not for reconstructing or normalizing the whole Photoshop document model.
+
+## Stream Behavior
+
+When loading from a seekable stream, the library restores the original stream position after loading. This makes it safer to use inside larger workflows that share a stream instance.
