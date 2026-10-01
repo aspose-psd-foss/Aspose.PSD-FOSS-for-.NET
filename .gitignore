@@ -1,0 +1,7 @@
+bin/
+obj/
+/tmp/
+/openspec
+/agents.md
+/GRAPH_REPORT.md
+.editorconfig
