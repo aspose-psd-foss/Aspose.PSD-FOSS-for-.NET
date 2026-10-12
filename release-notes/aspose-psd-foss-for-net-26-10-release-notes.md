@@ -6,9 +6,7 @@ title: "Aspose.PSD FOSS for .NET 26.10 - Release Notes"
 description: "Aspose.PSD FOSS for .NET 26.10 - Release Notes – the latest updates and examples."
 ---
 
-{{% alert color="primary" %}}
 This page contains release notes for [Aspose.PSD FOSS for .NET 26.10](https://www.nuget.org/packages/Aspose.PSD.FOSS/)
-{{% /alert %}}
 
 # Initial release of Aspose.PSD FOSS for .NET
 
