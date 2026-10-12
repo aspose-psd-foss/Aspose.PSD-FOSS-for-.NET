@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <TargetFrameworks>netstandard2.1;net10.0</TargetFrameworks>
+      <LangVersion>8.0</LangVersion>
+    <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    
     <AssemblyName>Aspose.PSD.FOSS</AssemblyName>
     <RootNamespace>Aspose.PSD.FOSS</RootNamespace>
     
@@ -20,10 +20,43 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\Aspose.PSD.FOSS.xml</DocumentationFile>
+      <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+      <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+      <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
+      <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
+      <GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>
+      <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
+      <GenerateAssemblyDescriptionAttribute>false</GenerateAssemblyDescriptionAttribute>
+      <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+      <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
   </PropertyGroup>
 
   <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
+    <Target Name="GeneratePublicKeyFile" Condition="'$(Configuration)' != 'Debug'" BeforeTargets="BeforeCompile">
+        <PropertyGroup>
+            <CustomPublicKey Condition="'$(CustomPublicKey)' == ''"></CustomPublicKey>
+            <GeneratedClassCode>
+                <![CDATA[
+namespace Aspose.FOSS.Security
+{
+    internal static class PublicKey
+    {
+        public const string Value = "$(CustomPublicKey)"%3B
+    }
+}
+      ]]>
+            </GeneratedClassCode>
+        </PropertyGroup>
+        <WriteLinesToFile File="$(IntermediateOutputPath)GeneratedKey.g.cs"
+                          Lines="$(GeneratedClassCode)"
+                          Overwrite="true"
+                          WriteOnlyWhenDifferent="true" />
+        <ItemGroup>
+            <Compile Include="$(IntermediateOutputPath)GeneratedKey.g.cs" />
+        </ItemGroup>
+    </Target>
+    
 
 </Project>

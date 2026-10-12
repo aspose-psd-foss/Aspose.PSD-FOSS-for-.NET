@@ -1,7 +1,15 @@
 bin/
 obj/
 /tmp/
-/openspec
 /agents.md
 /GRAPH_REPORT.md
-.editorconfig
+/streams-sample-output.psd
+/structural-editing-sample-output.psd
+*.bak
+*.nupkg
+*.bin
+DesignTimeBuild/
+FileContentIndex/
+v18/
+openspec/
+publish/

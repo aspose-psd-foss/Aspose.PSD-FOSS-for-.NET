@@ -1,152 +1,154 @@
-namespace Aspose.PSD.FileFormats.Core.Blending;
-
-/// <summary>
-/// Defines the blend modes used for layers in PSD files.
-/// </summary>
-public enum BlendMode : uint
+namespace Aspose.PSD.FileFormats.Core.Blending
 {
-    /// <summary>
-    /// Normal blend mode (no blending).
-    /// </summary>
-    Normal = 1852797549,
 
     /// <summary>
-    /// Multiply blend mode (multiply colors, darkens image).
+    /// Defines the blend modes used for layers in PSD files.
     /// </summary>
-    Multiply = 1836411936,
+    public enum BlendMode : uint
+    {
+        /// <summary>
+        /// Normal blend mode (no blending).
+        /// </summary>
+        Normal = 1852797549,
 
-    /// <summary>
-    /// Screen blend mode (screen colors, lightens image).
-    /// </summary>
-    Screen = 1935897198,
+        /// <summary>
+        /// Multiply blend mode (multiply colors, darkens image).
+        /// </summary>
+        Multiply = 1836411936,
 
-    /// <summary>
-    /// Overlay blend mode (combines multiply and screen).
-    /// </summary>
-    Overlay = 1870030194,
+        /// <summary>
+        /// Screen blend mode (screen colors, lightens image).
+        /// </summary>
+        Screen = 1935897198,
 
-    /// <summary>
-    /// Darken blend mode (keeps darker pixels).
-    /// </summary>
-    Darken = 1684107883,
+        /// <summary>
+        /// Overlay blend mode (combines multiply and screen).
+        /// </summary>
+        Overlay = 1870030194,
 
-    /// <summary>
-    /// Lighten blend mode (keeps lighter pixels).
-    /// </summary>
-    Lighten = 1818850405,
+        /// <summary>
+        /// Darken blend mode (keeps darker pixels).
+        /// </summary>
+        Darken = 1684107883,
 
-    /// <summary>
-    /// Color Dodge blend mode (dodges colors).
-    /// </summary>
-    ColorDodge = 1684633120,
+        /// <summary>
+        /// Lighten blend mode (keeps lighter pixels).
+        /// </summary>
+        Lighten = 1818850405,
 
-    /// <summary>
-    /// Color Burn blend mode (burns colors).
-    /// </summary>
-    ColorBurn = 1768188278,
+        /// <summary>
+        /// Color Dodge blend mode (dodges colors).
+        /// </summary>
+        ColorDodge = 1684633120,
 
-    /// <summary>
-    /// Hard Light blend mode (hard light blending).
-    /// </summary>
-    HardLight = 1749838196,
+        /// <summary>
+        /// Color Burn blend mode (burns colors).
+        /// </summary>
+        ColorBurn = 1768188278,
 
-    /// <summary>
-    /// Soft Light blend mode (soft light blending).
-    /// </summary>
-    SoftLight = 1934387572,
+        /// <summary>
+        /// Hard Light blend mode (hard light blending).
+        /// </summary>
+        HardLight = 1749838196,
 
-    /// <summary>
-    /// Difference blend mode (subtract colors).
-    /// </summary>
-    Difference = 1684629094,
+        /// <summary>
+        /// Soft Light blend mode (soft light blending).
+        /// </summary>
+        SoftLight = 1934387572,
 
-    /// <summary>
-    /// Exclusion blend mode (exclude colors).
-    /// </summary>
-    Exclusion = 1936553316,
+        /// <summary>
+        /// Difference blend mode (subtract colors).
+        /// </summary>
+        Difference = 1684629094,
 
-    /// <summary>
-    /// Hue blend mode (apply hue).
-    /// </summary>
-    Hue = 1752524064,
+        /// <summary>
+        /// Exclusion blend mode (exclude colors).
+        /// </summary>
+        Exclusion = 1936553316,
 
-    /// <summary>
-    /// Saturation blend mode (apply saturation).
-    /// </summary>
-    Saturation = 1935766560,
+        /// <summary>
+        /// Hue blend mode (apply hue).
+        /// </summary>
+        Hue = 1752524064,
 
-    /// <summary>
-    /// Color blend mode (apply color).
-    /// </summary>
-    Color = 1668246642,
+        /// <summary>
+        /// Saturation blend mode (apply saturation).
+        /// </summary>
+        Saturation = 1935766560,
 
-    /// <summary>
-    /// Luminosity blend mode (apply luminosity).
-    /// </summary>
-    Luminosity = 1819634976,
+        /// <summary>
+        /// Color blend mode (apply color).
+        /// </summary>
+        Color = 1668246642,
 
-    /// <summary>
-    /// Darker Color blend mode (darker of colors).
-    /// </summary>
-    DarkerColor = 1684751212,
+        /// <summary>
+        /// Luminosity blend mode (apply luminosity).
+        /// </summary>
+        Luminosity = 1819634976,
 
-    /// <summary>
-    /// Lighter Color blend mode (lighter of colors).
-    /// </summary>
-    LighterColor = 1818706796,
+        /// <summary>
+        /// Darker Color blend mode (darker of colors).
+        /// </summary>
+        DarkerColor = 1684751212,
 
-    /// <summary>
-    /// Linear Burn blend mode (linear burn).
-    /// </summary>
-    LinearBurn = 1818391150,
+        /// <summary>
+        /// Lighter Color blend mode (lighter of colors).
+        /// </summary>
+        LighterColor = 1818706796,
 
-    /// <summary>
-    /// Linear Dodge blend mode (linear dodge).
-    /// </summary>
-    LinearDodge = 1818518631,
+        /// <summary>
+        /// Linear Burn blend mode (linear burn).
+        /// </summary>
+        LinearBurn = 1818391150,
 
-    /// <summary>
-    /// Linear Light blend mode (linear light).
-    /// </summary>
-    LinearLight = 1816947060,
+        /// <summary>
+        /// Linear Dodge blend mode (linear dodge).
+        /// </summary>
+        LinearDodge = 1818518631,
 
-    /// <summary>
-    /// Vivid Light blend mode (vivid light).
-    /// </summary>
-    VividLight = 1984719220,
+        /// <summary>
+        /// Linear Light blend mode (linear light).
+        /// </summary>
+        LinearLight = 1816947060,
 
-    /// <summary>
-    /// Pin Light blend mode (pin light).
-    /// </summary>
-    PinLight = 1884055924,
+        /// <summary>
+        /// Vivid Light blend mode (vivid light).
+        /// </summary>
+        VividLight = 1984719220,
 
-    /// <summary>
-    /// Hard Mix blend mode (hard mix).
-    /// </summary>
-    HardMix = 1749903736,
+        /// <summary>
+        /// Pin Light blend mode (pin light).
+        /// </summary>
+        PinLight = 1884055924,
 
-    /// <summary>
-    /// Subtract blend mode (subtract colors).
-    /// </summary>
-    Subtract = 1718842722,
+        /// <summary>
+        /// Hard Mix blend mode (hard mix).
+        /// </summary>
+        HardMix = 1749903736,
 
-    /// <summary>
-    /// Divide blend mode (divide colors).
-    /// </summary>
-    Divide = 1717856630,
+        /// <summary>
+        /// Subtract blend mode (subtract colors).
+        /// </summary>
+        Subtract = 1718842722,
 
-    /// <summary>
-    /// Dissolve blend mode.
-    /// </summary>
-    Dissolve = 1684632435,
+        /// <summary>
+        /// Divide blend mode (divide colors).
+        /// </summary>
+        Divide = 1717856630,
 
-    /// <summary>
-    /// Pass-through blend mode.
-    /// </summary>
-    PassThrough = 1885434739,
+        /// <summary>
+        /// Dissolve blend mode.
+        /// </summary>
+        Dissolve = 1684632435,
 
-    /// <summary>
-    /// Blend mode is absent or not set yet.
-    /// </summary>
-    Absent = 0
+        /// <summary>
+        /// Pass-through blend mode.
+        /// </summary>
+        PassThrough = 1885434739,
+
+        /// <summary>
+        /// Blend mode is absent or not set yet.
+        /// </summary>
+        Absent = 0
+    }
 }

@@ -1,31 +1,34 @@
-namespace Aspose.PSD.FileFormats.Psd;
+using System.IO;
 
-/// <summary>
-/// Writes parsed PSD/PSB document state to a stream.
-/// </summary>
-internal static class PsdImageWriter
+namespace Aspose.PSD.FileFormats.Psd
 {
     /// <summary>
-    /// Saves a parsed document state to a writable stream.
+    /// Writes parsed PSD/PSB document state to a stream.
     /// </summary>
-    /// <param name="document">The parsed document state to write.</param>
-    /// <param name="stream">The destination stream.</param>
-    /// <param name="leaveOpen">true to leave the stream open after saving; otherwise, false.</param>
-    public static void Save(PsdImageDocumentState document, Stream stream, bool leaveOpen)
+    internal static class PsdImageWriter
     {
-        var writer = new BigEndianWriter(stream, leaveOpen);
-        try
+        /// <summary>
+        /// Saves a parsed document state to a writable stream.
+        /// </summary>
+        /// <param name="document">The parsed document state to write.</param>
+        /// <param name="stream">The destination stream.</param>
+        /// <param name="leaveOpen">true to leave the stream open after saving; otherwise, false.</param>
+        public static void Save(PsdImageDocumentState document, Stream stream, bool leaveOpen)
         {
-            writer.Write((uint)PsdHeader.PsdSignature);
-            document.Header?.Save(writer);
-            document.ColorData.Save(writer);
-            document.ImageResourcesSection.Save(writer);
-            document.LayerAndMaskSection.Save(writer, document.Header?.IsLargeDocument == true);
-            document.ImageData.Save(writer);
-        }
-        finally
-        {
-            writer.Dispose();
+            var writer = new BigEndianWriter(stream, leaveOpen);
+            try
+            {
+                writer.Write((uint)PsdHeader.PsdSignature);
+                document.Header?.Save(writer);
+                document.ColorData.Save(writer);
+                document.ImageResourcesSection.Save(writer);
+                document.LayerAndMaskSection.Save(writer, document.Header?.IsLargeDocument == true);
+                document.ImageData.Save(writer);
+            }
+            finally
+            {
+                writer.Dispose();
+            }
         }
     }
 }

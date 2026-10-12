@@ -1,24 +1,26 @@
+using System;
 using System.Collections.ObjectModel;
 using System.Drawing;
 
-namespace Aspose.PSD.FileFormats.Psd;
-
-/// <summary>
-/// Provides a read-only view over an indexed-color PSD palette.
-/// </summary>
-internal sealed class IndexedColorPaletteInfo
+namespace Aspose.PSD.FileFormats.Psd
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="IndexedColorPaletteInfo"/> class.
+    /// Provides a read-only view over an indexed-color PSD palette.
     /// </summary>
-    /// <param name="entries">The decoded palette entries.</param>
-    public IndexedColorPaletteInfo(Color[] entries)
+    internal sealed class IndexedColorPaletteInfo
     {
-        Entries = Array.AsReadOnly((Color[])entries.Clone());
-    }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="IndexedColorPaletteInfo"/> class.
+        /// </summary>
+        /// <param name="entries">The decoded palette entries.</param>
+        public IndexedColorPaletteInfo(Color[] entries)
+        {
+            Entries = Array.AsReadOnly((Color[])entries.Clone());
+        }
 
-    /// <summary>
-    /// Gets the decoded palette entries.
-    /// </summary>
-    public ReadOnlyCollection<Color> Entries { get; }
+        /// <summary>
+        /// Gets the decoded palette entries.
+        /// </summary>
+        public ReadOnlyCollection<Color> Entries { get; }
+    }
 }

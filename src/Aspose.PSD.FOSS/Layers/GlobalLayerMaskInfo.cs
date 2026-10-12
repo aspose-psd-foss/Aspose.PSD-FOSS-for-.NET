@@ -1,12 +1,13 @@
-namespace Aspose.PSD.FileFormats.Psd.Layers;
-
-/// <summary>
-/// Represents global layer mask information.
-/// </summary>
-public class GlobalLayerMaskInfo
+namespace Aspose.PSD.FileFormats.Psd.Layers
 {
     /// <summary>
-    /// Gets an empty global layer mask info instance.
+    /// Represents global layer mask information.
     /// </summary>
-    internal static GlobalLayerMaskInfo Empty { get; } = new();
+    public class GlobalLayerMaskInfo
+    {
+        /// <summary>
+        /// Gets an empty global layer mask info instance.
+        /// </summary>
+        internal static GlobalLayerMaskInfo Empty { get; } = new GlobalLayerMaskInfo();
+    }
 }

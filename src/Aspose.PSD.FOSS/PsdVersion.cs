@@ -1,17 +1,18 @@
-namespace Aspose.PSD.FileFormats.Psd;
-
-/// <summary>
-/// Represents the supported PSD container versions.
-/// </summary>
-public enum PsdVersion : byte
+namespace Aspose.PSD.FileFormats.Psd
 {
     /// <summary>
-    /// Standard PSD document format.
+    /// Represents the supported PSD container versions.
     /// </summary>
-    Psd = 1,
+    public enum PsdVersion : byte
+    {
+        /// <summary>
+        /// Standard PSD document format.
+        /// </summary>
+        Psd = 1,
 
-    /// <summary>
-    /// Large-document PSB format.
-    /// </summary>
-    Psb = 2
+        /// <summary>
+        /// Large-document PSB format.
+        /// </summary>
+        Psb = 2
+    }
 }

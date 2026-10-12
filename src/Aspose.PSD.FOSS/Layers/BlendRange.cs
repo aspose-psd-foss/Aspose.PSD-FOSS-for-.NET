@@ -1,17 +1,18 @@
-namespace Aspose.PSD.FileFormats.Psd.Layers;
-
-/// <summary>
-/// Represents a PSD layer blend range.
-/// </summary>
-public class BlendRange
+namespace Aspose.PSD.FileFormats.Psd.Layers
 {
     /// <summary>
-    /// Gets or sets the destination blend range.
+    /// Represents a PSD layer blend range.
     /// </summary>
-    public int Destination { get; set; }
+    public class BlendRange
+    {
+        /// <summary>
+        /// Gets or sets the destination blend range.
+        /// </summary>
+        public int Destination { get; set; }
 
-    /// <summary>
-    /// Gets or sets the source blend range.
-    /// </summary>
-    public int Source { get; set; }
+        /// <summary>
+        /// Gets or sets the source blend range.
+        /// </summary>
+        public int Source { get; set; }
+    }
 }
