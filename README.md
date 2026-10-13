@@ -63,7 +63,7 @@ dotnet pack src/Aspose.PSD.FOSS/Aspose.PSD.FOSS.csproj -c Release
 
 The package will be created under `src/Aspose.PSD.FOSS/bin/Release/`.
 
-To install it through a local NuGet:
+To install it through a NuGet:
 
 ```bash
 dotnet add package Aspose.PSD.FOSS

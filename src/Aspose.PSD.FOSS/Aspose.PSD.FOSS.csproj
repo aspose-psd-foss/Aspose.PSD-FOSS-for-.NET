@@ -9,6 +9,7 @@
     <RootNamespace>Aspose.PSD.FOSS</RootNamespace>
     
     <PackageId>Aspose.PSD.FOSS</PackageId>
+    <PackageReadmeFile>..\..\README.md</PackageReadmeFile>
     <Version>1.0.0</Version>
     <Authors>SID</Authors>
     <Description>Free Open Source .NET library for basic PSD file operations (read/write without rendering)</Description>
